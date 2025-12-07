@@ -49,6 +49,20 @@ const colors = [
     active: '#B794F4',
     gradient: '#6B46C1',
     background: '#805AD5'
+  },
+  {
+    curve: '#D53F8C',
+    point: '#F687B3',
+    active: '#F687B3',
+    gradient: '#B83280',
+    background: '#D53F8C'
+  },
+  {
+    curve: '#4A5568',
+    point: '#A0AEC0',
+    active: '#A0AEC0',
+    gradient: '#2D3748',
+    background: '#4A5568'
   }
 ]
 

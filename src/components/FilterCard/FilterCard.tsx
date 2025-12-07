@@ -32,7 +32,16 @@ const FilterCard = ({
   onEnter?: (event: FilterChangeEvent) => void
   onChange: (event: FilterChangeEvent) => void
 }) => {
-  const { minFreq, maxFreq } = scale
+  const {
+    minFreq,
+    maxFreq,
+    minGain,
+    maxGain,
+    minQ,
+    maxQ,
+    gainPrecision = 1,
+    qPrecision = 1
+  } = scale
   const [noiseDataUrl, setNoiseDataUrl] = useState<string>('')
   // eslint-disable-next-line no-param-reassign
   if (disabled) filter = { type: 'BYPASS', freq: 0, gain: 0, q: 1 }
@@ -86,11 +95,12 @@ const FilterCard = ({
 
       <div className="flex flex-row gap-2 w-full">
         <SliderInput
-          max={10}
-          min={-10}
+          max={maxGain}
+          min={minGain}
           step={0.1}
           label="Gain"
           value={filter.gain}
+          precision={gainPrecision}
           disabled={disabled || zeroGain}
           onChange={(gain, ended) =>
             onChange({ ...filter, index, gain, ended })
@@ -99,11 +109,12 @@ const FilterCard = ({
 
         <SliderInput
           log
-          max={10}
-          min={0.1}
+          max={maxQ}
+          min={minQ}
           step={0.1}
           label="Q"
           value={filter.q}
+          precision={qPrecision}
           disabled={disabled || zeroQ}
           onChange={(q, ended) => onChange({ ...filter, index, q, ended })}
         />

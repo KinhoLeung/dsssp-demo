@@ -1,11 +1,10 @@
 import clsx from 'clsx'
+import type React from 'react'
 import { useRef } from 'react'
 import tailwindColors from 'tailwindcss/colors'
 
 import { FilterInput } from '.'
 import styles from './SliderInput.module.css'
-
-const precision = 2
 
 const SliderInput = ({
   value,
@@ -16,6 +15,7 @@ const SliderInput = ({
   height = 96,
   label,
   log = false,
+  precision = 1,
   disabled
 }: {
   value: number
@@ -26,6 +26,7 @@ const SliderInput = ({
   height?: number
   label?: string
   log?: boolean
+  precision?: number
   disabled?: boolean
 }) => {
   const dragging = useRef(false)
@@ -45,8 +46,14 @@ const SliderInput = ({
     return (Math.log(log) - minv) / scale
   }
 
-  const getNewValue = (event: any): number => {
-    let newValue = Number(event.target.value)
+  const getNewValue = (
+    event:
+      | React.ChangeEvent<HTMLInputElement>
+      | React.MouseEvent<HTMLInputElement>
+      | React.TouchEvent<HTMLInputElement>
+  ): number => {
+    const target = event.target as HTMLInputElement
+    let newValue = Number(target.value)
     if (log) newValue = Number(linearToLog(newValue).toFixed(precision))
     return newValue
   }
@@ -155,9 +162,9 @@ const SliderInput = ({
       <div className="pt-1">
         <FilterInput
           value={value}
-          min={log ? 0 : min}
-          max={log ? 100 : max}
-          precision={2}
+          min={min}
+          max={max}
+          precision={precision}
           disabled={disabled}
           onChange={(value) => onChange(value, true)}
         />

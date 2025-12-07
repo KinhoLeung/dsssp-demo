@@ -11,6 +11,15 @@ import 'dsssp/font'
 
 import SelectArrowIcon from '../../assets/select-arrow.svg?react'
 
+const allowedFilterTypes: FilterType[] = [
+  'BYPASS',
+  'PEAK',
+  'LOWSHELF2',
+  'HIGHSHELF2',
+  'LOWPASS2',
+  'HIGHPASS2'
+]
+
 const isSafari = () => {
   const ua = navigator.userAgent
   return (
@@ -42,6 +51,13 @@ const FilterSelect = ({
   onChange: (type: FilterType) => void
 }) => {
   const [opened, setOpened] = useState<boolean>(false)
+  const availableTypes = useMemo(
+    () => filterTypeKeys.filter((type) => allowedFilterTypes.includes(type)),
+    []
+  )
+  const selectedType = availableTypes.includes(filter.type)
+    ? filter.type
+    : availableTypes[0]
   // temporary solution to hide broken dsssp icons from dropdowns
   const safariBrowser = useMemo(() => isSafari(), [])
 
@@ -57,7 +73,7 @@ const FilterSelect = ({
 
       <div className="relative py-1 select-none text-zinc-500 hover:text-zinc-300 ">
         <select
-          value={filter.type}
+          value={selectedType}
           onBlur={() => setOpened(false)}
           onFocus={() => setOpened(true)}
           onMouseDown={() => setOpened(true)}
@@ -67,7 +83,7 @@ const FilterSelect = ({
           }}
           className="bg-transparent text-transparent appearance-none w-[130px] h-full px-1 cursor-pointer focus:outline-none focus:ring-0"
         >
-          {filterTypeKeys.map((type: FilterType) => (
+          {availableTypes.map((type: FilterType) => (
             <option
               key={type}
               value={type}

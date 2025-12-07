@@ -34,10 +34,11 @@ const FilterInput = ({
     const num = Number(inputValue)
     if (!isNaN(num)) {
       const sanitized = Math.min(Math.max(Number(num), min), max)
-      if (sanitized !== oldValue.current) {
-        setInputValue(sanitized.toFixed(precision))
-        onChange?.(sanitized)
-        oldValue.current = sanitized
+      const rounded = Number(sanitized.toFixed(precision))
+      if (rounded !== oldValue.current) {
+        setInputValue(rounded.toFixed(precision))
+        onChange?.(rounded)
+        oldValue.current = rounded
       }
     }
   }

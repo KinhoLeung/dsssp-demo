@@ -15,11 +15,10 @@ import { useState } from 'react'
 import tailwindColors from 'tailwindcss/colors'
 
 import styles from './App.module.css'
-import { Header, FilterCard } from './components'
+import { DevicePanel, FilterCard, Header } from './components'
 import { customPreset } from './configs/presets'
 import scale from './configs/scale'
 import theme from './configs/theme'
-import NavBar from './pages/components/NavBar'
 
 function App() {
   const calcPresetCoefficients = (filters: GraphFilter[]) =>
@@ -40,11 +39,33 @@ function App() {
   const handleFilterChange = (filterEvent: FilterChangeEvent) => {
     const { index, ended, ...filter } = filterEvent
 
+    const clampedFreq =
+      filter.freq !== undefined
+        ? Math.min(Math.max(filter.freq, scale.minFreq), scale.maxFreq)
+        : filter.freq
+
+    const clampedGain =
+      filter.gain !== undefined
+        ? Math.min(Math.max(filter.gain, scale.minGain), scale.maxGain)
+        : filter.gain
+
+    const clampedQ =
+      filter.q !== undefined
+        ? Math.min(Math.max(filter.q, scale.minQ), scale.maxQ)
+        : filter.q
+
+    const nextFilter = {
+      ...filter,
+      freq: clampedFreq,
+      gain: clampedGain,
+      q: clampedQ
+    }
+
     if (ended) {
       setCoefficients((prevCoefficients) => {
         const newCoefficients = [...prevCoefficients]
         newCoefficients[index] = calcFilterCoefficients(
-          filter,
+          nextFilter,
           scale.sampleRate
         )
         return newCoefficients
@@ -54,7 +75,7 @@ function App() {
 
     setFilters((prevFilters) => {
       const newFilters = [...prevFilters]
-      newFilters[index] = { ...newFilters[index], ...filter }
+      newFilters[index] = { ...newFilters[index], ...nextFilter }
       return newFilters
     })
   }
@@ -75,18 +96,23 @@ function App() {
 
   return (
     <div className="text-white text-sans min-h-screen flex flex-col items-center">
-      <div className="max-w-[840px] pt-1 flex flex-col gap-1">
+      <div className="max-w-[1440px] pt-1 flex flex-col gap-1">
         <Header
           altered={altered}
-          coefficients={coefficients} // prop-drilling them down to the MusicPlayer
           onPresetChange={handlePresetChange}
           onPowerChange={setPowered}
         />
 
+        <DevicePanel
+          filters={filters}
+          coefficients={coefficients}
+          sampleRate={scale.sampleRate}
+        />
+
         <div className="shadow-sm shadow-black relative">
           <FrequencyResponseGraph
-            width={840}
-            height={360}
+            width={1440}
+            height={420}
             theme={theme}
             scale={scale}
           >
@@ -155,7 +181,6 @@ function App() {
           ))}
         </div>
       </div>
-      <NavBar />
     </div>
   )
 }
