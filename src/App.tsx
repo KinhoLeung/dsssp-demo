@@ -8,14 +8,12 @@ import {
   PointerTracker,
   type GraphFilter,
   type BiQuadCoefficients,
-  calcFilterCoefficients,
-  FrequencyResponseCurve
+  calcFilterCoefficients
 } from 'dsssp'
 import { useState } from 'react'
-import tailwindColors from 'tailwindcss/colors'
 
 import styles from './App.module.css'
-import { DevicePanel, FilterCard, Header } from './components'
+import { DevicePanel, FilterCard } from './components'
 import SliderInput from './components/FilterCard/SliderInput'
 import { customPreset } from './configs/presets'
 import scale from './configs/scale'
@@ -36,8 +34,6 @@ function App() {
       return calcFilterCoefficients(filter, scale.sampleRate)
     })
 
-  const [powered, setPowered] = useState(true)
-  const [altered, setAltered] = useState(false)
   const [gainFilter, setGainFilter] = useState<GraphFilter>(
     () => ({ ...defaultGainFilter })
   )
@@ -93,7 +89,6 @@ function App() {
       return enforcedFilters
     })
 
-    if (ended) setAltered(true)
   }
 
   const handleMouseLeave = () => {
@@ -104,15 +99,6 @@ function App() {
     if (!dragging) setActiveIndex(index)
   }
 
-  const handlePresetChange = (preset: GraphFilter[]) => {
-    setAltered(false)
-    const enforcedPreset = enforceEdgeTypes(preset)
-    const gainReset = { ...defaultGainFilter }
-    setFilters(enforcedPreset)
-    setGainFilter(gainReset)
-    setCoefficients(calcPresetCoefficients([...enforcedPreset, gainReset]))
-  }
-
   const handleGainChange = (gain: number, ended: boolean) => {
     const clampedGain = Math.min(Math.max(gain, scale.minGain), scale.maxGain)
     const nextGainFilter = { ...gainFilter, gain: clampedGain }
@@ -120,7 +106,6 @@ function App() {
 
     if (ended) {
       setCoefficients(calcPresetCoefficients([...filters, nextGainFilter]))
-      setAltered(true)
     }
   }
 
@@ -130,12 +115,6 @@ function App() {
   return (
     <div className="text-white text-sans min-h-screen flex flex-col items-center">
       <div className="max-w-[1440px] pt-1 flex flex-col gap-1">
-        <Header
-          altered={altered}
-          onPresetChange={handlePresetChange}
-          onPowerChange={setPowered}
-        />
-
         <DevicePanel
           filters={filtersWithGain}
           coefficients={coefficients}
@@ -150,51 +129,41 @@ function App() {
               theme={theme}
               scale={scale}
             >
-              {powered ? (
+              {filters.map((filter, index) => (
                 <>
-                  {filters.map((filter, index) => (
-                    <>
-                      <FilterGradient
-                        fill={true}
-                        key={index}
-                        index={index}
-                        filter={filter}
-                        id={`filter-${index}`}
-                      />
+                  <FilterGradient
+                    fill={true}
+                    key={index}
+                    index={index}
+                    filter={filter}
+                    id={`filter-${index}`}
+                  />
 
-                      <FilterCurve
-                        showPin
-                        key={index}
-                        index={index}
-                        filter={filter}
-                        active={activeIndex === index}
-                        gradientId={`filter-${index}`}
-                      />
-                    </>
-                  ))}
-                  <CompositeCurve filters={filtersWithGain} />
-                  {filters.map((filter, index) => (
-                    <FilterPoint
-                      key={index}
-                      index={index}
-                      filter={filter}
-                      // label={getLabel(index)}
-                      active={activeIndex === index}
-                      onDrag={setDragging}
-                      onEnter={handleMouseEnter}
-                      onLeave={handleMouseLeave}
-                      onChange={handleFilterChange}
-                    />
-                  ))}
-                  {!dragging && <PointerTracker />}
+                  <FilterCurve
+                    showPin
+                    key={index}
+                    index={index}
+                    filter={filter}
+                    active={activeIndex === index}
+                    gradientId={`filter-${index}`}
+                  />
                 </>
-              ) : (
-                <FrequencyResponseCurve
-                  dotted
-                  magnitudes={[]}
-                  color={tailwindColors.slate[500]}
+              ))}
+              <CompositeCurve filters={filtersWithGain} />
+              {filters.map((filter, index) => (
+                <FilterPoint
+                  key={index}
+                  index={index}
+                  filter={filter}
+                  // label={getLabel(index)}
+                  active={activeIndex === index}
+                  onDrag={setDragging}
+                  onEnter={handleMouseEnter}
+                  onLeave={handleMouseLeave}
+                  onChange={handleFilterChange}
                 />
-              )}
+              ))}
+              {!dragging && <PointerTracker />}
             </FrequencyResponseGraph>
 
             <div className={styles.glareOverlay}></div>
@@ -222,7 +191,7 @@ function App() {
               key={index}
               index={index}
               filter={filter}
-              disabled={!powered}
+              disabled={false}
               active={activeIndex === index}
               onLeave={handleMouseLeave}
               onEnter={handleMouseEnter}
