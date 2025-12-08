@@ -9,7 +9,7 @@ const scale = {
   gainPrecision: 1,
   qPrecision: 1,
   minQ: 0.1,
-  maxQ: 20,
+  maxQ: 25,
   displayMinGain: -18,
   displayMaxGain: 12,
   dbSteps: 3, // 0 to disable
