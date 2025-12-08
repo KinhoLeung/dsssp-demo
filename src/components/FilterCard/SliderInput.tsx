@@ -16,7 +16,8 @@ const SliderInput = ({
   label,
   log = false,
   precision = 1,
-  disabled
+  disabled,
+  centerLabel = false
 }: {
   value: number
   onChange: (value: number, ended: boolean) => void
@@ -28,6 +29,7 @@ const SliderInput = ({
   log?: boolean
   precision?: number
   disabled?: boolean
+  centerLabel?: boolean
 }) => {
   const dragging = useRef(false)
   const oldValue = useRef(value)
@@ -120,6 +122,7 @@ const SliderInput = ({
         <div
           className={clsx(
             'pb-1 text-sm font-semibold text-zinc-500 drop-shadow-lg transition-opacity duration-150',
+            { 'text-center': centerLabel },
             { 'opacity-50 pointer-events-none': disabled }
           )}
         >

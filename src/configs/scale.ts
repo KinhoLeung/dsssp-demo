@@ -9,9 +9,9 @@ const scale = {
   gainPrecision: 1,
   qPrecision: 1,
   minQ: 0.1,
-  maxQ: 25,
-  displayMinGain: -20,
-  displayMaxGain: 13,
+  maxQ: 20,
+  displayMinGain: -18,
+  displayMaxGain: 12,
   dbSteps: 3, // 0 to disable
   dbLabelSteps: 6,
   dbLabels: true,

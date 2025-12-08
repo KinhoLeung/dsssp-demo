@@ -16,8 +16,9 @@ const allowedFilterTypes: FilterType[] = [
   'PEAK',
   'LOWSHELF2',
   'HIGHSHELF2',
-  'LOWPASS2',
-  'HIGHPASS2'
+  // 'LOWPASS2',
+  // 'HIGHPASS2',
+  // 'GAIN'
 ]
 
 const isSafari = () => {
@@ -32,29 +33,31 @@ const isSafari = () => {
 const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1)
 
 const getLabelName = (type: FilterType) => {
-  return capitalize(type.toLowerCase())
+  const normalizedType = type.replace(/\d+$/, '')
+
+  return capitalize(normalizedType.toLowerCase())
     .replace(/([wh])shelf/, '$1 Shelf')
     .replace(/([wh])pass/, '$1 Pass')
-    .replace(/1/g, ' ¹')
-    .replace(/2/g, ' ²')
 }
 
 const FilterSelect = ({
   color,
   filter,
   disabled,
-  onChange
+  onChange,
+  locked
 }: {
   color?: string
   filter: GraphFilter
   disabled: boolean
+  locked?: boolean
   onChange: (type: FilterType) => void
 }) => {
   const [opened, setOpened] = useState<boolean>(false)
-  const availableTypes = useMemo(
-    () => filterTypeKeys.filter((type) => allowedFilterTypes.includes(type)),
-    []
-  )
+  const availableTypes = useMemo(() => {
+    if (locked) return [filter.type]
+    return filterTypeKeys.filter((type) => allowedFilterTypes.includes(type))
+  }, [filter.type, locked])
   const selectedType = availableTypes.includes(filter.type)
     ? filter.type
     : availableTypes[0]
@@ -78,9 +81,11 @@ const FilterSelect = ({
           onFocus={() => setOpened(true)}
           onMouseDown={() => setOpened(true)}
           onChange={(e) => {
+            if (locked) return
             setOpened(false)
             onChange(e.target.value as FilterType)
           }}
+          disabled={disabled || locked}
           className="bg-transparent text-transparent appearance-none w-[130px] h-full px-1 cursor-pointer focus:outline-none focus:ring-0"
         >
           {availableTypes.map((type: FilterType) => (
