@@ -5,6 +5,7 @@ import {
   FilterGradient,
   type FilterChangeEvent,
   FilterPoint,
+  type FilterPointEvent,
   PointerTracker,
   type GraphFilter,
   type BiQuadCoefficients,
@@ -21,8 +22,18 @@ import theme from './configs/theme'
 
 const enforceEdgeTypes = (filters: GraphFilter[]) =>
   filters.map((filter, index, arr) => {
-    if (index === 0) return { ...filter, type: 'HIGHPASS2' }
-    if (index === arr.length - 1) return { ...filter, type: 'LOWPASS2' }
+    if (index === 0) {
+      if (filter.type === 'BYPASS' || filter.type === 'HIGHPASS2') {
+        return filter
+      }
+      return { ...filter, type: 'HIGHPASS2' }
+    }
+    if (index === arr.length - 1) {
+      if (filter.type === 'BYPASS' || filter.type === 'LOWPASS2') {
+        return filter
+      }
+      return { ...filter, type: 'LOWSHELF2' }
+    }
     return filter
   })
 
@@ -74,10 +85,7 @@ function App() {
 
     setFilters((prevFilters) => {
       const newFilters = [...prevFilters]
-      const typeLocked = index === 0 || index === prevFilters.length - 1
-      const safePatch = { ...nextFilter }
-      if (typeLocked) delete safePatch.type
-      newFilters[index] = { ...newFilters[index], ...safePatch }
+      newFilters[index] = { ...newFilters[index], ...nextFilter }
       const enforcedFilters = enforceEdgeTypes(newFilters)
 
       if (ended) {
@@ -89,6 +97,23 @@ function App() {
       return enforcedFilters
     })
 
+  }
+
+  const handleFilterDoubleClick = ({ index }: FilterPointEvent) => {
+    const presetFilter = customPreset[index]
+    if (!presetFilter) return
+
+    setFilters((prevFilters) => {
+      const newFilters = [...prevFilters]
+      newFilters[index] = { ...presetFilter }
+      const enforcedFilters = enforceEdgeTypes(newFilters)
+
+      setCoefficients(
+        calcPresetCoefficients([...enforcedFilters, gainFilter])
+      )
+
+      return enforcedFilters
+    })
   }
 
   const handleMouseLeave = () => {
@@ -107,6 +132,18 @@ function App() {
     if (ended) {
       setCoefficients(calcPresetCoefficients([...filters, nextGainFilter]))
     }
+  }
+
+  const handleResetFilters = () => {
+    const resetFilters = enforceEdgeTypes(customPreset)
+    const resetGainFilter = { ...defaultGainFilter }
+
+    setFilters(resetFilters)
+    setGainFilter(resetGainFilter)
+    setCoefficients(
+      calcPresetCoefficients([...resetFilters, resetGainFilter])
+    )
+    setActiveIndex(-1)
   }
 
   const filtersWithGain = [...filters, gainFilter]
@@ -161,6 +198,7 @@ function App() {
                   onEnter={handleMouseEnter}
                   onLeave={handleMouseLeave}
                   onChange={handleFilterChange}
+                  onDoubleClick={handleFilterDoubleClick}
                 />
               ))}
               {!dragging && <PointerTracker />}
@@ -170,7 +208,7 @@ function App() {
           </div>
 
           <div className="flex items-center px-3 bg-zinc-900/60 border-l border-zinc-800">
-            <div className="w-[88px]">
+            <div className="w-[88px] flex flex-col items-stretch gap-2">
               <SliderInput
                 label="Gain"
                 min={scale.minGain}
@@ -181,6 +219,13 @@ function App() {
                 onChange={handleGainChange}
                 centerLabel
               />
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="mt-1 px-2 py-1 text-xs font-semibold rounded-sm bg-zinc-800 text-zinc-200 hover:bg-zinc-700 active:bg-zinc-600 border border-zinc-700"
+              >
+                Reset
+              </button>
             </div>
           </div>
         </div>
@@ -190,13 +235,14 @@ function App() {
             <FilterCard
               key={index}
               index={index}
+              isFirst={index === 0}
+              isLast={index === lastIndex}
               filter={filter}
               disabled={false}
               active={activeIndex === index}
               onLeave={handleMouseLeave}
               onEnter={handleMouseEnter}
               onChange={handleFilterChange}
-              lockType={index === 0 || index === lastIndex}
             />
           ))}
         </div>

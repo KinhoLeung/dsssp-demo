@@ -15,10 +15,7 @@ const allowedFilterTypes: FilterType[] = [
   'BYPASS',
   'PEAK',
   'LOWSHELF2',
-  'HIGHSHELF2',
-  // 'LOWPASS2',
-  // 'HIGHPASS2',
-  // 'GAIN'
+  'HIGHSHELF2'
 ]
 
 const isSafari = () => {
@@ -45,19 +42,25 @@ const FilterSelect = ({
   filter,
   disabled,
   onChange,
-  locked
+  locked,
+  isFirst,
+  isLast
 }: {
   color?: string
   filter: GraphFilter
   disabled: boolean
   locked?: boolean
+  isFirst?: boolean
+  isLast?: boolean
   onChange: (type: FilterType) => void
 }) => {
   const [opened, setOpened] = useState<boolean>(false)
   const availableTypes = useMemo(() => {
     if (locked) return [filter.type]
+    if (isFirst) return ['BYPASS', 'HIGHPASS2']
+    if (isLast) return ['BYPASS', 'LOWPASS2']
     return filterTypeKeys.filter((type) => allowedFilterTypes.includes(type))
-  }, [filter.type, locked])
+  }, [filter.type, isFirst, isLast, locked])
   const selectedType = availableTypes.includes(filter.type)
     ? filter.type
     : availableTypes[0]

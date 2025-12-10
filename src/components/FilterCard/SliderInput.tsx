@@ -89,6 +89,20 @@ const SliderInput = ({
     oldValue.current = value
   }
 
+  const handleWheel = (e: React.WheelEvent<HTMLInputElement>) => {
+    if (disabled) return
+    e.preventDefault()
+
+    const direction = e.deltaY > 0 ? -1 : 1
+    const stepMultiplier = e.shiftKey ? 10 : 1
+
+    let nextValue = value + step * stepMultiplier * direction
+    nextValue = Math.min(max, Math.max(min, nextValue))
+    nextValue = Number(nextValue.toFixed(precision))
+
+    if (nextValue !== value) onChange(nextValue, true)
+  }
+
   const sliderValue = log ? logToLinear(value).toFixed(precision) : value
 
   const calcPercentage = () => {
@@ -150,6 +164,7 @@ const SliderInput = ({
             onMouseUp={handleMouseUp}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
+            onWheel={handleWheel}
             className={styles.slider}
             style={
               {

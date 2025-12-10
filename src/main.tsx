@@ -13,6 +13,11 @@ function fallbackRender({ error }: { error: Error }) {
   return <pre style={{ padding: '8px', color: 'red' }}>{error.message}</pre>
 }
 
+// Disable context menu globally
+document.addEventListener('contextmenu', (event) => {
+  event.preventDefault()
+})
+
 export const router = createHashRouter([
   {
     path: '/',

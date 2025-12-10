@@ -23,13 +23,17 @@ const FilterCard = ({
   onEnter,
   onLeave,
   onChange,
-  lockType
+  lockType,
+  isFirst,
+  isLast
 }: {
   index: number
   active: boolean
   filter: GraphFilter
   disabled: boolean
   lockType?: boolean
+  isFirst?: boolean
+  isLast?: boolean
   onLeave?: () => void
   onEnter?: (event: FilterChangeEvent) => void
   onChange: (event: FilterChangeEvent) => void
@@ -82,6 +86,8 @@ const FilterCard = ({
         filter={filter}
         disabled={disabled}
         locked={lockType}
+        isFirst={isFirst}
+        isLast={isLast}
         onChange={(type) => onChange({ ...filter, index, type, ended: true })}
       />
 
