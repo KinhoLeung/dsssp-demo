@@ -27,6 +27,9 @@ const DevicePanel = ({
     deviceName,
     logs,
     lastError,
+    isAuthorized,
+    boardId,
+    authInProgress,
     connectBle,
     connectHid,
     connectMock,
@@ -70,6 +73,12 @@ const DevicePanel = ({
           <span className="text-sm text-zinc-200">
             {deviceName || 'No device'}
             {transport ? ` · ${transport.toUpperCase()}` : ''}
+            {connected && (
+              <span className="ml-2 text-xs text-zinc-400">
+                {isAuthorized ? 'Authorized' : 'Not authorized'}
+                {isAuthorized && boardId ? ` · ID ${boardId}` : ''}
+              </span>
+            )}
           </span>
         </div>
 
@@ -112,7 +121,8 @@ const DevicePanel = ({
       <div className="flex flex-wrap gap-2">
         <button
           className={clsx(buttonClasses, 'px-3 text-xs', {
-            'opacity-50 pointer-events-none': !connected || busy
+            'opacity-50 pointer-events-none':
+              !connected || busy || authInProgress || !isAuthorized
           })}
           onClick={handlePing}
         >
@@ -120,7 +130,8 @@ const DevicePanel = ({
         </button>
         <button
           className={clsx(buttonClasses, 'px-3 text-xs', {
-            'opacity-50 pointer-events-none': !connected || busy
+            'opacity-50 pointer-events-none':
+              !connected || busy || authInProgress || !isAuthorized
           })}
           onClick={handleSendFilters}
         >
