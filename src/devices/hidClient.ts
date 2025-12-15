@@ -30,7 +30,11 @@ class HidClient implements DeviceClient {
   }
 
   private handleInputReport = (event: HIDInputReportEvent) => {
-    const data = new Uint8Array(event.data.buffer)
+    const data = new Uint8Array(
+      event.data.buffer,
+      event.data.byteOffset,
+      event.data.byteLength
+    )
     this.onData?.(data)
   }
 

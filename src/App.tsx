@@ -11,7 +11,7 @@ import {
   type BiQuadCoefficients,
   calcFilterCoefficients
 } from 'dsssp'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import styles from './App.module.css'
 import { DevicePanel, FilterCard } from './components'
@@ -146,7 +146,10 @@ function App() {
     setActiveIndex(-1)
   }
 
-  const filtersWithGain = [...filters, gainFilter]
+  const filtersWithGain = useMemo(
+    () => [...filters, gainFilter],
+    [filters, gainFilter]
+  )
   const lastIndex = filters.length - 1
 
   return (

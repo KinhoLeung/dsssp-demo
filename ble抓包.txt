@@ -1,0 +1,3 @@
+终端运行命令：.\btvs.exe -Mode Wireshark
+过滤输入框输入(在书签右边)：btatt
+在包列表里随便点一条，然后按 Ctrl+F，选择 Hex Value，输入 d5 5d，点 Find，会跳到包含 magic 的包，这就是 framing 数据

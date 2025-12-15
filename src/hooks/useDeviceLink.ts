@@ -10,6 +10,10 @@ import {
   type DeviceStatus,
   type TransportType
 } from '../devices/types'
+import { FramedClient } from '../protocol/framedClient'
+import { encodeJson } from '../protocol/jsonCodec'
+import { MsgId } from '../protocol/msgIds'
+import { RpcClient } from '../protocol/rpcClient'
 import {
   AUTH_NONCE_LEN,
   CMD_AUTH_CHALLENGE,
@@ -17,7 +21,6 @@ import {
   verifyAuthResponse
 } from '../utils/deviceAuth'
 
-const encoder = new TextEncoder()
 const decoder = new TextDecoder()
 
 const toHex = (data: Uint8Array) =>
@@ -69,25 +72,35 @@ const useDeviceLink = () => {
     reject: (error: Error) => void
   } | null>(null)
   const authTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const framedRef = useRef<FramedClient | null>(null)
+  const rpcRef = useRef<RpcClient | null>(null)
 
   const pushLog = useCallback((entry: DeviceLogEntry) => {
     setLogs((prev) => [...prev.slice(-40), entry])
   }, [])
 
-  const attachReader = useCallback(
+  const attachProtocol = useCallback(
     (nextClient: DeviceClient) => {
-      nextClient.onMessage((data: Uint8Array) => {
+      const framed = new FramedClient(nextClient)
+      const rpc = new RpcClient(framed)
+
+      framed.onFrame((frame) => {
         pushLog({
           direction: 'rx',
-          message: describePayload(data),
+          message: `msg 0x${frame.msgId
+            .toString(16)
+            .padStart(4, '0')} flags 0x${frame.flags
+            .toString(16)
+            .padStart(2, '0')} ${describePayload(frame.payload)}`,
           ts: Date.now()
         })
 
         const pending = pendingAuthRef.current
         if (
           pending &&
-          data.length > 0 &&
-          data[0] === CMD_AUTH_RESPONSE
+          frame.msgId === MsgId.System &&
+          frame.payload.length > 0 &&
+          frame.payload[0] === CMD_AUTH_RESPONSE
         ) {
           pendingAuthRef.current = null
           if (authTimeoutRef.current) {
@@ -99,7 +112,7 @@ const useDeviceLink = () => {
             setAuthInProgress(false)
             const result = await verifyAuthResponse(
               pending.nonce,
-              data
+              frame.payload
             )
             if (result.ok) {
               setIsAuthorized(true)
@@ -139,6 +152,10 @@ const useDeviceLink = () => {
           })
         }
       })
+
+      framed.attach()
+      framedRef.current = framed
+      rpcRef.current = rpc
     },
     [pushLog]
   )
@@ -152,12 +169,20 @@ const useDeviceLink = () => {
         setIsAuthorized(false)
         setBoardId(null)
         hasTriedAuthRef.current = false
-        if (authTimeoutRef.current) {
-          clearTimeout(authTimeoutRef.current)
-          authTimeoutRef.current = null
-        }
-        pendingAuthRef.current = null
-        pushLog({
+	      if (authTimeoutRef.current) {
+	        clearTimeout(authTimeoutRef.current)
+	        authTimeoutRef.current = null
+	      }
+	      pendingAuthRef.current = null
+	      framedRef.current?.reset()
+	      rpcRef.current?.resetPending('reconnect')
+	      framedRef.current = null
+	      rpcRef.current = null
+		      framedRef.current?.reset()
+		      rpcRef.current?.resetPending('disconnect')
+		      framedRef.current = null
+		      rpcRef.current = null
+	        pushLog({
           direction: 'info',
           message: 'Device disconnected',
           ts: Date.now()
@@ -182,10 +207,10 @@ const useDeviceLink = () => {
       pendingAuthRef.current = null
 
       try {
-        const nextClient = factory()
-        await nextClient.connect()
-        attachReader(nextClient)
-        attachDisconnect(nextClient)
+	        const nextClient = factory()
+	        await nextClient.connect()
+	        attachProtocol(nextClient)
+	        attachDisconnect(nextClient)
         setClient(nextClient)
         setDeviceName(nextClient.label)
         setStatus('connected')
@@ -203,7 +228,7 @@ const useDeviceLink = () => {
         pushLog({ direction: 'error', message, ts: Date.now() })
       }
     },
-    [attachReader, client, pushLog]
+	    [attachProtocol, attachDisconnect, client, pushLog]
   )
 
   const connectHid = useCallback(
@@ -228,26 +253,35 @@ const useDeviceLink = () => {
     setIsAuthorized(false)
     setBoardId(null)
     hasTriedAuthRef.current = false
-    if (authTimeoutRef.current) {
-      clearTimeout(authTimeoutRef.current)
-      authTimeoutRef.current = null
-    }
-    pendingAuthRef.current = null
-    pushLog({ direction: 'info', message: 'Disconnected', ts: Date.now() })
-  }, [client, pushLog])
+	    if (authTimeoutRef.current) {
+	      clearTimeout(authTimeoutRef.current)
+	      authTimeoutRef.current = null
+		    }
+		    pendingAuthRef.current = null
+		    framedRef.current?.reset()
+		    rpcRef.current?.resetPending('disconnect')
+		    framedRef.current = null
+		    rpcRef.current = null
+		    pushLog({ direction: 'info', message: 'Disconnected', ts: Date.now() })
+	  }, [client, pushLog])
 
   const sendBytes = useCallback(
     async (data: Uint8Array, label?: string) => {
-      if (!client) throw new Error('No device connected')
+      if (!client || !framedRef.current)
+        throw new Error('No device connected')
       try {
-        await client.send(data)
+        await framedRef.current.sendFrame({
+          msgId: MsgId.System,
+          payload: data
+        })
         pushLog({
           direction: 'tx',
           message: label ?? describePayload(data),
           ts: Date.now()
         })
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
+        const message =
+          error instanceof Error ? error.message : String(error)
         setLastError(message)
         setStatus('error')
         pushLog({ direction: 'error', message, ts: Date.now() })
@@ -257,15 +291,54 @@ const useDeviceLink = () => {
     [client, pushLog]
   )
 
-  const sendJson = useCallback(
-    async (payload: Record<string, unknown>) => {
-      const bytes = encoder.encode(JSON.stringify(payload))
-      await sendBytes(
-        bytes,
-        `${payload.op ?? 'json'} (${bytes.length} bytes)`
-      )
+  const callJson = useCallback(
+    async (msgId: number, payload: Record<string, unknown>) => {
+      if (!rpcRef.current) throw new Error('RPC not ready')
+      const bytes = encodeJson(payload)
+      pushLog({
+        direction: 'tx',
+        message: `msg 0x${msgId
+          .toString(16)
+          .padStart(4, '0')} ${payload.op ?? 'json'} (${bytes.length} bytes)`,
+        ts: Date.now()
+      })
+      try {
+        return await rpcRef.current.call(msgId, bytes)
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : String(error)
+        setLastError(message)
+        setStatus('error')
+        pushLog({ direction: 'error', message, ts: Date.now() })
+        throw error
+      }
     },
-    [sendBytes]
+    [pushLog]
+  )
+
+  const sendJson = useCallback(
+    async (msgId: number, payload: Record<string, unknown>) => {
+      if (!rpcRef.current) throw new Error('RPC not ready')
+      const bytes = encodeJson(payload)
+      pushLog({
+        direction: 'tx',
+        message: `msg 0x${msgId
+          .toString(16)
+          .padStart(4, '0')} ${payload.op ?? 'json'} (${bytes.length} bytes)`,
+        ts: Date.now()
+      })
+      try {
+        await rpcRef.current.notify(msgId, bytes)
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : String(error)
+        setLastError(message)
+        setStatus('error')
+        pushLog({ direction: 'error', message, ts: Date.now() })
+        throw error
+      }
+    },
+    [pushLog]
   )
 
   const authenticate = useCallback(async () => {
@@ -287,16 +360,16 @@ const useDeviceLink = () => {
     setBoardId(null)
     setAuthInProgress(true)
 
-    const nonce = new Uint8Array(AUTH_NONCE_LEN)
-    window.crypto.getRandomValues(nonce)
-    const frame = new Uint8Array(1 + AUTH_NONCE_LEN)
-    frame[0] = CMD_AUTH_CHALLENGE
-    frame.set(nonce, 1)
+	    const nonce = new Uint8Array(AUTH_NONCE_LEN)
+	    window.crypto.getRandomValues(nonce)
+	    const payload = new Uint8Array(1 + AUTH_NONCE_LEN)
+	    payload[0] = CMD_AUTH_CHALLENGE
+	    payload.set(nonce, 1)
 
     return await new Promise<boolean>((resolve, reject) => {
       pendingAuthRef.current = { nonce, resolve, reject }
 
-      sendBytes(frame, 'auth_challenge').catch((error) => {
+	      sendBytes(payload, 'auth_challenge').catch((error) => {
         pendingAuthRef.current = null
         setAuthInProgress(false)
         const message =
@@ -363,6 +436,50 @@ const useDeviceLink = () => {
     return () => clearInterval(interval)
   }, [client, pushLog])
 
+  const getCapabilities = useCallback(
+    async () =>
+      await callJson(MsgId.GetCapabilities, {
+        op: 'get_capabilities',
+        ts: Date.now()
+      }),
+    [callJson]
+  )
+
+  const getModuleConfig = useCallback(
+    async (moduleId: number) =>
+      await callJson(MsgId.GetModuleConfig, {
+        op: 'get_module_config',
+        moduleId,
+        ts: Date.now()
+      }),
+    [callJson]
+  )
+
+  const setModuleConfig = useCallback(
+    async (moduleId: number, config: Record<string, unknown>) =>
+      await callJson(MsgId.SetModuleConfig, {
+        op: 'set_module_config',
+        moduleId,
+        config,
+        ts: Date.now()
+      }),
+    [callJson]
+  )
+
+  const setEq = useCallback(
+    async (payload: {
+      filters: unknown
+      coefficients: unknown
+      sampleRate: number
+    }) =>
+      await sendJson(MsgId.SetEq, {
+        op: 'set_eq',
+        ts: Date.now(),
+        payload
+      }),
+    [sendJson]
+  )
+
   return {
     status,
     deviceName,
@@ -378,7 +495,11 @@ const useDeviceLink = () => {
     disconnect,
     sendBytes,
     sendJson,
-    authenticate
+    authenticate,
+    getCapabilities,
+    getModuleConfig,
+    setModuleConfig,
+    setEq
   }
 }
 

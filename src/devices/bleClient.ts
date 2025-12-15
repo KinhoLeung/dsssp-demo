@@ -48,7 +48,11 @@ class BleClient implements DeviceClient {
   ) => {
     const value = event.target.value
     if (!value) return
-    const data = new Uint8Array(value.buffer)
+    const data = new Uint8Array(
+      value.buffer,
+      value.byteOffset,
+      value.byteLength
+    )
     this.onData?.(data)
   }
 

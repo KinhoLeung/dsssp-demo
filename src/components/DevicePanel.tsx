@@ -1,5 +1,11 @@
 import clsx from 'clsx'
-import { type BiQuadCoefficients, type GraphFilter } from 'dsssp'
+import {
+  calcFilterCoefficients,
+  type BiQuadCoefficients,
+  type GraphFilter
+} from 'dsssp'
+import debounce from 'lodash.debounce'
+import { useEffect, useMemo, useRef } from 'react'
 
 import useDeviceLink from '../hooks/useDeviceLink'
 
@@ -11,6 +17,8 @@ const statusColorMap: Record<string, string> = {
   connected: 'bg-green-500',
   error: 'bg-red-500'
 }
+
+const AUTO_SEND_DEBOUNCE_MS = 200
 
 const DevicePanel = ({
   filters,
@@ -31,36 +39,67 @@ const DevicePanel = ({
     boardId,
     authInProgress,
     connectBle,
-    connectHid,
-    connectMock,
-    disconnect,
-    sendJson
-  } = useDeviceLink()
+	    connectHid,
+	    connectMock,
+	    disconnect,
+	    getCapabilities,
+	    setEq
+	  } = useDeviceLink()
 
   const busy = status === 'connecting'
   const connected = status === 'connected'
   const statusDot = statusColorMap[status] || 'bg-zinc-700'
   const recentLogs = logs.slice(-4).reverse()
 
-  const handlePing = async () => {
-    try {
-      await sendJson({ op: 'ping', ts: Date.now() })
-    } catch (error) {
-      console.error(error)
-    }
-  }
+  const canAutoSend =
+    connected && !busy && !authInProgress && isAuthorized
+  const skipInitialAutoSendRef = useRef(true)
 
-  const handleSendFilters = async () => {
-    try {
-      await sendJson({
-        op: 'filters',
-        ts: Date.now(),
-        payload: { filters, coefficients, sampleRate }
-      })
-    } catch (error) {
-      console.error(error)
+  const debouncedAutoSend = useMemo(
+    () =>
+      debounce(async (nextFilters: GraphFilter[]) => {
+        if (!canAutoSend) return
+        const nextCoefficients = nextFilters.map((filter) =>
+          calcFilterCoefficients(filter, sampleRate)
+        )
+        try {
+          await setEq({
+            filters: nextFilters,
+            coefficients: nextCoefficients,
+            sampleRate
+          })
+        } catch (error) {
+          console.error(error)
+        }
+      }, AUTO_SEND_DEBOUNCE_MS),
+    [canAutoSend, sampleRate, setEq]
+  )
+
+  useEffect(() => () => debouncedAutoSend.cancel(), [debouncedAutoSend])
+
+  useEffect(() => {
+    if (skipInitialAutoSendRef.current) {
+      skipInitialAutoSendRef.current = false
+      return
     }
-  }
+    debouncedAutoSend(filters)
+  }, [filters, debouncedAutoSend])
+
+	  const handlePing = async () => {
+	    try {
+	      await getCapabilities()
+	    } catch (error) {
+	      console.error(error)
+	    }
+	  }
+
+	  const handleSendFilters = async () => {
+	    try {
+	      await setEq({ filters, coefficients, sampleRate })
+	    } catch (error) {
+	      console.error(error)
+	    }
+	  }
 
   return (
     <div className="flex flex-col gap-2 bg-black border border-zinc-800 rounded-sm px-3 py-2 shadow-sm">
