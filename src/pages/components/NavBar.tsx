@@ -2,7 +2,7 @@ import clsx from 'clsx'
 import { useLocation } from 'react-router-dom'
 
 const navItems = [
-  { href: '/', label: 'Demo 1' },
+  { href: '/demo1', label: 'Demo 1' },
   { href: '/demo2', label: 'Demo 2' },
   { href: '/demo3', label: 'Demo 3' },
   { href: '/demo4', label: 'Demo 4' },
