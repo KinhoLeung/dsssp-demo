@@ -1,6 +1,6 @@
 import '@fontsource/poppins/index.css'
 
-import { StrictMode } from 'react'
+import { StrictMode, useEffect, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ErrorBoundary } from 'react-error-boundary'
 import { createHashRouter, RouterProvider } from 'react-router-dom'
@@ -15,6 +15,16 @@ import './main.css'
 
 function fallbackRender({ error }: { error: Error }) {
   return <pre style={{ padding: '8px', color: 'red' }}>{error.message}</pre>
+}
+
+function ContextMenuDisabler({ children }: { children: ReactNode }) {
+  useEffect(() => {
+    const handler = (event: MouseEvent) => event.preventDefault()
+    document.addEventListener('contextmenu', handler)
+    return () => document.removeEventListener('contextmenu', handler)
+  }, [])
+
+  return children
 }
 
 export const router = createHashRouter([
@@ -42,8 +52,10 @@ export const router = createHashRouter([
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ErrorBoundary fallbackRender={fallbackRender}>
-      <RouterProvider router={router} />
-    </ErrorBoundary>
+    <ContextMenuDisabler>
+      <ErrorBoundary fallbackRender={fallbackRender}>
+        <RouterProvider router={router} />
+      </ErrorBoundary>
+    </ContextMenuDisabler>
   </StrictMode>
 )
