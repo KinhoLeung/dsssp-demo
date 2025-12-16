@@ -36,14 +36,14 @@ const DevicePanel = ({
     logs,
     lastError,
     isAuthorized,
-    boardId,
+    deviceId,
+    firmwareVersion,
     authInProgress,
     connectBle,
 	    connectHid,
 	    connectMock,
 	    disconnect,
-	    getCapabilities,
-	    setEq
+	    getCapabilities
 	  } = useDeviceLink()
 
   const busy = status === 'connecting'
@@ -115,7 +115,10 @@ const DevicePanel = ({
             {connected && (
               <span className="ml-2 text-xs text-zinc-400">
                 {isAuthorized ? 'Authorized' : 'Not authorized'}
-                {isAuthorized && boardId ? ` · ID ${boardId}` : ''}
+                {isAuthorized && deviceId ? ` · ID ${deviceId}` : ''}
+                {isAuthorized && firmwareVersion
+                  ? ` · FW ${firmwareVersion}`
+                  : ''}
               </span>
             )}
           </span>

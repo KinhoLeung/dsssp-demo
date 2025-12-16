@@ -26,6 +26,8 @@ class BleClient implements DeviceClient {
 
   private onDisconnectCb?: () => void
 
+  private sendQueue: Promise<void> = Promise.resolve()
+
   constructor(options: BleClientOptions) {
     this.options = options
   }
@@ -93,26 +95,44 @@ class BleClient implements DeviceClient {
   }
 
   async send(data: Uint8Array) {
-    if (!this.txCharacteristic)
-      throw new Error('BLE characteristic is not ready')
+    const previous = this.sendQueue
+    const next = previous
+      .catch(() => undefined)
+      .then(async () => {
+        if (!this.txCharacteristic) {
+          throw new Error('BLE characteristic is not ready')
+        }
 
-    const chunkSize = this.options.maxChunkSize ?? data.length
-    for (let offset = 0; offset < data.length; offset += chunkSize) {
-      const chunk = data.slice(offset, offset + chunkSize)
-      if (
-        this.txCharacteristic.properties.writeWithoutResponse &&
-        this.txCharacteristic.writeValueWithoutResponse
-      ) {
-        await this.txCharacteristic.writeValueWithoutResponse(chunk)
-      } else {
-        await this.txCharacteristic.writeValueWithResponse(chunk)
-      }
-    }
+        const chunkSize = this.options.maxChunkSize ?? data.length
+        for (let offset = 0; offset < data.length; offset += chunkSize) {
+          const chunk = data.slice(offset, offset + chunkSize)
+          const canWriteWithResponse =
+            this.txCharacteristic.properties.write &&
+            this.txCharacteristic.writeValueWithResponse
+          const canWriteWithoutResponse =
+            this.txCharacteristic.properties.writeWithoutResponse &&
+            this.txCharacteristic.writeValueWithoutResponse
+
+          if (canWriteWithResponse) {
+            await this.txCharacteristic.writeValueWithResponse(chunk)
+          } else if (canWriteWithoutResponse) {
+            await this.txCharacteristic.writeValueWithoutResponse(chunk)
+          } else {
+            throw new Error(
+              'BLE characteristic does not support write operations'
+            )
+          }
+        }
+      })
+
+    this.sendQueue = next
+    return next
   }
 
   async disconnect() {
     if (!this.device) return
     this.handleDisconnect()
+    this.sendQueue = Promise.resolve()
     if (this.device.gatt?.connected) this.device.gatt.disconnect()
     this.device.removeEventListener('gattserverdisconnected', this.handleDisconnect)
     this.device = undefined

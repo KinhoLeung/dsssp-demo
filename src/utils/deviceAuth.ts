@@ -1,10 +1,10 @@
-export const CMD_AUTH_CHALLENGE = 0xa0
-export const CMD_AUTH_RESPONSE = 0xa1
 export const AUTH_NONCE_LEN = 32
-export const AUTH_BOARD_ID_LEN = 8
 export const AUTH_SIGNATURE_LEN = 64
+export const AUTH_INFO_TLV_FW_VER = 0x01
+export const AUTH_INFO_TLV_DEVICE_ID = 0x10
 
 let cachedPublicKey: CryptoKey | null = null
+const utf8Decoder = new TextDecoder()
 
 const base64ToUint8Array = (b64: string): Uint8Array => {
   if (typeof atob === 'undefined') {
@@ -81,15 +81,48 @@ const encodeDerSignature = (r: Uint8Array, s: Uint8Array): Uint8Array => {
   return out
 }
 
-const formatBoardId = (bytes: Uint8Array): string => {
+const formatDeviceId = (bytes: Uint8Array): string => {
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
 }
 
+const parseAuthInfoTlvs = (
+  tlvBytes: Uint8Array
+): {
+  deviceId?: string
+  firmwareVersion?: string
+} => {
+  const out: {
+    deviceId?: string
+    firmwareVersion?: string
+  } = {}
+
+  let i = 0
+  while (i + 2 <= tlvBytes.length) {
+    const type = tlvBytes[i]
+    const len = tlvBytes[i + 1]
+    const valueStart = i + 2
+    const valueEnd = valueStart + len
+    if (valueEnd > tlvBytes.length) break
+    const valueBytes = tlvBytes.slice(valueStart, valueEnd)
+
+    if (type === AUTH_INFO_TLV_DEVICE_ID) {
+      out.deviceId = formatDeviceId(valueBytes)
+    } else {
+      const value = utf8Decoder.decode(valueBytes)
+      if (type === AUTH_INFO_TLV_FW_VER) out.firmwareVersion = value
+    }
+
+    i = valueEnd
+  }
+  return out
+}
+
 export type VerifyResult = {
   ok: boolean
-  boardId?: string
+  deviceId?: string
+  firmwareVersion?: string
   error?: string
 }
 
@@ -97,75 +130,82 @@ export const verifyAuthResponse = async (
   nonce: Uint8Array,
   response: Uint8Array
 ): Promise<VerifyResult> => {
-  if (!response.length || response[0] !== CMD_AUTH_RESPONSE) {
-    return { ok: false, error: 'Invalid auth response command' }
-  }
-  if (
-    response.length <
-    1 + AUTH_BOARD_ID_LEN + 1 + AUTH_SIGNATURE_LEN
-  ) {
+  if (!response.length) return { ok: false, error: 'Auth response empty' }
+
+  // Format: [sig_len][signature(64)][info_len][info...]
+  const baseLen = 1 + AUTH_SIGNATURE_LEN + 1
+  if (response.length < baseLen) {
     return { ok: false, error: 'Auth response too short' }
   }
-
-  const boardIdBytes = response.slice(1, 1 + AUTH_BOARD_ID_LEN)
-  const sigLen = response[1 + AUTH_BOARD_ID_LEN]
-  if (sigLen < AUTH_SIGNATURE_LEN) {
+  const sigLen = response[0]
+  if (sigLen !== AUTH_SIGNATURE_LEN) {
     return { ok: false, error: 'Auth signature length invalid' }
   }
-
-  const sigStart = 1 + AUTH_BOARD_ID_LEN + 1
-  const sigEnd = sigStart + AUTH_SIGNATURE_LEN
-  if (response.length < sigEnd) {
-    return { ok: false, error: 'Auth signature truncated' }
+  const signatureRaw = response.slice(1, 1 + AUTH_SIGNATURE_LEN)
+  const infoLen = response[1 + AUTH_SIGNATURE_LEN]
+  const infoStart = 1 + AUTH_SIGNATURE_LEN + 1
+  const infoEnd = infoStart + infoLen
+  if (response.length < infoEnd) {
+    return { ok: false, error: 'Auth info truncated' }
   }
+  const infoBytes = response.slice(infoStart, infoEnd)
 
   try {
     const key = await getPublicKey()
-    const signatureRaw = response.slice(sigStart, sigEnd)
-    const r = signatureRaw.slice(0, AUTH_SIGNATURE_LEN / 2)
-    const s = signatureRaw.slice(AUTH_SIGNATURE_LEN / 2)
-    const derSignature = encodeDerSignature(r, s)
-
-    // 首先按 DER 尝试（符合 WebCrypto 规范）
-    let verified = false
-    try {
-      verified = await crypto.subtle.verify(
-        {
-          name: 'ECDSA',
-          hash: { name: 'SHA-256' }
-        },
-        key,
-        derSignature,
-        nonce
-      )
-    } catch {
-      verified = false
-    }
-
-    // 某些实现（或兼容层）可能接受 raw r||s 形式，做一次回退尝试
-    if (!verified) {
+    const verifyWith = async (
+      message: Uint8Array,
+      derSignature: Uint8Array,
+      signatureRaw: Uint8Array
+    ): Promise<boolean> => {
+      // 首先按 DER 尝试（符合 WebCrypto 规范）
       try {
-        verified = await crypto.subtle.verify(
+        const ok = await crypto.subtle.verify(
+          {
+            name: 'ECDSA',
+            hash: { name: 'SHA-256' }
+          },
+          key,
+          derSignature,
+          message
+        )
+        if (ok) return true
+      } catch {
+        // ignore
+      }
+
+      // 某些实现（或兼容层）可能接受 raw r||s 形式，做一次回退尝试
+      try {
+        return await crypto.subtle.verify(
           {
             name: 'ECDSA',
             hash: { name: 'SHA-256' }
           },
           key,
           signatureRaw,
-          nonce
+          message
         )
       } catch {
-        // ignore and fall through to error
+        return false
       }
     }
 
-    if (!verified) {
-      return { ok: false, error: 'Signature verification failed' }
-    }
+    const r = signatureRaw.slice(0, AUTH_SIGNATURE_LEN / 2)
+    const s = signatureRaw.slice(AUTH_SIGNATURE_LEN / 2)
+    const derSignature = encodeDerSignature(r, s)
 
+    const signedMessage = new Uint8Array(nonce.length + 1 + infoBytes.length)
+    signedMessage.set(nonce, 0)
+    signedMessage[nonce.length] = infoLen
+    signedMessage.set(infoBytes, nonce.length + 1)
+
+    const verified = await verifyWith(signedMessage, derSignature, signatureRaw)
+    if (!verified) return { ok: false, error: 'Signature verification failed' }
+
+    const info = parseAuthInfoTlvs(infoBytes)
     return {
       ok: true,
-      boardId: formatBoardId(boardIdBytes)
+      deviceId: info.deviceId,
+      firmwareVersion: info.firmwareVersion
     }
   } catch (error) {
     const message =

@@ -16,8 +16,6 @@ import { MsgId } from '../protocol/msgIds'
 import { RpcClient } from '../protocol/rpcClient'
 import {
   AUTH_NONCE_LEN,
-  CMD_AUTH_CHALLENGE,
-  CMD_AUTH_RESPONSE,
   verifyAuthResponse
 } from '../utils/deviceAuth'
 
@@ -62,7 +60,10 @@ const useDeviceLink = () => {
   const [lastError, setLastError] = useState<string>('')
   const [logs, setLogs] = useState<DeviceLogEntry[]>([])
   const [isAuthorized, setIsAuthorized] = useState(false)
-  const [boardId, setBoardId] = useState<string | null>(null)
+  const [deviceId, setDeviceId] = useState<string | null>(null)
+  const [firmwareVersion, setFirmwareVersion] = useState<string | null>(
+    null
+  )
   const [authInProgress, setAuthInProgress] = useState(false)
   const lastTransport = useRef<TransportType | null>(null)
   const hasTriedAuthRef = useRef(false)
@@ -98,9 +99,8 @@ const useDeviceLink = () => {
         const pending = pendingAuthRef.current
         if (
           pending &&
-          frame.msgId === MsgId.System &&
-          frame.payload.length > 0 &&
-          frame.payload[0] === CMD_AUTH_RESPONSE
+          frame.msgId === MsgId.Auth &&
+          frame.payload.length > 0
         ) {
           pendingAuthRef.current = null
           if (authTimeoutRef.current) {
@@ -116,11 +116,16 @@ const useDeviceLink = () => {
             )
             if (result.ok) {
               setIsAuthorized(true)
-              setBoardId(result.boardId ?? null)
+              setDeviceId(result.deviceId ?? null)
+              setFirmwareVersion(result.firmwareVersion ?? null)
               pushLog({
                 direction: 'info',
                 message: `Auth OK${
-                  result.boardId ? ` (ID ${result.boardId})` : ''
+                  result.deviceId ? ` (ID ${result.deviceId})` : ''
+                }${
+                  result.firmwareVersion
+                    ? ` (FW ${result.firmwareVersion})`
+                    : ''
                 }`,
                 ts: Date.now()
               })
@@ -167,7 +172,8 @@ const useDeviceLink = () => {
         setStatus('idle')
         setDeviceName('')
         setIsAuthorized(false)
-        setBoardId(null)
+        setDeviceId(null)
+        setFirmwareVersion(null)
         hasTriedAuthRef.current = false
 	      if (authTimeoutRef.current) {
 	        clearTimeout(authTimeoutRef.current)
@@ -198,7 +204,8 @@ const useDeviceLink = () => {
       setStatus('connecting')
       setLastError('')
       setIsAuthorized(false)
-      setBoardId(null)
+      setDeviceId(null)
+      setFirmwareVersion(null)
       hasTriedAuthRef.current = false
       if (authTimeoutRef.current) {
         clearTimeout(authTimeoutRef.current)
@@ -251,7 +258,7 @@ const useDeviceLink = () => {
     setClient(null)
     setStatus('idle')
     setIsAuthorized(false)
-    setBoardId(null)
+
     hasTriedAuthRef.current = false
 	    if (authTimeoutRef.current) {
 	      clearTimeout(authTimeoutRef.current)
@@ -271,7 +278,7 @@ const useDeviceLink = () => {
         throw new Error('No device connected')
       try {
         await framedRef.current.sendFrame({
-          msgId: MsgId.System,
+          msgId: MsgId.Auth,
           payload: data
         })
         pushLog({
@@ -357,14 +364,12 @@ const useDeviceLink = () => {
     }
 
     setIsAuthorized(false)
-    setBoardId(null)
+
     setAuthInProgress(true)
 
 	    const nonce = new Uint8Array(AUTH_NONCE_LEN)
 	    window.crypto.getRandomValues(nonce)
-	    const payload = new Uint8Array(1 + AUTH_NONCE_LEN)
-	    payload[0] = CMD_AUTH_CHALLENGE
-	    payload.set(nonce, 1)
+	    const payload = nonce
 
     return await new Promise<boolean>((resolve, reject) => {
       pendingAuthRef.current = { nonce, resolve, reject }
@@ -432,53 +437,20 @@ const useDeviceLink = () => {
           ts: Date.now()
         })
       }
-    }, 2000)
+    }, 200)
     return () => clearInterval(interval)
   }, [client, pushLog])
 
   const getCapabilities = useCallback(
     async () =>
-      await callJson(MsgId.GetCapabilities, {
+      await callJson(MsgId.getCapabilities, {
         op: 'get_capabilities',
         ts: Date.now()
       }),
     [callJson]
   )
 
-  const getModuleConfig = useCallback(
-    async (moduleId: number) =>
-      await callJson(MsgId.GetModuleConfig, {
-        op: 'get_module_config',
-        moduleId,
-        ts: Date.now()
-      }),
-    [callJson]
-  )
 
-  const setModuleConfig = useCallback(
-    async (moduleId: number, config: Record<string, unknown>) =>
-      await callJson(MsgId.SetModuleConfig, {
-        op: 'set_module_config',
-        moduleId,
-        config,
-        ts: Date.now()
-      }),
-    [callJson]
-  )
-
-  const setEq = useCallback(
-    async (payload: {
-      filters: unknown
-      coefficients: unknown
-      sampleRate: number
-    }) =>
-      await sendJson(MsgId.SetEq, {
-        op: 'set_eq',
-        ts: Date.now(),
-        payload
-      }),
-    [sendJson]
-  )
 
   return {
     status,
@@ -487,7 +459,8 @@ const useDeviceLink = () => {
     logs,
     lastError,
     isAuthorized,
-    boardId,
+    deviceId,
+    firmwareVersion,
     authInProgress,
     connectHid,
     connectBle,
@@ -497,9 +470,7 @@ const useDeviceLink = () => {
     sendJson,
     authenticate,
     getCapabilities,
-    getModuleConfig,
-    setModuleConfig,
-    setEq
+
   }
 }
 
