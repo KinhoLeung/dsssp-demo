@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import react from '@vitejs/plugin-react-swc'
-import path from 'path'
+import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import svgr from 'vite-plugin-svgr'
 
@@ -21,6 +20,11 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [svgr(), react()],
     base: getBase(mode),
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url))
+      }
+    },
     // resolve: {
     //   alias: [
     //     {
