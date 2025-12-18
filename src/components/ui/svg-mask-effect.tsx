@@ -1,7 +1,9 @@
-"use client";
-import { useState, useEffect, useRef } from "react";
-import { motion } from "motion/react";
-import { cn } from "@/lib/utils";
+'use client';
+
+import { motion } from 'motion/react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+
+import { cn } from '@/lib/utils';
 
 export const MaskContainer = ({
   children,
@@ -10,39 +12,41 @@ export const MaskContainer = ({
   revealSize = 600,
   className,
 }: {
-  children?: string | React.ReactNode;
-  revealText?: string | React.ReactNode;
+  children?: ReactNode;
+  revealText?: ReactNode;
   size?: number;
   revealSize?: number;
   className?: string;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [mousePosition, setMousePosition] = useState<any>({ x: null, y: null });
-  const containerRef = useRef<any>(null);
-  const updateMousePosition = (e: any) => {
-    const rect = containerRef.current.getBoundingClientRect();
-    setMousePosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  };
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    containerRef.current.addEventListener("mousemove", updateMousePosition);
+    const element = containerRef.current;
+    if (!element) return;
+
+    const updateMousePosition = (event: MouseEvent) => {
+      const rect = element.getBoundingClientRect();
+      setMousePosition({
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      });
+    };
+
+    element.addEventListener('mousemove', updateMousePosition);
     return () => {
-      if (containerRef.current) {
-        containerRef.current.removeEventListener(
-          "mousemove",
-          updateMousePosition,
-        );
-      }
+      element.removeEventListener('mousemove', updateMousePosition);
     };
   }, []);
-  let maskSize = isHovered ? revealSize : size;
+  const maskSize = isHovered ? revealSize : size;
 
   return (
     <motion.div
       ref={containerRef}
-      className={cn("relative h-screen", className)}
+      className={cn('relative h-dvh w-screen', className)}
       animate={{
-        backgroundColor: isHovered ? "var(--slate-900)" : "var(--white)",
+        backgroundColor: isHovered ? 'var(--slate-900)' : 'var(--white)',
       }}
       transition={{
         backgroundColor: { duration: 0.3 },
@@ -57,8 +61,8 @@ export const MaskContainer = ({
           maskSize: `${maskSize}px`,
         }}
         transition={{
-          maskSize: { duration: 0.3, ease: "easeInOut" },
-          maskPosition: { duration: 0.15, ease: "linear" },
+          maskSize: { duration: 0.3, ease: 'easeInOut' },
+          maskPosition: { duration: 0.15, ease: 'linear' },
         }}
       >
         <div className="absolute inset-0 z-0 h-full w-full bg-black opacity-50 dark:bg-white" />

@@ -1,6 +1,6 @@
-import React, { MouseEvent, useEffect, useState } from "react"
+import React, { useEffect, useState, type MouseEvent } from 'react'
 
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils'
 
 interface RippleButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -16,8 +16,8 @@ export const RippleButton = React.forwardRef<
     {
       className,
       children,
-      rippleColor = "#ffffff",
-      duration = "600ms",
+      rippleColor = '#ffffff',
+      duration = '600ms',
       onClick,
       ...props
     },
@@ -26,11 +26,6 @@ export const RippleButton = React.forwardRef<
     const [buttonRipples, setButtonRipples] = useState<
       Array<{ x: number; y: number; size: number; key: number }>
     >([])
-
-    const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-      createRipple(event)
-      onClick?.(event)
-    }
 
     const createRipple = (event: MouseEvent<HTMLButtonElement>) => {
       const button = event.currentTarget
@@ -41,6 +36,11 @@ export const RippleButton = React.forwardRef<
 
       const newRipple = { x, y, size, key: Date.now() }
       setButtonRipples((prevRipples) => [...prevRipples, newRipple])
+    }
+
+    const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+      createRipple(event)
+      onClick?.(event)
     }
 
     useEffect(() => {
@@ -58,7 +58,7 @@ export const RippleButton = React.forwardRef<
     return (
       <button
         className={cn(
-          "bg-background text-primary relative flex cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 px-4 py-2 text-center",
+          'bg-background text-primary relative flex cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 px-4 py-2 text-center',
           className
         )}
         onClick={handleClick}
@@ -77,7 +77,7 @@ export const RippleButton = React.forwardRef<
                 top: `${ripple.y}px`,
                 left: `${ripple.x}px`,
                 backgroundColor: rippleColor,
-                transform: `scale(0)`,
+                transform: 'scale(0)',
               }}
             />
           ))}
@@ -87,4 +87,4 @@ export const RippleButton = React.forwardRef<
   }
 )
 
-RippleButton.displayName = "RippleButton"
+RippleButton.displayName = 'RippleButton'

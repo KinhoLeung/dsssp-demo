@@ -1,6 +1,6 @@
-import type React from "react"
+import type React from 'react'
 
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils'
 
 interface SidebarItem {
   icon?: React.ReactNode
@@ -10,32 +10,32 @@ interface SidebarItem {
 }
 
 interface WindowControlsProps {
-  variant?: "macos" | "windows" | "chrome" | "safari"
-  headerStyle?: "minimal" | "full"
+  variant?: 'macos' | 'windows' | 'chrome' | 'safari'
+  headerStyle?: 'minimal' | 'full'
 }
 
 interface AddressBarProps {
   url?: string
   secure?: boolean
-  variant?: "chrome" | "safari"
+  variant?: 'chrome' | 'safari'
   className?: string
 }
 
 interface SidebarContentProps {
   items?: SidebarItem[]
-  variant?: "navigation" | "bookmarks" | "history" | "extensions"
+  variant?: 'navigation' | 'bookmarks' | 'history' | 'extensions'
   className?: string
 }
 
 interface BrowserWindowProps {
   children?: React.ReactNode
   className?: string
-  size?: "sm" | "md" | "lg" | "xl"
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   showSidebar?: boolean
-  sidebarPosition?: "left" | "right" | "top" | "bottom"
-  headerStyle?: "minimal" | "full"
-  variant?: "chrome" | "safari" | "generic"
-  theme?: "light" | "dark" | "auto"
+  sidebarPosition?: 'left' | 'right' | 'top' | 'bottom'
+  headerStyle?: 'minimal' | 'full'
+  variant?: 'chrome' | 'safari' | 'generic'
+  theme?: 'light' | 'dark' | 'auto'
   url?: string
   sidebarItems?: Array<{
     icon?: React.ReactNode
@@ -46,25 +46,25 @@ interface BrowserWindowProps {
 }
 
 function WindowControls({
-  variant = "macos",
-  headerStyle = "full",
+  variant = 'macos',
+  headerStyle = 'full',
 }: WindowControlsProps) {
-  const sizeClasses = "size-2"
+  const sizeClasses = 'size-2'
 
-  if (variant === "macos" || variant === "safari") {
+  if (variant === 'macos' || variant === 'safari') {
     const dotColors =
-      headerStyle === "minimal"
+      headerStyle === 'minimal'
         ? {
-            red: "bg-muted border  border-foreground/20",
-            yellow: "bg-muted border border-foreground/20",
-            green: "bg-muted border border-foreground/20",
+            red: 'bg-muted border  border-foreground/20',
+            yellow: 'bg-muted border border-foreground/20',
+            green: 'bg-muted border border-foreground/20',
           }
         : {
-            red: "bg-red-500 hover:bg-red-600 border border-foreground/20",
+            red: 'bg-red-500 hover:bg-red-600 border border-foreground/20',
             yellow:
-              "bg-yellow-500 hover:bg-yellow-600 border border-foreground/20",
+              'bg-yellow-500 hover:bg-yellow-600 border border-foreground/20',
             green:
-              "bg-green-500 hover:bg-green-600 border border-foreground/20 ",
+              'bg-green-500 hover:bg-green-600 border border-foreground/20 ',
           }
 
     return (
@@ -72,36 +72,36 @@ function WindowControls({
         <div
           className={cn(
             sizeClasses,
-            "rounded-full",
+            'rounded-full',
             dotColors.red,
-            "transition-colors cursor-pointer flex items-center justify-center group"
+            'transition-colors cursor-pointer flex items-center justify-center group'
           )}
         >
-          {headerStyle !== "minimal" && (
+          {headerStyle !== 'minimal' && (
             <div className="w-1.5 h-0.5 bg-red-900/60 opacity-0 group-hover:opacity-100 transition-opacity"></div>
           )}
         </div>
         <div
           className={cn(
             sizeClasses,
-            "rounded-full",
+            'rounded-full',
             dotColors.yellow,
-            "transition-colors cursor-pointer flex items-center justify-center group"
+            'transition-colors cursor-pointer flex items-center justify-center group'
           )}
         >
-          {headerStyle !== "minimal" && (
+          {headerStyle !== 'minimal' && (
             <div className="w-1.5 h-0.5 bg-yellow-900/60 opacity-0 group-hover:opacity-100 transition-opacity"></div>
           )}
         </div>
         <div
           className={cn(
             sizeClasses,
-            "rounded-full",
+            'rounded-full',
             dotColors.green,
-            "transition-colors cursor-pointer flex items-center justify-center group"
+            'transition-colors cursor-pointer flex items-center justify-center group'
           )}
         >
-          {headerStyle !== "minimal" && (
+          {headerStyle !== 'minimal' && (
             <div className="w-1 h-1 border border-green-900/60 opacity-0 group-hover:opacity-100 transition-opacity"></div>
           )}
         </div>
@@ -109,7 +109,7 @@ function WindowControls({
     )
   }
 
-  if (variant === "windows") {
+  if (variant === 'windows') {
     return (
       <div className="flex gap-1">
         <div className="w-6 h-4 bg-muted/50 hover:bg-muted transition-colors cursor-pointer flex items-center justify-center">
@@ -126,25 +126,25 @@ function WindowControls({
     )
   }
 
-  if (variant === "chrome") {
+  if (variant === 'chrome') {
     return (
       <div className="flex gap-1.5">
         <div
           className={cn(
             sizeClasses,
-            "rounded-full bg-red-500 hover:bg-red-600 transition-colors cursor-pointer"
+            'rounded-full bg-red-500 hover:bg-red-600 transition-colors cursor-pointer'
           )}
         ></div>
         <div
           className={cn(
             sizeClasses,
-            "rounded-full bg-yellow-500 hover:bg-yellow-600 transition-colors cursor-pointer"
+            'rounded-full bg-yellow-500 hover:bg-yellow-600 transition-colors cursor-pointer'
           )}
         ></div>
         <div
           className={cn(
             sizeClasses,
-            "rounded-full bg-green-500 hover:bg-green-600 transition-colors cursor-pointer"
+            'rounded-full bg-green-500 hover:bg-green-600 transition-colors cursor-pointer'
           )}
         ></div>
       </div>
@@ -167,21 +167,21 @@ function WindowControls({
 }
 
 function AddressBar({
-  url = "https://example.com",
+  url = 'https://example.com',
   secure = true,
-  variant = "chrome",
-  className = "",
+  variant = 'chrome',
+  className = '',
 }: AddressBarProps) {
   const variantStyles = {
     chrome:
-      "bg-muted/30 rounded-full border border-foreground/5 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.03)_inset] backdrop-blur-sm",
+      'bg-muted/30 rounded-full border border-foreground/5 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.03)_inset] backdrop-blur-sm',
     safari:
-      "bg-muted/20 rounded-lg border border-foreground/5 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.03)_inset] backdrop-blur-sm",
+      'bg-muted/20 rounded-lg border border-foreground/5 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.03)_inset] backdrop-blur-sm',
   }
 
   const iconColors = {
-    chrome: "text-muted-foreground/60",
-    safari: "text-muted-foreground/60",
+    chrome: 'text-muted-foreground/60',
+    safari: 'text-muted-foreground/60',
   }
 
   return (
@@ -205,12 +205,12 @@ function AddressBar({
 
 function SidebarContent({
   items = [
-    { label: "Dashboard", active: true },
-    { label: "Analytics", badge: "3" },
-    { label: "Settings" },
-    { label: "Profile" },
+    { label: 'Dashboard', active: true },
+    { label: 'Analytics', badge: '3' },
+    { label: 'Settings' },
+    { label: 'Profile' },
   ],
-  className = "",
+  className = '',
 }: SidebarContentProps) {
   return (
     <div className={`p-3 space-y-1 ${className}`}>
@@ -221,8 +221,8 @@ function SidebarContent({
             flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer
             ${
               item.active
-                ? "bg-primary/5 text-primary border border-primary/5"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/20"
+                ? 'bg-primary/5 text-primary border border-primary/5'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/20'
             }
           `}
         >
@@ -243,46 +243,46 @@ function SidebarContent({
 
 export function BrowserWindow({
   children,
-  className = "",
-  size = "md",
+  className = '',
+  size = 'md',
   showSidebar = false,
-  sidebarPosition = "left",
-  headerStyle = "minimal",
-  variant = "generic",
-  theme = "auto",
+  sidebarPosition = 'left',
+  headerStyle = 'minimal',
+  variant = 'generic',
+  theme = 'auto',
   url,
   sidebarItems,
 }: BrowserWindowProps) {
   const sizeClasses = {
-    sm: "h-64 max-w-sm",
-    md: "h-80 max-w-2xl",
-    lg: "h-96 max-w-4xl",
-    xl: "h-[32rem] max-w-6xl",
+    sm: 'h-64 max-w-sm',
+    md: 'h-80 max-w-2xl',
+    lg: 'h-96 max-w-4xl',
+    xl: 'h-[32rem] max-w-6xl',
   }
 
   const sidebarSizes = {
-    sm: "w-32",
-    md: "w-48",
-    lg: "w-56",
-    xl: "w-64",
+    sm: 'w-32',
+    md: 'w-48',
+    lg: 'w-56',
+    xl: 'w-64',
   }
 
   const themeClasses =
-    theme === "dark"
-      ? "bg-background border-border"
-      : theme === "light"
-        ? "bg-background border-border"
-        : "bg-background border-border"
+    theme === 'dark'
+      ? 'bg-background border-border'
+      : theme === 'light'
+        ? 'bg-background border-border'
+        : 'bg-background border-border'
 
   const getHeaderStyles = () => {
     const baseStyles =
-      "h-11 border-b border-foreground/5 flex items-center px-4"
+      'h-11 border-b border-foreground/5 flex items-center px-4'
 
-    if (variant === "chrome") {
+    if (variant === 'chrome') {
       return `${baseStyles} bg-muted/10 overflow-hidden`
     }
 
-    if (variant === "safari") {
+    if (variant === 'safari') {
       return `${baseStyles} bg-muted/10 overflow-hidden border-b border-border/30`
     }
 
@@ -298,20 +298,20 @@ export function BrowserWindow({
     >
       <div className={getHeaderStyles()}>
         <WindowControls
-          variant={variant === "generic" ? "macos" : variant}
+          variant={variant === 'generic' ? 'macos' : variant}
           headerStyle={headerStyle}
         />
 
-        {headerStyle === "full" && (
+        {headerStyle === 'full' && (
           <AddressBar
             url={url}
-            variant={variant === "generic" ? "chrome" : variant}
+            variant={variant === 'generic' ? 'chrome' : variant}
             className="ml-4"
           />
         )}
       </div>
 
-      {showSidebar && sidebarPosition === "top" && (
+      {showSidebar && sidebarPosition === 'top' && (
         <div className="border-b border-foreground/5 bg-muted/20 h-16">
           <SidebarContent
             items={sidebarItems}
@@ -323,7 +323,7 @@ export function BrowserWindow({
 
       <div className="flex flex-1 h-0">
         {/* Left Sidebar */}
-        {showSidebar && sidebarPosition === "left" && (
+        {showSidebar && sidebarPosition === 'left' && (
           <div
             className={`border-r border-foreground/5 bg-muted/20 ${sidebarSizes[size]} flex-shrink-0 h-full`}
           >
@@ -337,7 +337,7 @@ export function BrowserWindow({
         </div>
 
         {/* Right Sidebar */}
-        {showSidebar && sidebarPosition === "right" && (
+        {showSidebar && sidebarPosition === 'right' && (
           <div
             className={`border-l border-foreground/5 bg-muted/20 ${sidebarSizes[size]} flex-shrink-0 h-full`}
           >
@@ -347,7 +347,7 @@ export function BrowserWindow({
       </div>
 
       {/* Bottom Sidebar */}
-      {showSidebar && sidebarPosition === "bottom" && (
+      {showSidebar && sidebarPosition === 'bottom' && (
         <div className="border-t border-foreground/5 bg-muted/20 h-16">
           <SidebarContent
             items={sidebarItems}
