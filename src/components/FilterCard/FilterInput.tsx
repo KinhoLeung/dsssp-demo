@@ -66,7 +66,7 @@ const FilterInput = ({
       })}
     >
       {label && (
-        <label className="mb-1 text-sm font-semibold text-zinc-500 drop-shadow-lg">
+        <label className="mb-1 text-sm font-semibold text-zinc-600 drop-shadow-lg dark:text-zinc-500">
           {label}
         </label>
       )}
@@ -82,14 +82,14 @@ const FilterInput = ({
           onKeyUp={handleKeyUp}
           onBlur={handleBlur}
           className={clsx(
-            'appearance-none [&::-webkit-inner-spin-button]:appearance-none block w-full text-center shadow-md bg-zinc-950 text-white border border-zinc-700 rounded-sm py-0.5 focus:outline-none focus:ring-sky-500 focus:border-sky-500',
+            'appearance-none [&::-webkit-inner-spin-button]:appearance-none block w-full text-center shadow-md bg-white text-zinc-900 border border-zinc-300 rounded-sm py-0.5 focus:outline-none focus:ring-sky-500 focus:border-sky-500 dark:bg-zinc-950 dark:text-white dark:border-zinc-700',
             { 'pl-10': prefix },
             { 'pr-8': suffix }
           )}
         />
 
         {suffix && (
-          <span className="absolute top-[1px] right-[1px] bottom-[1px] flex items-center px-2 pointer-events-none rounded-r-sm text-zinc-500 text-sm text-center bg-zinc-900 border-l border-zinc-800 bg-opacity-80">
+          <span className="absolute top-[1px] right-[1px] bottom-[1px] flex items-center px-2 pointer-events-none rounded-r-sm text-zinc-500 text-sm text-center bg-zinc-100 border-l border-zinc-200 bg-opacity-80 dark:bg-zinc-900 dark:border-zinc-800">
             {suffix}
           </span>
         )}

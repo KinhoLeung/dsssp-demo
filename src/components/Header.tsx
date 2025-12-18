@@ -35,7 +35,7 @@ const Header = ({
     : tailwindColors.red[950]
 
   return (
-    <div className="flex flex-row w-full gap-2 py-2 px-3 bg-black text-zinc-500  border border-zinc-800 rounded-sm shadow-sm items-center justify-between">
+    <div className="flex flex-row w-full gap-2 py-2 px-3 bg-white text-zinc-600 border border-zinc-200 rounded-sm shadow-sm items-center justify-between dark:bg-black dark:text-zinc-500 dark:border-zinc-800">
       <div className="flex flex-row gap-3">
         <button
           className={clsx(buttonClasses, 'px-3 m-[0] h-[34px] ', {

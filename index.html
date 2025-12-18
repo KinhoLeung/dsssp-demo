@@ -7,6 +7,23 @@
       content="width=device-width, initial-scale=1.0"
     />
     <title>DSSSP Demo</title>
+    <script>
+      ;(() => {
+        try {
+          const stored = localStorage.getItem('theme')
+          const theme =
+            stored === 'dark' || stored === 'light'
+              ? stored
+              : window.matchMedia?.('(prefers-color-scheme: dark)')?.matches
+                ? 'dark'
+                : 'light'
+          if (theme === 'dark') document.documentElement.classList.add('dark')
+          document.documentElement.style.colorScheme = theme
+        } catch {
+          // ignore
+        }
+      })()
+    </script>
     <script
       async
       src="https://www.googletagmanager.com/gtag/js?id=G-LMPYMK3VCR"
@@ -20,7 +37,7 @@
       gtag('config', 'G-LMPYMK3VCR')
     </script>
   </head>
-  <body style="background: black; color: white">
+  <body>
     <div id="root"></div>
     <script
       type="module"

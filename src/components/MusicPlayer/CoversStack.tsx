@@ -26,7 +26,7 @@ export const CoversStack = ({
             src={cover}
             alt="cover"
             className={clsx(
-              'bg-black cursor-pointer w-full h-full absolute transform-gpu origin-left'
+              'bg-white dark:bg-black cursor-pointer w-full h-full absolute transform-gpu origin-left'
             )}
             style={{
               width: 34 - layer * 6,

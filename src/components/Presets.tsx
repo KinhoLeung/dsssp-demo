@@ -8,7 +8,7 @@ import SelectArrowIcon from '../assets/select-arrow.svg?react'
 import presets from '../configs/presets'
 
 export const buttonClasses =
-  'px-2 py-1 m-[-1px] text-sm bg-black border border-zinc-800 rounded-sm hover:bg-zinc-950 focus-visible:z-10 focus:outline-none focus-visible:border-sky-500 active:border-zinc-500 active:z-10'
+  'px-2 py-1 m-[-1px] text-sm bg-white text-zinc-700 border border-zinc-200 rounded-sm hover:bg-zinc-50 focus-visible:z-10 focus:outline-none focus-visible:border-sky-500 active:border-zinc-400 active:z-10 dark:bg-black dark:text-zinc-500 dark:border-zinc-800 dark:hover:bg-zinc-950 dark:active:border-zinc-500'
 
 const PresetControl = ({
   powered,
@@ -58,7 +58,7 @@ const PresetControl = ({
         'opacity-50 pointer-events-none': !powered
       })}
     >
-      <div className="flex flex-row border rounded-sm border-zinc-800 relative">
+      <div className="flex flex-row border rounded-sm border-zinc-200 relative dark:border-zinc-800">
         <div className="w-[140px] py-1 px-3 text-center relative">
           <select
             onBlur={() => setOpened(false)}
@@ -72,7 +72,7 @@ const PresetControl = ({
               <option
                 key={preset.name}
                 value={preset.name}
-                className="bg-zinc-950 text-white text-sm text-align-center"
+                className="bg-white text-zinc-900 text-sm text-align-center dark:bg-zinc-950 dark:text-white"
               >
                 &nbsp;{preset.name}
               </option>
@@ -91,7 +91,7 @@ const PresetControl = ({
         </div>
 
         <button
-          className={clsx(buttonClasses, 'hover:text-zinc-200')}
+          className={clsx(buttonClasses, 'hover:text-zinc-900 dark:hover:text-zinc-200')}
           onClick={handlePrevClick}
           aria-label="Previous preset"
         >
@@ -99,7 +99,7 @@ const PresetControl = ({
         </button>
 
         <button
-          className={clsx(buttonClasses, 'hover:text-zinc-200')}
+          className={clsx(buttonClasses, 'hover:text-zinc-900 dark:hover:text-zinc-200')}
           onClick={handleNextClick}
           aria-label="Next preset"
         >

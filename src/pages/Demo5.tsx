@@ -70,7 +70,7 @@ const Demo5 = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-[#2b2f37] text-white">
+    <div className="flex min-h-screen flex-col items-center">
       <div className="mt-8 border-[2.5px] border-black relative overflow-hidden rounded-xl shadow-[0_8px_16px_8px_#0002,0_1px_3px_1px_#FFF3]">
         <FrequencyResponseGraph
           width={460}

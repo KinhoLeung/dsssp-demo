@@ -112,7 +112,7 @@ const SliderInput = ({
       {label && (
         <div
           className={clsx(
-            'pb-1 text-sm font-semibold text-zinc-500 drop-shadow-lg transition-opacity duration-150',
+            'pb-1 text-sm font-semibold text-zinc-600 drop-shadow-lg transition-opacity duration-150 dark:text-zinc-500',
             { 'opacity-50 pointer-events-none': disabled }
           )}
         >

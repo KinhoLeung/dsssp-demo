@@ -92,7 +92,7 @@ const Demo4 = () => {
   }, [])
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-[#f3f1ef] text-black">
+    <div className="flex min-h-screen flex-col items-center">
       <div className="w-[840px] flex flex-col pt-1">
         <div className="relative">
           <FrequencyResponseGraph
@@ -139,7 +139,7 @@ const Demo4 = () => {
             />
           </FrequencyResponseGraph>
           <button
-            className="absolute bottom-0 left-[50%] my-4 ml-[-22px] p-1 bg-white hover:bg-[#f3f1ef] active:bg-[#ffe] rounded-md text-lg font-semibold text-black border-2 border-black inline-block"
+            className="absolute bottom-0 left-[50%] my-4 ml-[-22px] p-1 bg-white hover:bg-zinc-50 active:bg-zinc-100 rounded-md text-lg font-semibold text-black border-2 border-black inline-block dark:bg-black dark:hover:bg-zinc-950 dark:active:bg-zinc-900 dark:text-white dark:border-white"
             onClick={createFilters}
           >
             <RestartIcon className="w-8 h-8" />

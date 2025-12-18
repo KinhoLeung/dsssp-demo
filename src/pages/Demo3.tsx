@@ -100,7 +100,7 @@ const Demo4 = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-[#f3f1ef] text-black">
+    <div className="flex min-h-screen flex-col items-center">
       <div className="w-[840px] flex flex-col pt-1">
         <div>
           <FrequencyResponseGraph

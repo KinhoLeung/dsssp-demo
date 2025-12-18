@@ -72,7 +72,7 @@ const Demo1 = () => {
   }
 
   return (
-    <div className="text-white text-sans min-h-screen flex flex-col items-center">
+    <div className="text-sans min-h-screen flex flex-col items-center">
       <div className="max-w-[840px] pt-1 flex flex-col gap-1">
         <Header
           altered={altered}

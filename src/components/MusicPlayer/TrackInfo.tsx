@@ -32,18 +32,22 @@ export const TrackInfo: React.FC<TrackInfoProps> = ({
         onClick={() => onChangeTrack?.((activeIndex + 1) % tracks.length)}
       />
       <div className="w-[86px] flex flex-col h-full overflow-hidden items-start justify-center text-xs">
-        <div className="text-zinc-300 whitespace-nowrap">{artist}</div>
-        <div className="text-zinc-600 whitespace-nowrap">{title}</div>
+        <div className="text-zinc-900 dark:text-zinc-300 whitespace-nowrap">{artist}</div>
+        <div className="text-zinc-500 dark:text-zinc-600 whitespace-nowrap">{title}</div>
       </div>
       <div className="flex flex-col h-full items-end justify-center pointer-events-none">
         {loading ? (
-          <div className="h-3 w-[22px] px-1 text-zinc-600">
+          <div className="h-3 w-[22px] px-1 text-zinc-500 dark:text-zinc-600">
             <Spinner className="h-3 w-3" />
           </div>
         ) : (
           <>
-            <div className="text-zinc-600 text-xs">{currentTime}</div>
-            <div className="text-zinc-600 text-xs">{duration}</div>
+            <div className="text-zinc-500 dark:text-zinc-600 text-xs">
+              {currentTime}
+            </div>
+            <div className="text-zinc-500 dark:text-zinc-600 text-xs">
+              {duration}
+            </div>
           </>
         )}
       </div>

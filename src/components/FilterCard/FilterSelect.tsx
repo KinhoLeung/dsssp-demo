@@ -51,11 +51,11 @@ const FilterSelect = ({
         'opacity-50 pointer-events-none': disabled
       })}
     >
-      <div className="font-semibold text-sm text-zinc-500 z-10 relative">
+      <div className="font-semibold text-sm text-zinc-600 z-10 relative dark:text-zinc-500">
         Type
       </div>
 
-      <div className="relative py-1 select-none text-zinc-500 hover:text-zinc-300 ">
+      <div className="relative py-1 select-none text-zinc-600 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-300">
         <select
           value={filter.type}
           onBlur={() => setOpened(false)}
@@ -71,7 +71,7 @@ const FilterSelect = ({
             <option
               key={type}
               value={type}
-              className="bg-zinc-950 active:bg-blue-400 text-white text-sm font-[dsssp,sans-serif]"
+              className="bg-white active:bg-sky-200 text-zinc-900 text-sm font-[dsssp,sans-serif] dark:bg-zinc-950 dark:active:bg-blue-400 dark:text-white"
               dangerouslySetInnerHTML={{
                 __html: `&nbsp;${safariBrowser ? '' : getIconSymbol(type)} ${getLabelName(type)}&nbsp;`
               }}
