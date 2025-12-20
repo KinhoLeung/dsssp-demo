@@ -254,10 +254,10 @@ export function BrowserWindow({
   sidebarItems,
 }: BrowserWindowProps) {
   const sizeClasses = {
-    sm: 'h-64 max-w-sm',
-    md: 'h-80 max-w-2xl',
-    lg: 'h-96 max-w-4xl',
-    xl: 'h-[32rem] max-w-6xl',
+    sm: 'h-64 w-full max-w-sm',
+    md: 'h-80 w-full max-w-2xl',
+    lg: 'h-96 w-full max-w-4xl',
+    xl: 'h-[32rem] w-full max-w-6xl',
   }
 
   const sidebarSizes = {
@@ -292,7 +292,7 @@ export function BrowserWindow({
   return (
     <div
       className={`
-        relative mask-b-from-50% rounded-2xl border shadow-[0px_1px_1px_0px_rgba(0,_0,_0,_0.05),_0px_1px_1px_0px_rgba(255,_252,_240,_0.5)_inset,_0px_0px_0px_1px_hsla(0,_0%,_100%,_0.1)_inset,_0px_0px_1px_0px_rgba(28,_27,_26,_0.5)] dark:shadow-[0px_1px_1px_0px_rgba(0,_0,_0,_0.2),_0px_1px_1px_0px_rgba(0,_0,_0,_0.3)_inset,_0px_0px_0px_1px_hsla(0,_0%,_0%,_0.2)_inset,_0px_0px_1px_0px_rgba(255,_255,_255,_0.1)]
+        relative mask-b-from-50% overflow-hidden rounded-2xl border shadow-[0px_1px_1px_0px_rgba(0,_0,_0,_0.05),_0px_1px_1px_0px_rgba(255,_252,_240,_0.5)_inset,_0px_0px_0px_1px_hsla(0,_0%,_100%,_0.1)_inset,_0px_0px_1px_0px_rgba(28,_27,_26,_0.5)] dark:shadow-[0px_1px_1px_0px_rgba(0,_0,_0,_0.2),_0px_1px_1px_0px_rgba(0,_0,_0,_0.3)_inset,_0px_0px_0px_1px_hsla(0,_0%,_0%,_0.2)_inset,_0px_0px_1px_0px_rgba(255,_255,_255,_0.1)]
         ${sizeClasses[size]} ${themeClasses} ${className} flex flex-col
       `}
     >

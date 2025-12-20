@@ -4,6 +4,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type ReactNode,
   type ComponentPropsWithoutRef,
 } from 'react'
 import { flushSync } from 'react-dom'
@@ -13,11 +14,15 @@ import { cn } from '@/lib/utils'
 interface AnimatedThemeTogglerProps
   extends ComponentPropsWithoutRef<'button'> {
   duration?: number
+  iconLight?: ReactNode
+  iconDark?: ReactNode
 }
 
 export const AnimatedThemeToggler = ({
   className,
   duration = 400,
+  iconLight,
+  iconDark,
   ...props
 }: AnimatedThemeTogglerProps) => {
   const [isDark, setIsDark] = useState(false)
@@ -82,7 +87,7 @@ export const AnimatedThemeToggler = ({
       className={cn(className)}
       {...props}
     >
-      {isDark ? <Sun /> : <Moon />}
+      {isDark ? iconDark ?? <Sun /> : iconLight ?? <Moon />}
       <span className="sr-only">Toggle theme</span>
     </button>
   )

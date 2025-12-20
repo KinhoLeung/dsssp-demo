@@ -46,8 +46,10 @@
   },
   "dependencies": {
     "@fontsource/poppins": "^5.2.5",
-    "class-variance-authority": "^0.7.1",
+    "@radix-ui/react-slot": "^1.2.4",
     "dsssp": "git+https://github.com/KinhoLeung/dsssp.git#custom",
+    "framer-motion": "^12.23.26",
+    "lightswind": "^3.1.20",
     "lucide-react": "^0.561.0",
     "motion": "^12.23.26",
     "react": "^19.1.0",
