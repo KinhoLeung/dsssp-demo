@@ -1,21 +1,18 @@
 import clsx from 'clsx'
-import { type BiQuadCoefficients, type GraphFilter } from 'dsssp'
+import { type GraphFilter } from 'dsssp'
 import { useState } from 'react'
 import tailwindColors from 'tailwindcss/colors'
 
 import PowerIcon from '../assets/power.svg?react'
 
-import MusicPlayer from './MusicPlayer'
 import Presets, { buttonClasses } from './Presets'
 
 const Header = ({
   altered = false,
-  coefficients,
   onPresetChange,
   onPowerChange
 }: {
   altered?: boolean
-  coefficients: BiQuadCoefficients[]
   onPresetChange: (
     newFilters: GraphFilter[],
     newIndex: number,
@@ -57,11 +54,6 @@ const Header = ({
           onPresetChange={onPresetChange}
         />
       </div>
-
-      <MusicPlayer
-        powered={powered}
-        coefficients={coefficients}
-      />
     </div>
   )
 }

@@ -1,6 +1,0 @@
-export { default } from './MusicPlayer'
-export { TrackInfo } from './TrackInfo'
-export { Visualizer } from './Visualizer'
-export { AudioController } from './AudioController'
-export { PlaybackButtons } from './PlaybackButtons'
-export { CoversStack } from './CoversStack'

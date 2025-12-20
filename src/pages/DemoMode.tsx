@@ -7,8 +7,6 @@ import {
   FilterPoint,
   PointerTracker,
   type GraphFilter,
-  type BiQuadCoefficients,
-  calcFilterCoefficients,
   FrequencyResponseCurve
 } from 'dsssp'
 import { useState } from 'react'
@@ -21,17 +19,9 @@ import scale from '../configs/scale'
 import theme from '../configs/theme'
 
 const DemoMode = () => {
-  const calcPresetCoefficients = (filters: GraphFilter[]) =>
-    filters.map((filter) => {
-      return calcFilterCoefficients(filter, scale.sampleRate)
-    })
-
   const [powered, setPowered] = useState(true)
   const [altered, setAltered] = useState(false)
   const [filters, setFilters] = useState(customPreset)
-  const [coefficients, setCoefficients] = useState<BiQuadCoefficients[]>(
-    calcPresetCoefficients(customPreset)
-  )
 
   const [dragging, setDragging] = useState(false)
   const [activeIndex, setActiveIndex] = useState<number>(-1)
@@ -40,11 +30,6 @@ const DemoMode = () => {
     const { index, ended, ...filter } = filterEvent
 
     if (ended) {
-      setCoefficients((prevCoefficients) => {
-        const newCoefficients = [...prevCoefficients]
-        newCoefficients[index] = calcFilterCoefficients(filter, scale.sampleRate)
-        return newCoefficients
-      })
       setAltered(true)
     }
 
@@ -66,7 +51,6 @@ const DemoMode = () => {
   const handlePresetChange = (preset: GraphFilter[]) => {
     setAltered(false)
     setFilters(preset)
-    setCoefficients(calcPresetCoefficients(preset))
   }
 
   return (
@@ -74,7 +58,6 @@ const DemoMode = () => {
       <div className="max-w-[840px] pt-1 flex flex-col gap-1">
         <Header
           altered={altered}
-          coefficients={coefficients} // prop-drilling them down to the MusicPlayer
           onPresetChange={handlePresetChange}
           onPowerChange={setPowered}
         />
