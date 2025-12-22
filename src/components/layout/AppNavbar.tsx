@@ -16,6 +16,7 @@ import {
   Navbar,
   NavbarLogo,
 } from '@/components/ui/resizable-navbar'
+import { cn } from '@/lib/utils'
 
 const navItems = [
   {
@@ -49,12 +50,16 @@ const AppNavbar = () => {
             onClick={toggleLanguage}
             aria-label="Toggle language"
             size="icon"
+            className="rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800"
           >
             {languageLabel}
           </Button>
           <AnimatedThemeToggler
             aria-label="Toggle theme"
-            className={buttonVariants({ variant: 'ghost', size: 'icon' })}
+            className={cn(
+              buttonVariants({ variant: 'ghost', size: 'icon' }),
+              'rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800'
+            )}
             iconLight={
               <LineMdSunnyOutlineToMoonAltLoopTransitionIcon className="h-5 w-5" />
             }
@@ -73,12 +78,16 @@ const AppNavbar = () => {
               onClick={toggleLanguage}
               aria-label="Toggle language"
               size="icon"
+              className="rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800"
             >
               {languageLabel}
             </Button>
             <AnimatedThemeToggler
               aria-label="Toggle theme"
-              className={buttonVariants({ variant: 'ghost', size: 'icon' })}
+              className={cn(
+                buttonVariants({ variant: 'ghost', size: 'icon' }),
+                'rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800'
+              )}
               iconLight={
                 <LineMdSunnyOutlineToMoonAltLoopTransitionIcon className="h-5 w-5" />
               }

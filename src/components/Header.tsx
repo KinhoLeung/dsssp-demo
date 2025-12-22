@@ -9,10 +9,16 @@ import Presets, { buttonClasses } from './Presets'
 
 const Header = ({
   altered = false,
+  powered,
+  defaultPowered = true,
+  presetIndex,
   onPresetChange,
   onPowerChange
 }: {
   altered?: boolean
+  powered?: boolean
+  defaultPowered?: boolean
+  presetIndex?: number
   onPresetChange: (
     newFilters: GraphFilter[],
     newIndex: number,
@@ -20,14 +26,20 @@ const Header = ({
   ) => void
   onPowerChange: (powered: boolean) => void
 }) => {
-  const [powered, setPowered] = useState(true)
+  const [uncontrolledPowered, setUncontrolledPowered] =
+    useState(defaultPowered)
+  const isControlled = powered !== undefined
+  const currentPowered = isControlled ? powered : uncontrolledPowered
 
   const togglePower = () => {
-    setPowered(!powered)
-    onPowerChange(!powered)
+    const nextPowered = !currentPowered
+    if (!isControlled) {
+      setUncontrolledPowered(nextPowered)
+    }
+    onPowerChange(nextPowered)
   }
 
-  const glowColor = powered
+  const glowColor = currentPowered
     ? tailwindColors.green[500]
     : tailwindColors.red[950]
 
@@ -36,8 +48,8 @@ const Header = ({
       <div className="flex flex-row gap-3">
         <button
           className={clsx(buttonClasses, 'px-3 m-[0] h-[34px] ', {
-            'text-green-600 hover:text-green-400 ': powered,
-            'text-red-700 hover:text-red-500 ': !powered
+            'text-green-600 hover:text-green-400 ': currentPowered,
+            'text-red-700 hover:text-red-500 ': !currentPowered
           })}
           style={{
             background: `radial-gradient(circle, ${glowColor}20 0%, ${glowColor}18 30%, transparent 70%)`
@@ -49,9 +61,10 @@ const Header = ({
         </button>
 
         <Presets
-          powered={powered}
+          powered={currentPowered}
           altered={altered}
           onPresetChange={onPresetChange}
+          presetIndex={presetIndex}
         />
       </div>
     </div>

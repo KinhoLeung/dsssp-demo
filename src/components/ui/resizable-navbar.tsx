@@ -3,8 +3,7 @@ import { Menu, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import React, { useState } from 'react';
 
-import GameIconsRoundKnobDark from '@/assets/GameIconsRoundKnob-dark.svg';
-import GameIconsRoundKnob from '@/assets/GameIconsRoundKnob.svg';
+import GameIconsRoundKnob from '@/assets/GameIconsRoundKnob.svg?react';
 import { cn } from '@/lib/utils';
 
 
@@ -85,7 +84,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         minWidth: '800px',
       }}
       className={cn(
-        'relative z-[60] mx-auto hidden w-full max-w-7xl flex-row items-center justify-between self-start rounded-full bg-white px-4 py-2 lg:flex dark:bg-black',
+        'relative z-[60] hidden w-full flex-row items-center justify-between self-start rounded-none border border-black/10 bg-white px-4 py-2 lg:flex dark:border-white/10 dark:bg-black',
         className,
       )}
     >
@@ -116,7 +115,7 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
           {hovered === idx && (
             <motion.div
               layoutId='hovered'
-              className='absolute inset-0 h-full w-full rounded-full bg-gray-100 dark:bg-neutral-800'
+              className='absolute inset-0 h-full w-full rounded-lg bg-gray-100 dark:bg-neutral-800'
             />
           )}
           <span className='relative z-20'>{item.name}</span>
@@ -137,7 +136,7 @@ export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
         width: visible ? '90%' : '100%',
         paddingRight: visible ? '12px' : '0px',
         paddingLeft: visible ? '12px' : '0px',
-        borderRadius: visible ? '4px' : '2rem',
+        borderRadius: visible ? '0px' : '0px',
         y: visible ? 20 : 0,
       }}
       transition={{
@@ -146,7 +145,7 @@ export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
         damping: 50,
       }}
       className={cn(
-        'relative z-50 mx-auto flex w-full max-w-[calc(100vw-2rem)] flex-col items-center justify-between bg-white px-0 py-2 lg:hidden dark:bg-black',
+        'relative z-50 flex w-full flex-col items-center justify-between rounded-none border border-black/10 bg-white px-0 py-2 lg:hidden dark:border-white/10 dark:bg-black',
         className,
       )}
     >
@@ -216,19 +215,9 @@ export const NavbarLogo = () => {
       href='#'
       className='relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black'
     >
-      <img
-        src={GameIconsRoundKnob}
-        alt='Game Icons Round Knob logo'
-        width={32}
-        height={32}
-        className='dark:hidden'
-      />
-      <img
-        src={GameIconsRoundKnobDark}
-        alt='Game Icons Round Knob logo dark'
-        width={32}
-        height={32}
-        className='hidden dark:block'
+      <GameIconsRoundKnob
+        className='h-8 w-8 text-black dark:text-white'
+        aria-hidden='true'
       />
       <span className='text-2xl font-semibold text-black dark:text-white'>WebHMI</span>
     </a>

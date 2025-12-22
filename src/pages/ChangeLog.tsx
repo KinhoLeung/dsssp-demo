@@ -1,41 +1,231 @@
-import { ScrollTimeline, type TimelineEvent } from '@/components/lightswind/scroll-timeline'
+import { Timeline } from '@/components/ui/timeline'
 
 const ChangeLog = () => {
-  const events: TimelineEvent[] = [
+  const data = [
     {
-      year: '2024-09',
-      title: 'v1.2 Release',
-      subtitle: 'Stability Update',
-      description:
-        'Improved USB connection handling and reduced reconnect time across devices.'
+      title: '2024',
+      content: (
+        <div>
+          <p className="mb-8 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
+            Built and launched Aceternity UI and Aceternity UI Pro from scratch.
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <img
+              src="https://assets.aceternity.com/templates/startup-1.webp"
+              alt="startup template"
+              width={500}
+              height={500}
+              className="h-20 w-full rounded-lg object-cover shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] md:h-44 lg:h-60"
+            />
+            <img
+              src="https://assets.aceternity.com/templates/startup-2.webp"
+              alt="startup template"
+              width={500}
+              height={500}
+              className="h-20 w-full rounded-lg object-cover shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] md:h-44 lg:h-60"
+            />
+            <img
+              src="https://assets.aceternity.com/templates/startup-3.webp"
+              alt="startup template"
+              width={500}
+              height={500}
+              className="h-20 w-full rounded-lg object-cover shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] md:h-44 lg:h-60"
+            />
+            <img
+              src="https://assets.aceternity.com/templates/startup-4.webp"
+              alt="startup template"
+              width={500}
+              height={500}
+              className="h-20 w-full rounded-lg object-cover shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] md:h-44 lg:h-60"
+            />
+          </div>
+        </div>
+      ),
     },
     {
-      year: '2024-07',
-      title: 'v1.1 Update',
-      subtitle: 'UI Polish',
-      description:
-        'Refined navigation animations and added clearer status feedback for controls.'
+      title: 'Late 2023',
+      content: (
+        <div>
+          <p className="mb-6 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
+            Refined the design system and shipped the first batch of templates
+            for teams.
+          </p>
+          <div className="mb-8 space-y-2 text-xs text-neutral-700 md:text-sm dark:text-neutral-300">
+            <div className="flex items-center gap-2">
+              [done] Landing page kit for product launches
+            </div>
+            <div className="flex items-center gap-2">
+              [done] Hero + feature combinations for SaaS
+            </div>
+            <div className="flex items-center gap-2">
+              [done] Component tokens and spacing rules
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <img
+              src="https://assets.aceternity.com/pro/hero-sections.png"
+              alt="hero template"
+              width={500}
+              height={500}
+              className="h-20 w-full rounded-lg object-cover shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] md:h-44 lg:h-60"
+            />
+            <img
+              src="https://assets.aceternity.com/features-section.png"
+              alt="feature template"
+              width={500}
+              height={500}
+              className="h-20 w-full rounded-lg object-cover shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] md:h-44 lg:h-60"
+            />
+          </div>
+        </div>
+      ),
     },
     {
-      year: '2024-05',
-      title: 'v1.0 Launch',
-      subtitle: 'Initial Public Release',
-      description:
-        'Core dashboard, device monitoring, and demo mode are available in the first release.'
-    }
+      title: 'Early 2023',
+      content: (
+        <div>
+          <p className="mb-8 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
+            I usually run out of copy, but when I see content this big, I try to
+            integrate lorem ipsum.
+          </p>
+          <p className="mb-8 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
+            Lorem ipsum is for people who are too lazy to write copy. But we are
+            not. Here are some more example of beautiful designs I built.
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <img
+              src="https://assets.aceternity.com/pro/hero-sections.png"
+              alt="hero template"
+              width={500}
+              height={500}
+              className="h-20 w-full rounded-lg object-cover shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] md:h-44 lg:h-60"
+            />
+            <img
+              src="https://assets.aceternity.com/features-section.png"
+              alt="feature template"
+              width={500}
+              height={500}
+              className="h-20 w-full rounded-lg object-cover shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] md:h-44 lg:h-60"
+            />
+            <img
+              src="https://assets.aceternity.com/pro/bento-grids.png"
+              alt="bento template"
+              width={500}
+              height={500}
+              className="h-20 w-full rounded-lg object-cover shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] md:h-44 lg:h-60"
+            />
+            <img
+              src="https://assets.aceternity.com/cards.png"
+              alt="cards template"
+              width={500}
+              height={500}
+              className="h-20 w-full rounded-lg object-cover shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] md:h-44 lg:h-60"
+            />
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: '2022',
+      content: (
+        <div>
+          <p className="mb-6 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
+            Rebuilt the core layout system with better spacing, tokens, and
+            responsive utilities.
+          </p>
+          <div className="mb-8 space-y-2 text-xs text-neutral-700 md:text-sm dark:text-neutral-300">
+            <div className="flex items-center gap-2">
+              [done] Grid primitives and layout helpers
+            </div>
+            <div className="flex items-center gap-2">
+              [done] Color scale and typography presets
+            </div>
+            <div className="flex items-center gap-2">
+              [done] Component docs and usage patterns
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <img
+              src="https://assets.aceternity.com/pro/bento-grids.png"
+              alt="bento template"
+              width={500}
+              height={500}
+              className="h-20 w-full rounded-lg object-cover shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] md:h-44 lg:h-60"
+            />
+            <img
+              src="https://assets.aceternity.com/cards.png"
+              alt="cards template"
+              width={500}
+              height={500}
+              className="h-20 w-full rounded-lg object-cover shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] md:h-44 lg:h-60"
+            />
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Changelog',
+      content: (
+        <div>
+          <p className="mb-4 text-xs font-normal text-neutral-800 md:text-sm dark:text-neutral-200">
+            Deployed 5 new components on Aceternity today.
+          </p>
+          <div className="mb-8">
+            <div className="flex items-center gap-2 text-xs text-neutral-700 md:text-sm dark:text-neutral-300">
+              [done] Card grid component
+            </div>
+            <div className="flex items-center gap-2 text-xs text-neutral-700 md:text-sm dark:text-neutral-300">
+              [done] Startup template Aceternity
+            </div>
+            <div className="flex items-center gap-2 text-xs text-neutral-700 md:text-sm dark:text-neutral-300">
+              [done] Random file upload lol
+            </div>
+            <div className="flex items-center gap-2 text-xs text-neutral-700 md:text-sm dark:text-neutral-300">
+              [done] Himesh Reshammiya Music CD
+            </div>
+            <div className="flex items-center gap-2 text-xs text-neutral-700 md:text-sm dark:text-neutral-300">
+              [done] Salman Bhai Fan Club registrations open
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <img
+              src="https://assets.aceternity.com/pro/hero-sections.png"
+              alt="hero template"
+              width={500}
+              height={500}
+              className="h-20 w-full rounded-lg object-cover shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] md:h-44 lg:h-60"
+            />
+            <img
+              src="https://assets.aceternity.com/features-section.png"
+              alt="feature template"
+              width={500}
+              height={500}
+              className="h-20 w-full rounded-lg object-cover shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] md:h-44 lg:h-60"
+            />
+            <img
+              src="https://assets.aceternity.com/pro/bento-grids.png"
+              alt="bento template"
+              width={500}
+              height={500}
+              className="h-20 w-full rounded-lg object-cover shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] md:h-44 lg:h-60"
+            />
+            <img
+              src="https://assets.aceternity.com/cards.png"
+              alt="cards template"
+              width={500}
+              height={500}
+              className="h-20 w-full rounded-lg object-cover shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] md:h-44 lg:h-60"
+            />
+          </div>
+        </div>
+      ),
+    },
   ]
 
   return (
-    <ScrollTimeline
-      title="Change Log"
-      subtitle="Latest updates and product milestones"
-      events={events}
-      cardAlignment="alternating"
-      progressIndicator={true}
-      cardEffect="glow"
-      className="bg-background"
-      darkMode={true}
-    />
+    <div className="relative w-full overflow-clip">
+      <Timeline data={data} />
+    </div>
   )
 }
 

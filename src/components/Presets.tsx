@@ -13,7 +13,9 @@ export const buttonClasses =
 const PresetControl = ({
   powered,
   altered,
-  onPresetChange
+  onPresetChange,
+  presetIndex,
+  defaultPresetIndex = 0
 }: {
   powered: boolean
   altered: boolean
@@ -22,24 +24,43 @@ const PresetControl = ({
     newIndex: number,
     prevIndex: number
   ) => void
+  presetIndex?: number
+  defaultPresetIndex?: number
 }) => {
   const [opened, setOpened] = useState<boolean>(false)
-  const [presetIndex, setPresetIndex] = useState(0)
+  const [uncontrolledPresetIndex, setUncontrolledPresetIndex] = useState(
+    defaultPresetIndex
+  )
+  const isControlled = presetIndex !== undefined
+  const currentPresetIndex = isControlled
+    ? presetIndex
+    : uncontrolledPresetIndex
+
+  const setPresetIndex = (nextIndex: number) => {
+    if (!isControlled) {
+      setUncontrolledPresetIndex(nextIndex)
+    }
+  }
 
   const handlePrevClick = () => {
-    const newIndex = (presetIndex - 1 + presets.length) % presets.length
-    onPresetChange(presets[newIndex].filters, newIndex, presetIndex)
+    const newIndex =
+      (currentPresetIndex - 1 + presets.length) % presets.length
+    onPresetChange(presets[newIndex].filters, newIndex, currentPresetIndex)
     setPresetIndex(newIndex)
   }
 
   const handleNextClick = () => {
-    const newIndex = (presetIndex + 1) % presets.length
-    onPresetChange(presets[newIndex].filters, newIndex, presetIndex)
+    const newIndex = (currentPresetIndex + 1) % presets.length
+    onPresetChange(presets[newIndex].filters, newIndex, currentPresetIndex)
     setPresetIndex(newIndex)
   }
 
   const handleResetClick = () => {
-    onPresetChange(presets[presetIndex].filters, presetIndex, presetIndex)
+    onPresetChange(
+      presets[currentPresetIndex].filters,
+      currentPresetIndex,
+      currentPresetIndex
+    )
   }
 
   const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -47,7 +68,7 @@ const PresetControl = ({
     const newIndex = presets.findIndex(
       (preset) => preset.name === e.target.value
     )
-    onPresetChange(presets[newIndex].filters, newIndex, presetIndex)
+    onPresetChange(presets[newIndex].filters, newIndex, currentPresetIndex)
     setPresetIndex(newIndex)
   }
 
@@ -65,7 +86,7 @@ const PresetControl = ({
             onFocus={() => setOpened(true)}
             onMouseDown={() => setOpened(true)}
             onChange={handlePresetChange}
-            value={presets[presetIndex].name}
+            value={presets[currentPresetIndex].name}
             className="bg-transparent text-transparent appearance-none text-align-center w-[92px] h-full px-1 top-0 left-6 cursor-pointer absolute focus:outline-none focus:ring-0"
           >
             {presets.map((preset) => (
@@ -79,7 +100,7 @@ const PresetControl = ({
             ))}
           </select>
           <div className="flex gap-2 flex-row justify-center items-center">
-            {presets[presetIndex].name}
+            {presets[currentPresetIndex].name}
             <div
               className={clsx('pt-0.5 pointer-events-none z-10', {
                 'text-sky-500': opened

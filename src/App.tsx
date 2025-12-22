@@ -90,7 +90,52 @@ const App = () => {
     },
   ]
 
-  const handleCardClick = (card: { id: string }) => {
+  const handleCardClick = async (card: { id: string }) => {
+    const nav = navigator as Navigator & {
+      hid?: {
+        requestDevice: (options: {
+          filters: Array<{
+            vendorId?: number
+            productId?: number
+            usagePage?: number
+            usage?: number
+          }>
+        }) => Promise<unknown>
+      }
+      bluetooth?: {
+        requestDevice: (options: {
+          acceptAllDevices?: boolean
+          optionalServices?: string[]
+        }) => Promise<unknown>
+      }
+    }
+
+    if (card.id === '1') {
+      if (!nav.hid) {
+        console.warn('WebHID is not supported in this browser.')
+        return
+      }
+      try {
+        await nav.hid.requestDevice({ filters: [] })
+      } catch (error) {
+        console.warn('WebHID request was cancelled or failed.', error)
+      }
+      return
+    }
+
+    if (card.id === '2') {
+      if (!nav.bluetooth) {
+        console.warn('Web Bluetooth is not supported in this browser.')
+        return
+      }
+      try {
+        await nav.bluetooth.requestDevice({ acceptAllDevices: true })
+      } catch (error) {
+        console.warn('Web Bluetooth request was cancelled or failed.', error)
+      }
+      return
+    }
+
     if (card.id === '3') {
       navigate('/DemoMode')
     }

@@ -47,6 +47,7 @@
   "dependencies": {
     "@fontsource/poppins": "^5.2.5",
     "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-tooltip": "^1.2.8",
     "dsssp": "git+https://github.com/KinhoLeung/dsssp.git#custom",
     "framer-motion": "^12.23.26",
     "lightswind": "^3.1.20",

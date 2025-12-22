@@ -57,7 +57,7 @@ const FilterCard = ({
       onMouseEnter={() => onEnter?.({ ...filter, index })}
       onMouseLeave={onLeave}
       className={clsx(
-        'flex flex-col flex-1 gap-2 items-center shadow-sm border rounded-sm p-2 text-center transition-colors duration-200 bg-white overflow-hidden dark:bg-zinc-900',
+        'flex flex-col flex-1 gap-2 items-center shadow-sm border rounded-lg p-2 text-center transition-colors duration-200 bg-white overflow-hidden dark:bg-zinc-900',
         active && !disabled
           ? 'border-zinc-400 dark:border-zinc-600'
           : 'border-zinc-200 dark:border-zinc-800'
