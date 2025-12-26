@@ -12,32 +12,27 @@ import {
 import { useLayoutEffect, useRef, useState } from 'react'
 import tailwindColors from 'tailwindcss/colors'
 
+import MainOutputIcon from '@/assets/AntDesignSoundOutlined.svg?react'
+import SurroundIcon from '@/assets/FluentPersonSoundSpatial48Regular.svg?react'
+import EchoIcon from '@/assets/GameIconsSonicScreech.svg?react'
+import SubOutputIcon from '@/assets/F7Hifispeaker.svg?react'
+import MusicIcon from '@/assets/IconamoonMusic2Light.svg?react'
+import ReverbIcon from '@/assets/MdiHomeSoundInOutline.svg?react'
+import MicIcon from '@/assets/PepiconsPencilMicrophoneHandheld.svg?react'
+import CenterIcon from '@/assets/StreamlineSpeaker1.svg?react'
+import { AbstractlySlider } from '@/components/AbstractlySlider/AbstractlySlider'
+import { Knob } from '@/components/Knob/Knob'
+import { buttonVariants } from '@/components/ui/button'
+import { Dock, DockIcon, DockPanel, DockTabs } from '@/components/ui/dock'
+import { GlowingEffect } from '@/components/ui/glowing-effect'
+import { useTheme } from '@/hooks/useTheme'
+import { cn } from '@/lib/utils'
+
 import styles from '../App.module.css'
 import { FilterCard } from '../components'
 import { customPreset } from '../configs/presets'
 import scale from '../configs/scale'
 import { graphThemeDark, graphThemeLight } from '../configs/theme'
-import MainOutputIcon from '@/assets/AntDesignSoundOutlined.svg?react'
-import SubOutputIcon from '@/assets/F7Hifispeaker.svg?react'
-import MusicIcon from '@/assets/IconamoonMusic2Light.svg?react'
-import SurroundIcon from '@/assets/FluentPersonSoundSpatial48Regular.svg?react'
-import MicIcon from '@/assets/PepiconsPencilMicrophoneHandheld.svg?react'
-import EchoIcon from '@/assets/GameIconsSonicScreech.svg?react'
-import ReverbIcon from '@/assets/MdiHomeSoundInOutline.svg?react'
-import CenterIcon from '@/assets/StreamlineSpeaker1.svg?react'
-import { buttonVariants } from '@/components/ui/button'
-import { Dock, DockIcon, DockPanel, DockTabs } from '@/components/ui/dock'
-import { GlowingEffect } from '@/components/ui/glowing-effect'
-import MediaControlRadioGroup from '@/components/ui/MediaControlRadioGroup'
-import PowerToggleSwitch from '@/components/ui/PowerToggleSwitch'
-import SeasonSelectorRadio from '@/components/ui/season-selector-radio'
-import TiltedRadioGroup from '@/components/ui/TiltedRadioGroup'
-import { useTheme } from '@/hooks/useTheme'
-import { cn } from '@/lib/utils'
-import { ABSlider as ABSliderAlt } from '@/components/ABSlider'
-import DraggableVolumeKnob from '@/components/ui/DraggableVolumeKnob'
-import AnimatedRadioInputs from '@/components/ui/AnimatedRadioInputs'
-import GlowingDropdown from '@/components/ui/GlowingDropdown'
 
 type EqState = {
   powered: boolean
@@ -109,8 +104,8 @@ const DemoMode = () => {
   const [dockValue, setDockValue] = useState(
     () => DOCK_DATA.navbar[0]?.value ?? 'music'
   )
-  const [sliderValueAlt, setSliderValueAlt] = useState(35)
-  const [powerToggleOn, setPowerToggleOn] = useState(false)
+  const [abstractlySliderValue, setAbstractlySliderValue] = useState(35)
+  const [knobValue, setKnobValue] = useState(35)
   const [eqStates, setEqStates] = useState<Record<string, EqState>>(() => {
     const initial: Record<string, EqState> = {}
     DOCK_PANELS.forEach((panel) => {
@@ -167,26 +162,6 @@ const DemoMode = () => {
     updateEqState(dockValue, (prev) =>
       prev.dragging ? prev : { ...prev, activeIndex: index }
     )
-  }
-
-  const handlePresetChange = (
-    preset: GraphFilter[],
-    newIndex: number,
-    _prevIndex: number
-  ) => {
-    updateEqState(dockValue, (prev) => ({
-      ...prev,
-      altered: false,
-      filters: cloneFilters(preset),
-      presetIndex: newIndex,
-    }))
-  }
-
-  const handlePowerChange = (nextPowered: boolean) => {
-    updateEqState(dockValue, (prev) => ({
-      ...prev,
-      powered: nextPowered,
-    }))
   }
 
   const handleDragChange = (isDragging: boolean) => {
@@ -322,124 +297,37 @@ const DemoMode = () => {
               proximity={80}
               inactiveZone={0.02}
             />
-            <div className="relative flex flex-col items-center gap-3 overflow-hidden rounded-xl border border-black/5 bg-white/70 p-6 text-center backdrop-blur dark:border-white/10 dark:bg-neutral-900/60 dark:shadow-[0px_0px_27px_0px_#2D2D2D]">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                ABSlider
-              </span>
-              <ABSliderAlt
-                value={sliderValueAlt}
-                onChange={setSliderValueAlt}
-                ledOpacity={sliderValueAlt / 100}
-                min={0}
-                max={100}
-                step={1}
-                aria-label="AB slider alt"
-              />
-            </div>
-          </div>
-        </div>
-        <div className="w-full max-w-[880px] px-3 pb-24 sm:px-6">
-          <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              spread={40}
-              glow={true}
-              disabled={false}
-              proximity={80}
-              inactiveZone={0.02}
-            />
-            <div className="relative flex flex-col items-center gap-4 overflow-hidden rounded-xl border border-black/5 bg-white/70 p-6 text-center backdrop-blur dark:border-white/10 dark:bg-neutral-900/60 dark:shadow-[0px_0px_27px_0px_#2D2D2D]">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Animated Radio Inputs
-              </span>
-              <AnimatedRadioInputs />
-            </div>
-          </div>
-        </div>
-        <div className="w-full max-w-[880px] px-3 pb-24 sm:px-6">
-          <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              spread={40}
-              glow={true}
-              disabled={false}
-              proximity={80}
-              inactiveZone={0.02}
-            />
-            <div className="relative flex flex-col items-center gap-4 overflow-hidden rounded-xl border border-black/5 bg-white/70 p-6 text-center backdrop-blur dark:border-white/10 dark:bg-neutral-900/60 dark:shadow-[0px_0px_27px_0px_#2D2D2D]">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Media Control Radio Group
-              </span>
-              <MediaControlRadioGroup />
-            </div>
-          </div>
-        </div>
-        <div className="w-full max-w-[880px] px-3 pb-24 sm:px-6">
-          <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              spread={40}
-              glow={true}
-              disabled={false}
-              proximity={80}
-              inactiveZone={0.02}
-            />
-            <div className="relative flex flex-col items-center gap-4 overflow-hidden rounded-xl border border-black/5 bg-white/70 p-6 text-center backdrop-blur dark:border-white/10 dark:bg-neutral-900/60 dark:shadow-[0px_0px_27px_0px_#2D2D2D]">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Tilted Radio Group
-              </span>
-              <TiltedRadioGroup />
-            </div>
-          </div>
-        </div>
-        <div className="w-full max-w-[880px] px-3 pb-24 sm:px-6">
-          <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              spread={40}
-              glow={true}
-              disabled={false}
-              proximity={80}
-              inactiveZone={0.02}
-            />
-            <div className="relative flex flex-col items-center gap-4 overflow-hidden rounded-xl border border-black/5 bg-white/70 p-6 text-center backdrop-blur dark:border-white/10 dark:bg-neutral-900/60 dark:shadow-[0px_0px_27px_0px_#2D2D2D]">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Power Toggle Switch
-              </span>
-              <PowerToggleSwitch
-                checked={powerToggleOn}
-                onChange={setPowerToggleOn}
-              />
-            </div>
-          </div>
-        </div>
-        <div className="w-full max-w-[880px] px-3 pb-24 sm:px-6">
-          <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              spread={40}
-              glow={true}
-              disabled={false}
-              proximity={80}
-              inactiveZone={0.02}
-            />
-            <div className="relative flex flex-col items-center gap-4 overflow-hidden rounded-xl border border-black/5 bg-white/70 p-6 text-center backdrop-blur dark:border-white/10 dark:bg-neutral-900/60 dark:shadow-[0px_0px_27px_0px_#2D2D2D]">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Draggable Volume Knob
-              </span>
-              <DraggableVolumeKnob initialVolume={35} />
-            </div>
-          </div>
-        </div>
-        <div className="w-full max-w-[880px] px-3 pb-24 sm:px-6">
-          <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              spread={40}
-              glow={true}
-              disabled={false}
-              proximity={80}
-              inactiveZone={0.02}
-            />
-            <div className="relative flex flex-col items-center gap-4 overflow-hidden rounded-xl border border-black/5 bg-white/70 p-6 text-center backdrop-blur dark:border-white/10 dark:bg-neutral-900/60 dark:shadow-[0px_0px_27px_0px_#2D2D2D]">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Glowing Dropdown
-              </span>
-              <GlowingDropdown />
+            <div className="relative flex flex-col items-center gap-8 overflow-hidden rounded-xl border border-black/5 bg-white/70 p-6 text-center backdrop-blur dark:border-white/10 dark:bg-neutral-900/60 dark:shadow-[0px_0px_27px_0px_#2D2D2D]">
+              <div className="flex w-full flex-col items-center gap-3">
+                <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  AbstractlySlider
+                </span>
+                <AbstractlySlider
+                  value={abstractlySliderValue}
+                  onChange={setAbstractlySliderValue}
+                  aria-label="Abstractly slider"
+                />
+              </div>
+
+              <div className="h-px w-full bg-black/5 dark:bg-white/10" />
+
+              <div className="flex w-full flex-col items-center gap-4">
+                <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  Knob
+                </span>
+                <div className="flex flex-col items-center gap-2">
+                  <Knob
+                    value={knobValue}
+                    onChange={setKnobValue}
+                    aria-label="Knob"
+                    minLabel="0"
+                    maxLabel="100"
+                  />
+                  <div className="text-sm tabular-nums text-slate-500 dark:text-slate-400">
+                    {knobValue}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
