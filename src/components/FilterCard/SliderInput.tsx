@@ -1,9 +1,9 @@
 import clsx from 'clsx'
 import { useRef } from 'react'
-import tailwindColors from 'tailwindcss/colors'
+
+import { AbstractlySlider } from '../AbstractlySlider'
 
 import { FilterInput } from '.'
-import styles from './SliderInput.module.css'
 
 const precision = 2
 
@@ -29,7 +29,8 @@ const SliderInput = ({
   disabled?: boolean
 }) => {
   const dragging = useRef(false)
-  const oldValue = useRef(value)
+  const dragStartValue = useRef(value)
+  const lastValue = useRef(value)
 
   const linearToLog = (linear: number): number => {
     const minv = Math.log(min)
@@ -45,67 +46,25 @@ const SliderInput = ({
     return (Math.log(log) - minv) / scale
   }
 
-  const getNewValue = (event: any): number => {
-    let newValue = Number(event.target.value)
-    if (log) newValue = Number(linearToLog(newValue).toFixed(precision))
-    return newValue
-  }
+  const sliderMin = log ? 0 : min
+  const sliderMax = log ? 100 : max
+  const sliderValue = log ? Number(logToLinear(value).toFixed(precision)) : value
+  const sliderStep = step
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = getNewValue(e)
-    onChange(newValue, false)
-  }
-
-  const handleMouseUp = (e: React.MouseEvent<HTMLInputElement>) => {
+  const commitEndIfChanged = () => {
     if (!dragging.current) return
     dragging.current = false
-    const newValue = getNewValue(e)
-    if (oldValue.current !== newValue) onChange(newValue, true)
-  }
-
-  const handleTouchEnd = (e: React.TouchEvent<HTMLInputElement>) => {
-    if (!dragging.current) return
-    dragging.current = false
-    const newValue = getNewValue(e)
-    if (oldValue.current !== newValue) onChange(newValue, true)
-  }
-
-  const handleMouseDown = () => {
-    dragging.current = true
-    oldValue.current = value
-  }
-
-  const handleTouchStart = () => {
-    dragging.current = true
-    oldValue.current = value
-  }
-
-  const sliderValue = log ? logToLinear(value).toFixed(precision) : value
-
-  const calcPercentage = () => {
-    if (log) {
-      const logMin = Math.log(min)
-      const logMax = Math.log(max)
-      return ((Math.log(value) - logMin) / (logMax - logMin)) * 100
-    } else {
-      return ((Number(sliderValue) - min) / (max - min)) * 100
+    if (dragStartValue.current !== lastValue.current) {
+      onChange(lastValue.current, true)
     }
   }
 
-  const percentage = calcPercentage()
-
-  const zeroPercentage = ((0 - min) / (max - min)) * 100
-
-  const fillStart = percentage < zeroPercentage ? percentage : zeroPercentage
-  const fillEnd = percentage < zeroPercentage ? zeroPercentage : percentage
-  // const fillColor = disabled ? tailwindColors.black : tailwindColors.cyan[700]
-  const fillColor = disabled
-    ? tailwindColors.black
-    : log
-      ? tailwindColors.cyan[700]
-      : value > 0
-        ? tailwindColors.amber[800]
-        : tailwindColors.lime[700]
+  const handlePointerDownCapture = () => {
+    if (disabled) return
+    dragging.current = true
+    dragStartValue.current = value
+    lastValue.current = value
+  }
 
   return (
     <div>
@@ -127,26 +86,34 @@ const SliderInput = ({
               'opacity-50 pointer-events-none': disabled
             }
           )}
-          style={{ height, width: '38px' }}
+          onPointerDownCapture={handlePointerDownCapture}
+          onPointerUp={commitEndIfChanged}
+          onPointerCancel={commitEndIfChanged}
         >
-          <input
-            type="range"
-            min={log ? 0 : min}
-            max={log ? 100 : max}
-            step={step}
+          <AbstractlySlider
             value={sliderValue}
-            onChange={handleChange}
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            className={styles.slider}
+            min={sliderMin}
+            max={sliderMax}
+            step={sliderStep}
+            disabled={disabled}
+            showLed={false}
+            className="ab-slider--no-shell"
+            aria-label={label ?? 'Slider'}
+            onChange={(nextSliderValue) => {
+              const nextValue = log
+                ? Number(linearToLog(nextSliderValue).toFixed(precision))
+                : nextSliderValue
+              lastValue.current = nextValue
+              onChange(nextValue, false)
+            }}
             style={
               {
-                width: height,
-                '--fill-color': fillColor,
-                '--fill-start': `${fillStart}%`,
-                '--fill-end': `${fillEnd}%`
+                '--ab-slider-min-height': '0px',
+                '--ab-slider-innerplate-min-height': '0px',
+                '--ab-slider-innerplate-margin-top': '0px',
+                '--ab-slider-innerplate-padding-y': '10px',
+                '--ab-slider-track-margin-y': '10px',
+                '--ab-slider-track-height': `${Math.max(height, 165)}px`,
               } as React.CSSProperties
             }
           />
@@ -155,8 +122,8 @@ const SliderInput = ({
       <div className="pt-1">
         <FilterInput
           value={value}
-          min={log ? 0 : min}
-          max={log ? 100 : max}
+          min={min}
+          max={max}
           precision={2}
           disabled={disabled}
           onChange={(value) => onChange(value, true)}

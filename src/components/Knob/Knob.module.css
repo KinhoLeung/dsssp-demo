@@ -36,9 +36,10 @@
     0 0.5em 0.65em 0 rgba(0, 0, 0, 0.15);
   --knob-label-color: rgba(0, 0, 0, 0.45);
   --knob-tick-color: rgba(0, 0, 0, 0.18);
-  --knob-accent-color: #267ed9;
-  --knob-accent-shadow: 0 0 0.3em 0.08em rgba(38, 126, 217, 0.45);
-  --knob-accent-dot-shadow: 0 0 0.4em 0 rgba(38, 126, 217, 0.35);
+  --knob-accent-color: #7abed6;
+  --knob-accent-shadow: 0 0 0.3em 0.08em rgba(0, 108, 255, 0.45);
+  --knob-accent-dot-shadow: 0 0 0.4em 0 rgba(0, 108, 255, 0.35);
+  --knob-focus-color: #30c3dd;
 }
 
 .root.themeLight {
@@ -58,9 +59,10 @@
     0 0.5em 0.65em 0 rgba(0, 0, 0, 0.3);
   --knob-label-color: rgba(255, 255, 255, 0.4);
   --knob-tick-color: rgba(255, 255, 255, 0.2);
-  --knob-accent-color: #a8d8f8;
-  --knob-accent-shadow: 0 0 0.3em 0.08em #79c3f4;
-  --knob-accent-dot-shadow: 0 0 0.4em 0 #79c3f4;
+  --knob-accent-color: #7abed6;
+  --knob-accent-shadow: 0 0 0.3em 0.08em rgba(0, 108, 255, 0.6);
+  --knob-accent-dot-shadow: 0 0 0.4em 0 rgba(0, 108, 255, 0.5);
+  --knob-focus-color: #30c3dd;
 }
 
 .knobSurround {
@@ -93,8 +95,9 @@
   cursor: grabbing;
 }
 
-.knob:focus-visible {
-  box-shadow: none;
+.knob.focusRing:focus {
+  outline: 2px solid var(--knob-focus-color);
+  outline-offset: 0.55em;
 }
 
 .knob:before {

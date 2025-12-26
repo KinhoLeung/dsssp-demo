@@ -164,13 +164,39 @@ export function AbstractlySlider({
     [min, max, commitValue]
   )
 
+  const trackRef = React.useRef<HTMLDivElement | null>(null)
   const activePointerIdRef = React.useRef<number | null>(null)
+  const pointerDownRef = React.useRef(false)
+  const [showFocusRing, setShowFocusRing] = React.useState(false)
+
+  React.useEffect(() => {
+    const element = trackRef.current
+    if (!element) return
+
+    const onWheel = (event: WheelEvent) => {
+      if (disabled) return
+      if (event.deltaY === 0) return
+
+      event.preventDefault()
+
+      const direction = event.deltaY < 0 ? 1 : -1
+      const safeStep = Number.isFinite(step) && step > 0 ? step : 1
+      const multiplier = event.shiftKey ? 10 : 1
+      commitValue(currentValueRef.current + direction * safeStep * multiplier)
+    }
+
+    element.addEventListener('wheel', onWheel, { passive: false })
+    return () => element.removeEventListener('wheel', onWheel)
+  }, [commitValue, disabled, step])
 
   const onPointerDown = React.useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       if (disabled) return
       if (event.pointerType === 'mouse' && event.button !== 0) return
       event.preventDefault()
+
+      pointerDownRef.current = true
+      setShowFocusRing(false)
 
       const element = event.currentTarget
       try {
@@ -185,6 +211,17 @@ export function AbstractlySlider({
     },
     [disabled, updateFromClientY]
   )
+
+  const onFocus = React.useCallback(() => {
+    if (disabled) return
+    if (pointerDownRef.current) return
+    setShowFocusRing(true)
+  }, [disabled])
+
+  const onBlur = React.useCallback(() => {
+    pointerDownRef.current = false
+    setShowFocusRing(false)
+  }, [])
 
   const onPointerMove = React.useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
@@ -246,6 +283,7 @@ export function AbstractlySlider({
       }
 
       event.preventDefault()
+      setShowFocusRing(true)
       commitValue(next)
     },
     [disabled, min, max, step, commitValue]
@@ -282,7 +320,14 @@ export function AbstractlySlider({
 
       <div className="ab-slider-innerplate">
         <div
-          className="rangeslider rangeslider-vertical"
+          className={[
+            'rangeslider',
+            'rangeslider-vertical',
+            showFocusRing ? 'ab-slider-focus-ring' : null,
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          ref={trackRef}
           role="slider"
           aria-orientation="vertical"
           aria-label={ariaLabel}
@@ -296,6 +341,8 @@ export function AbstractlySlider({
               '--ab-slider-fraction': String(fraction),
             } as React.CSSProperties
           }
+          onFocus={onFocus}
+          onBlur={onBlur}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUpOrCancel}
@@ -311,4 +358,3 @@ export function AbstractlySlider({
     </div>
   )
 }
-

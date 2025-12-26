@@ -1,7 +1,21 @@
 .ab-slider {
+  /* Sizing (override via inline CSS variables for compact layouts). */
+  --ab-slider-width: 39px;
+  --ab-slider-min-height: 282px;
+  --ab-slider-innerplate-width: 30px;
+  --ab-slider-innerplate-min-height: 200px;
+  --ab-slider-innerplate-padding-y: 15px;
+  --ab-slider-innerplate-margin-top: 7px;
+  --ab-slider-track-height: 210px;
+  --ab-slider-track-width: 8px;
+  --ab-slider-track-margin-y: 20px;
+  --ab-slider-handle-width: 22px;
+  --ab-slider-handle-height: 53px;
+  --ab-slider-handle-offset-x: -9px;
+
   margin: auto;
-  width: 39px;
-  min-height: 282px;
+  width: var(--ab-slider-width);
+  min-height: var(--ab-slider-min-height);
   border-radius: 4px;
   text-align: center;
 
@@ -10,6 +24,7 @@
   --ab-slider-inner-bg: #f8f8f8;
   --ab-slider-inner-shadow: inset 1px 1px 4px 2px rgba(0, 0, 0, 0.12);
   --ab-slider-tickmarks-url: url("./ab-slider-tickmarks-light.svg");
+  --ab-slider-tickmarks-size: auto;
   --ab-slider-led-wrapper-bg: #ececec;
   --ab-slider-led-wrapper-shadow: inset 1px 1px 2px 0 rgba(0, 0, 0, 0.12);
   --ab-slider-led-off-bg: radial-gradient(#d7e3f2 31%, #c7d5e4 39%, #aab8c8 100%);
@@ -20,6 +35,7 @@
   --ab-slider-handle-bg: #e2e2e2;
   --ab-slider-handle-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.2);
   --ab-slider-handle-filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+  --ab-slider-focus: #30c3dd;
 
   background-image: var(--ab-slider-shell-bg);
 }
@@ -40,20 +56,26 @@
   --ab-slider-handle-bg: #343434;
   --ab-slider-handle-shadow: 0 4px 15px 0 rgba(0, 0, 0, 0.5);
   --ab-slider-handle-filter: none;
+  --ab-slider-focus: #30c3dd;
+}
+
+.ab-slider.ab-slider--no-shell {
+  background-image: none;
 }
 
 .ab-slider .ab-slider-innerplate {
-  margin: 7px auto 0 auto;
-  padding: 15px 0;
+  margin: var(--ab-slider-innerplate-margin-top) auto 0 auto;
+  padding: var(--ab-slider-innerplate-padding-y) 0;
   text-align: center;
-  width: 30px;
-  min-height: 200px;
+  width: var(--ab-slider-innerplate-width);
+  min-height: var(--ab-slider-innerplate-min-height);
   background: var(--ab-slider-inner-bg);
   box-shadow: var(--ab-slider-inner-shadow);
   border-radius: 6px;
   background-image: var(--ab-slider-tickmarks-url);
   background-position: center center;
   background-repeat: no-repeat;
+  background-size: var(--ab-slider-tickmarks-size);
 }
 
 .ab-slider .ab-slider-led-wrapper {
@@ -93,7 +115,7 @@
 
 /* Slider internals (markup is compatible with react-rangeslider, but no dependency is required). */
 .ab-slider .rangeslider {
-  margin: 20px 0;
+  margin: var(--ab-slider-track-margin-y) 0;
   position: relative;
   background: #e6e6e6;
   touch-action: none;
@@ -110,17 +132,13 @@
 
 .ab-slider .rangeslider-vertical {
   margin: auto;
-  height: 210px;
-  max-width: 8px;
+  height: var(--ab-slider-track-height);
+  max-width: var(--ab-slider-track-width);
   background: transparent;
   background-image: var(--ab-slider-track-bg);
   border: 1px solid var(--ab-slider-track-border);
   border-radius: 8px;
   user-select: none;
-
-  /* For positioning without layout reads. */
-  --ab-slider-track-height: 210px;
-  --ab-slider-handle-height: 53px;
 }
 
 .ab-slider .rangeslider-vertical .rangeslider__fill,
@@ -136,9 +154,9 @@
 }
 
 .ab-slider .rangeslider-vertical .rangeslider__handle {
-  width: 22px;
-  height: 53px;
-  left: -9px;
+  width: var(--ab-slider-handle-width);
+  height: var(--ab-slider-handle-height);
+  left: var(--ab-slider-handle-offset-x);
   outline: none;
   top: calc(
     (1 - var(--ab-slider-fraction, 0)) *
@@ -153,6 +171,11 @@
 
 .ab-slider .rangeslider-vertical:focus {
   outline: none;
+}
+
+.ab-slider .rangeslider-vertical.ab-slider-focus-ring:focus {
+  outline: 2px solid var(--ab-slider-focus);
+  outline-offset: 4px;
 }
 
 .ab-slider .rangeslider-vertical[aria-disabled="true"] {

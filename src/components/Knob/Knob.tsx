@@ -99,12 +99,18 @@ export function Knob({
   });
 
   const currentValue = clampNumber(isControlled ? value : uncontrolledValue, min, max);
+  const currentValueRef = React.useRef(currentValue);
+  React.useEffect(() => {
+    currentValueRef.current = currentValue;
+  }, [currentValue]);
 
   const knobSurroundRef = React.useRef<HTMLDivElement | null>(null);
   const knobRef = React.useRef<HTMLDivElement | null>(null);
 
   const dragPointerIdRef = React.useRef<number | null>(null);
   const dragRectRef = React.useRef<DOMRect | null>(null);
+  const pointerDownRef = React.useRef(false);
+  const [showFocusRing, setShowFocusRing] = React.useState(false);
 
   const setValue = React.useCallback(
     (next: number) => {
@@ -116,6 +122,10 @@ export function Knob({
   );
 
   const safeStep = step > 0 ? step : 1;
+  const safeStepRef = React.useRef(safeStep);
+  React.useEffect(() => {
+    safeStepRef.current = safeStep;
+  }, [safeStep]);
   const angleDeg = getAngleFromValue(currentValue, min, max);
   const tickAngleStep = numTicks > 1 ? KNOB_MAX_ANGLE_DEG / (numTicks - 1) : 0;
   const activeTicks = clampNumber(
@@ -142,6 +152,9 @@ export function Knob({
       if (disabled) return;
       if (event.button !== 0 && event.pointerType !== 'touch') return;
 
+      pointerDownRef.current = true;
+      setShowFocusRing(false);
+
       dragPointerIdRef.current = event.pointerId;
       dragRectRef.current = knobSurroundRef.current?.getBoundingClientRect() ?? null;
 
@@ -152,6 +165,36 @@ export function Knob({
     },
     [disabled, updateFromPointer],
   );
+
+  React.useEffect(() => {
+    const element = knobRef.current;
+    if (!element) return;
+
+    const onWheel = (event: WheelEvent) => {
+      if (disabled) return;
+      if (event.deltaY === 0) return;
+
+      event.preventDefault();
+
+      const direction = event.deltaY < 0 ? 1 : -1;
+      const multiplier = event.shiftKey ? 10 : 1;
+      setValue(currentValueRef.current + direction * safeStepRef.current * multiplier);
+    };
+
+    element.addEventListener('wheel', onWheel, { passive: false });
+    return () => element.removeEventListener('wheel', onWheel);
+  }, [disabled, setValue]);
+
+  const handleFocus = React.useCallback(() => {
+    if (disabled) return;
+    if (pointerDownRef.current) return;
+    setShowFocusRing(true);
+  }, [disabled]);
+
+  const handleBlur = React.useCallback(() => {
+    pointerDownRef.current = false;
+    setShowFocusRing(false);
+  }, []);
 
   const handlePointerMove = React.useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
@@ -182,27 +225,33 @@ export function Knob({
         case 'ArrowUp':
         case 'ArrowRight':
           event.preventDefault();
+          setShowFocusRing(true);
           setValue(currentValue + safeStep);
           break;
         case 'ArrowDown':
         case 'ArrowLeft':
           event.preventDefault();
+          setShowFocusRing(true);
           setValue(currentValue - safeStep);
           break;
         case 'PageUp':
           event.preventDefault();
+          setShowFocusRing(true);
           setValue(currentValue + bigStep);
           break;
         case 'PageDown':
           event.preventDefault();
+          setShowFocusRing(true);
           setValue(currentValue - bigStep);
           break;
         case 'Home':
           event.preventDefault();
+          setShowFocusRing(true);
           setValue(min);
           break;
         case 'End':
           event.preventDefault();
+          setShowFocusRing(true);
           setValue(max);
           break;
       }
@@ -222,12 +271,14 @@ export function Knob({
       <div ref={knobSurroundRef} className={styles.knobSurround}>
         <div
           ref={knobRef}
-          className={styles.knob}
+          className={[styles.knob, showFocusRing ? styles.focusRing : ''].filter(Boolean).join(' ')}
           style={{ transform: `rotate(${angleDeg}deg)` }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={stopDragging}
           onPointerCancel={stopDragging}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           role="slider"
           aria-label={ariaLabel}
           aria-valuemin={min}
