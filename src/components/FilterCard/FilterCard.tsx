@@ -93,6 +93,7 @@ const FilterCard = ({
           step={0.1}
           label="Gain"
           value={filter.gain}
+          focusColor={color}
           disabled={disabled || zeroGain}
           onChange={(gain, ended) =>
             onChange({ ...filter, index, gain, ended })
@@ -106,6 +107,7 @@ const FilterCard = ({
           step={0.1}
           label="Q"
           value={filter.q}
+          focusColor={color}
           disabled={disabled || zeroQ}
           onChange={(q, ended) => onChange({ ...filter, index, q, ended })}
         />

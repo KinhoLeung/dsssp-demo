@@ -16,7 +16,8 @@ const SliderInput = ({
   height = 96,
   label,
   log = false,
-  disabled
+  disabled,
+  focusColor
 }: {
   value: number
   onChange: (value: number, ended: boolean) => void
@@ -27,6 +28,7 @@ const SliderInput = ({
   label?: string
   log?: boolean
   disabled?: boolean
+  focusColor?: string
 }) => {
   const dragging = useRef(false)
   const dragStartValue = useRef(value)
@@ -114,6 +116,7 @@ const SliderInput = ({
                 '--ab-slider-innerplate-padding-y': '10px',
                 '--ab-slider-track-margin-y': '10px',
                 '--ab-slider-track-height': `${Math.max(height, 165)}px`,
+                ...(focusColor ? { '--ab-slider-focus': focusColor } : null)
               } as React.CSSProperties
             }
           />

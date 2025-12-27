@@ -154,10 +154,19 @@ export function AbstractlySlider({
   )
 
   const updateFromClientY = React.useCallback(
-    (clientY: number, element: HTMLDivElement) => {
+    (clientY: number, element: HTMLDivElement, pointerOffset = 0) => {
       const rect = element.getBoundingClientRect()
-      const y = clamp(clientY, rect.top, rect.bottom)
-      const normalized = 1 - (y - rect.top) / rect.height
+      const handle = element.querySelector<HTMLElement>('.rangeslider__handle')
+      const handleHeight = handle?.getBoundingClientRect().height ?? 0
+      const halfHandle = handleHeight / 2
+      const minY = rect.top + halfHandle
+      const maxY = rect.bottom - halfHandle
+      const safeMinY = Math.min(minY, maxY)
+      const safeMaxY = Math.max(minY, maxY)
+      const adjustedY = clientY - pointerOffset
+      const y = clamp(adjustedY, safeMinY, safeMaxY)
+      const usableHeight = safeMaxY - safeMinY
+      const normalized = usableHeight === 0 ? 0 : 1 - (y - safeMinY) / usableHeight
       const next = min + normalized * (max - min)
       commitValue(next)
     },
@@ -167,6 +176,7 @@ export function AbstractlySlider({
   const trackRef = React.useRef<HTMLDivElement | null>(null)
   const activePointerIdRef = React.useRef<number | null>(null)
   const pointerDownRef = React.useRef(false)
+  const pointerOffsetRef = React.useRef(0)
   const [showFocusRing, setShowFocusRing] = React.useState(false)
 
   React.useEffect(() => {
@@ -207,6 +217,17 @@ export function AbstractlySlider({
 
       activePointerIdRef.current = event.pointerId
       element.setPointerCapture(event.pointerId)
+
+      pointerOffsetRef.current = 0
+      const handle = element.querySelector<HTMLElement>('.rangeslider__handle')
+      const targetNode = event.target instanceof Node ? event.target : null
+      if (handle && targetNode && handle.contains(targetNode)) {
+        const handleRect = handle.getBoundingClientRect()
+        pointerOffsetRef.current =
+          event.clientY - (handleRect.top + handleRect.height / 2)
+        return
+      }
+
       updateFromClientY(event.clientY, element)
     },
     [disabled, updateFromClientY]
@@ -229,7 +250,7 @@ export function AbstractlySlider({
       if (activePointerIdRef.current == null) return
       if (event.pointerId !== activePointerIdRef.current) return
       event.preventDefault()
-      updateFromClientY(event.clientY, event.currentTarget)
+      updateFromClientY(event.clientY, event.currentTarget, pointerOffsetRef.current)
     },
     [disabled, updateFromClientY]
   )
@@ -239,6 +260,7 @@ export function AbstractlySlider({
       if (activePointerIdRef.current == null) return
       if (event.pointerId !== activePointerIdRef.current) return
       activePointerIdRef.current = null
+      pointerOffsetRef.current = 0
 
       try {
         event.currentTarget.releasePointerCapture(event.pointerId)
