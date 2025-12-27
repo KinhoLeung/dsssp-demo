@@ -17,6 +17,17 @@ import { AuroraText } from '@/components/ui/aurora-text'
 
 const App = () => {
   const navigate = useNavigate()
+  const sendDevLog = async (message: string) => {
+    try {
+      await fetch('/__log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: 'card', message })
+      })
+    } catch (error) {
+      console.warn('Dev log failed.', error)
+    }
+  }
 
   const cards = [
     {
@@ -91,6 +102,17 @@ const App = () => {
   ]
 
   const handleCardClick = async (card: { id: string }) => {
+    if (card.id === '1') {
+      console.log('usb')
+      void sendDevLog('usb')
+    } else if (card.id === '2') {
+      console.log('ble')
+      void sendDevLog('ble')
+    } else if (card.id === '3') {
+      console.log('demo')
+      void sendDevLog('demo')
+    }
+
     const nav = navigator as Navigator & {
       hid?: {
         requestDevice: (options: {

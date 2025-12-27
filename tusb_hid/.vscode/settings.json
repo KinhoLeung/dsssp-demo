@@ -6,7 +6,7 @@
   "idf.openOcdConfigs": [
     "board/esp32s3-builtin.cfg"
   ],
-  "idf.portWin": "detect",
+  "idf.portWin": "COM15",
   "idf.toolsPathWin": "D:\\Espressif",
   "idf.customExtraVars": {
     "IDF_TARGET": "esp32s3"
@@ -16,5 +16,6 @@
     "--background-index",
     "--query-driver=**",
     "--compile-commands-dir=e:\\Desktop\\github\\dsssp-demo\\tusb_hid\\build"
-  ]
+  ],
+  "idf.flashType": "UART"
 }

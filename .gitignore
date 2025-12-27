@@ -29,3 +29,5 @@ ec_private_pkcs8.der
 ec_private.pem
 ec_public.pem
 ec_public_spki.der
+gatt_server_service_table
+tusb_hid
