@@ -10,6 +10,14 @@ function clampNumber(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+function isValidLog10Range(min: number, max: number) {
+  return Number.isFinite(min) && Number.isFinite(max) && min > 0 && max > 0 && max > min;
+}
+
+function log10(value: number) {
+  return Math.log10(value);
+}
+
 function getKnobAngleFromPointer(clientX: number, clientY: number, rect: DOMRect) {
   const knobCenterX = rect.left + rect.width / 2;
   const knobCenterY = rect.top + rect.height / 2;
@@ -40,11 +48,15 @@ function getStepPrecision(step: number) {
   return dotIndex === -1 ? 0 : stepString.length - dotIndex - 1;
 }
 
-function getValueFromAngle(angleDeg: number, min: number, max: number, step: number) {
+function getValueFromAngle(angleDeg: number, min: number, max: number, step: number, logScale: boolean) {
   if (max <= min) return min;
-  if (step <= 0) return clampNumber(min + (angleDeg / KNOB_MAX_ANGLE_DEG) * (max - min), min, max);
+  const normalized = angleDeg / KNOB_MAX_ANGLE_DEG;
+  const useLog10 = logScale && isValidLog10Range(min, max);
+  const raw = useLog10
+    ? Math.pow(10, log10(min) + normalized * (log10(max) - log10(min)))
+    : min + normalized * (max - min);
+  if (step <= 0) return clampNumber(raw, min, max);
 
-  const raw = min + (angleDeg / KNOB_MAX_ANGLE_DEG) * (max - min);
   const steps = Math.round((raw - min) / step);
   const stepped = min + steps * step;
 
@@ -54,9 +66,14 @@ function getValueFromAngle(angleDeg: number, min: number, max: number, step: num
   return clampNumber(rounded, min, max);
 }
 
-function getAngleFromValue(value: number, min: number, max: number) {
+function getAngleFromValue(value: number, min: number, max: number, logScale: boolean) {
   if (max <= min) return 0;
-  return ((value - min) / (max - min)) * KNOB_MAX_ANGLE_DEG;
+  const clamped = clampNumber(value, min, max);
+  const useLog10 = logScale && isValidLog10Range(min, max);
+  const normalized = useLog10
+    ? (log10(clamped) - log10(min)) / (log10(max) - log10(min))
+    : (clamped - min) / (max - min);
+  return clampNumber(normalized, 0, 1) * KNOB_MAX_ANGLE_DEG;
 }
 
 export type KnobProps = {
@@ -65,6 +82,7 @@ export type KnobProps = {
   min?: number;
   max?: number;
   step?: number;
+  log?: boolean;
   numTicks?: number;
   minLabel?: string;
   maxLabel?: string;
@@ -82,6 +100,7 @@ export function Knob({
   min = 0,
   max = 100,
   step = 1,
+  log = false,
   numTicks = 27,
   minLabel = 'Min',
   maxLabel = 'Max',
@@ -126,7 +145,7 @@ export function Knob({
   React.useEffect(() => {
     safeStepRef.current = safeStep;
   }, [safeStep]);
-  const angleDeg = getAngleFromValue(currentValue, min, max);
+  const angleDeg = getAngleFromValue(currentValue, min, max, log);
   const tickAngleStep = numTicks > 1 ? KNOB_MAX_ANGLE_DEG / (numTicks - 1) : 0;
   const activeTicks = clampNumber(
     Math.round((angleDeg / KNOB_MAX_ANGLE_DEG) * numTicks),
@@ -142,9 +161,9 @@ export function Knob({
       const nextAngle = getKnobAngleFromPointer(clientX, clientY, rect);
       if (nextAngle === null) return;
 
-      setValue(getValueFromAngle(nextAngle, min, max, safeStep));
+      setValue(getValueFromAngle(nextAngle, min, max, safeStep, log));
     },
-    [max, min, safeStep, setValue],
+    [log, max, min, safeStep, setValue],
   );
 
   const handlePointerDown = React.useCallback(

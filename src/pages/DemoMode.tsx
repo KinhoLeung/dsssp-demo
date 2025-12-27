@@ -105,7 +105,7 @@ const DemoMode = () => {
     () => DOCK_DATA.navbar[0]?.value ?? 'music'
   )
   const [abstractlySliderValue, setAbstractlySliderValue] = useState(35)
-  const [knobValue, setKnobValue] = useState(35)
+  const [knobValue, setKnobValue] = useState(1000)
   const [eqStates, setEqStates] = useState<Record<string, EqState>>(() => {
     const initial: Record<string, EqState> = {}
     DOCK_PANELS.forEach((panel) => {
@@ -319,12 +319,16 @@ const DemoMode = () => {
                   <Knob
                     value={knobValue}
                     onChange={setKnobValue}
-                    aria-label="Knob"
-                    minLabel="0"
-                    maxLabel="100"
+                    aria-label="Frequency"
+                    min={20}
+                    max={20000}
+                    step={1}
+                    log
+                    minLabel="20Hz"
+                    maxLabel="20kHz"
                   />
                   <div className="text-sm tabular-nums text-slate-500 dark:text-slate-400">
-                    {knobValue}
+                    {knobValue} Hz
                   </div>
                 </div>
               </div>

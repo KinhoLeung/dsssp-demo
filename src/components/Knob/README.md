@@ -28,6 +28,7 @@ export function App() {
 
 - `value?: number` / `defaultValue?: number`：受控/非受控值
 - `min?: number`（默认 `0`）、`max?: number`（默认 `100`）、`step?: number`（默认 `1`）
+- `log?: boolean`（默认 `false`）：开启以 10 为底的对数刻度（适合频率等参数；要求 `min`/`max` 都大于 `0`）
 - `numTicks?: number`（默认 `27`）
 - `minLabel?: string`（默认 `"Min"`）、`maxLabel?: string`（默认 `"Max"`）
 - `theme?: "auto" | "light" | "dark"`（默认 `"auto"`，会跟随页面 `.dark` class）
