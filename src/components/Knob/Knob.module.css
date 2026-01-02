@@ -1,0 +1,179 @@
+@font-face {
+  font-family: "Open Sans";
+  font-style: normal;
+  font-weight: 300;
+  src:
+    local("Open Sans Light"),
+    local("OpenSans-Light"),
+    url(https://fonts.gstatic.com/s/opensans/v18/mem5YaGs126MiZpBA-UN_r8OUuhs.ttf) format("truetype");
+}
+@font-face {
+  font-family: "Varela Round";
+  font-style: normal;
+  font-weight: 400;
+  src:
+    local("Varela Round Regular"),
+    local("VarelaRound-Regular"),
+    url(https://fonts.gstatic.com/s/varelaround/v13/w8gdH283Tvk__Lua32TysjIfp8uK.ttf) format("truetype");
+}
+
+.root {
+  display: inline-block;
+  font-size: 100%;
+  font-family: "Open Sans", sans-serif;
+  text-align: center;
+  user-select: none;
+  --label-radius: 13.5em;
+
+  /* Theme tokens (default: light). */
+  color: var(--knob-text-color);
+  --knob-text-color: #5f5f5f;
+  --knob-surround-border-color: #cfcfcf;
+  --knob-surround-bg: linear-gradient(to top, #e3e3e3 0%, #f7f7f7 100%);
+  --knob-surround-shadow:
+    0 0.2em 0.1em 0.05em rgba(255, 255, 255, 0.65) inset,
+    0 -0.2em 0.1em 0.05em rgba(0, 0, 0, 0.12) inset,
+    0 0.5em 0.65em 0 rgba(0, 0, 0, 0.15);
+  --knob-label-color: rgba(0, 0, 0, 0.45);
+  --knob-tick-color: rgba(0, 0, 0, 0.18);
+  --knob-accent-color: #7abed6;
+  --knob-accent-shadow: 0 0 0.3em 0.08em rgba(0, 108, 255, 0.45);
+  --knob-accent-dot-shadow: 0 0 0.4em 0 rgba(0, 108, 255, 0.35);
+  --knob-focus-color: #30c3dd;
+}
+
+.root.themeLight {
+}
+
+.root.themeAuto {
+}
+
+.root.themeDark,
+:global(.dark) .root.themeAuto {
+  --knob-text-color: #aaa;
+  --knob-surround-border-color: #0e0e0e;
+  --knob-surround-bg: linear-gradient(to top, #1d1d1d 0%, #131313 100%);
+  --knob-surround-shadow:
+    0 0.2em 0.1em 0.05em rgba(255, 255, 255, 0.1) inset,
+    0 -0.2em 0.1em 0.05em rgba(0, 0, 0, 0.5) inset,
+    0 0.5em 0.65em 0 rgba(0, 0, 0, 0.3);
+  --knob-label-color: rgba(255, 255, 255, 0.4);
+  --knob-tick-color: rgba(255, 255, 255, 0.2);
+  --knob-accent-color: #7abed6;
+  --knob-accent-shadow: 0 0 0.3em 0.08em rgba(0, 108, 255, 0.6);
+  --knob-accent-dot-shadow: 0 0 0.4em 0 rgba(0, 108, 255, 0.5);
+  --knob-focus-color: #30c3dd;
+}
+
+.knobSurround {
+  position: relative;
+  width: 14em;
+  height: 14em;
+  border-radius: 50%;
+  border: solid 0.25em var(--knob-surround-border-color);
+  background: var(--knob-surround-bg);
+  box-shadow: var(--knob-surround-shadow);
+}
+
+.knob {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  -webkit-transform: rotate(0deg);
+  -moz-transform: rotate(0deg);
+  -o-transform: rotate(0deg);
+  -ms-transform: rotate(0deg);
+  transform: rotate(0deg);
+  z-index: 10;
+  touch-action: none;
+  cursor: grab;
+  outline: none;
+}
+
+.knob:active {
+  cursor: grabbing;
+}
+
+.knob.focusRing:focus {
+  outline: 2px solid var(--knob-focus-color);
+  outline-offset: 0.55em;
+}
+
+.knob:before {
+  content: "";
+  position: absolute;
+  bottom: 19%;
+  left: 19%;
+  width: 3%;
+  height: 3%;
+  background-color: var(--knob-accent-color);
+  border-radius: 50%;
+  box-shadow: var(--knob-accent-dot-shadow);
+}
+
+.min,
+.max {
+  display: block;
+  font-family: "Varela Round", sans-serif;
+  color: var(--knob-label-color);
+  text-transform: uppercase;
+  -webkit-font-smoothing: antialiased;
+  font-size: 70%;
+  position: absolute;
+  opacity: 0.5;
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+}
+
+.min {
+  transform: translate(-50%, -50%) rotate(-135deg) translateY(calc(-1 * var(--label-radius))) rotate(135deg);
+}
+
+.max {
+  transform: translate(-50%, -50%) rotate(135deg) translateY(calc(-1 * var(--label-radius))) rotate(-135deg);
+}
+
+.tick {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  overflow: visible;
+}
+
+.tick:after {
+  content: "";
+  width: 0.08em;
+  height: 0.6em;
+  background-color: var(--knob-tick-color);
+  position: absolute;
+  top: -1.5em;
+  left: 50%;
+  -webkit-transition: all 180ms ease-out;
+  -moz-transition: all 180ms ease-out;
+  -o-transition: all 180ms ease-out;
+  transition: all 180ms ease-out;
+}
+
+.activeTick:after {
+  background-color: var(--knob-accent-color);
+  box-shadow: var(--knob-accent-shadow);
+  -webkit-transition: all 50ms ease-in;
+  -moz-transition: all 50ms ease-in;
+  -o-transition: all 50ms ease-in;
+  transition: all 50ms ease-in;
+}
+
+.knob {
+  background-image: url("./noise.png");
+}
+
+.ticks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
