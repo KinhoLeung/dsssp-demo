@@ -9,7 +9,19 @@ import {
 import { useMemo, useState } from 'react'
 import 'dsssp/font'
 
-import SelectArrowIcon from '../../assets/select-arrow.svg?react'
+const SelectArrowIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M19 9l-7 7-7-7" />
+  </svg>
+)
 
 const isSafari = () => {
   const ua = navigator.userAgent
