@@ -21,18 +21,11 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [svgr(), react()],
     base: getBase(mode),
-    // resolve: {
-    //   alias: [
-    //     {
-    //       find: 'dsssp/font',
-    //       replacement: path.resolve(__dirname, '../dsssp-io/dist/index.css')
-    //     },
-    //     {
-    //       find: 'dsssp',
-    //       replacement: path.resolve(__dirname, '../dsssp-io/dist')
-    //     }
-    //   ]
-    // },
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
+    },
     server: {
       port: 3003,
       open: true,
