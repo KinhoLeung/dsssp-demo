@@ -6,6 +6,7 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { createHashRouter, RouterProvider } from 'react-router-dom'
 
 import App from './App.tsx'
+import Changelog from './pages/Changelog.tsx'
 import Docs from './pages/Docs.tsx'
 import './main.css'
 
@@ -25,6 +26,10 @@ export const router = createHashRouter([
       {
         path: 'docs',
         element: <Docs />
+      },
+      {
+        path: 'changelog',
+        element: <Changelog />
       }
     ]
   }

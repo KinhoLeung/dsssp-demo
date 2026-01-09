@@ -13,7 +13,8 @@ import {
 } from '@/components/ui/resizable-navbar'
 
 const navItems = [
-  { name: 'Docs', link: '#/docs' }
+  { name: 'Docs', link: '#/docs' },
+  { name: 'Changelog', link: '#/changelog' }
 ]
 
 function App() {
