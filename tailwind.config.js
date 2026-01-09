@@ -3,6 +3,7 @@ module.exports = {
     darkMode: ['class'],
     content: ['./src/**/*.{js,jsx,ts,tsx}'],
   plugins: [
+    require('lightswind/plugin'),
     function ({ addBase, theme }) {
       const colors = theme('colors')
       const variables = Object.entries(colors).reduce((acc, [key, value]) => {
