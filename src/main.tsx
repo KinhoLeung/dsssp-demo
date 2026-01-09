@@ -6,8 +6,7 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { createHashRouter, RouterProvider } from 'react-router-dom'
 
 import App from './App.tsx'
-import DemoMode from './pages/DemoMode.tsx'
-
+import Docs from './pages/Docs.tsx'
 import './main.css'
 
 function fallbackRender({ error }: { error: Error }) {
@@ -24,8 +23,8 @@ export const router = createHashRouter([
         element: <div />
       },
       {
-        path: 'demo-mode',
-        element: <DemoMode />
+        path: 'docs',
+        element: <Docs />
       }
     ]
   }

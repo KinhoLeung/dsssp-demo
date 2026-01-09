@@ -7,16 +7,13 @@ import {
   MobileNavMenu,
   MobileNavToggle,
   Navbar,
-  NavbarButton,
   NavbarLogo,
   NavBody,
   NavItems,
 } from '@/components/ui/resizable-navbar'
 
 const navItems = [
-  { name: 'Home', link: '#/' },
-  { name: 'Demo Mode', link: '#/demo-mode' },
-  { name: 'Docs', link: 'https://dsssp.io' }
+  { name: 'Docs', link: '#/docs' }
 ]
 
 function App() {
@@ -28,14 +25,7 @@ function App() {
         <NavBody>
           <NavbarLogo />
           <NavItems items={navItems} />
-          <div className="relative z-20 flex items-center gap-2">
-            <NavbarButton href="https://github.com/numberonebot/dsssp">
-              GitHub
-            </NavbarButton>
-            <NavbarButton href="#/demo-mode" variant="dark">
-              Try Demo
-            </NavbarButton>
-          </div>
+          <div className="relative z-20 flex items-center gap-2" />
         </NavBody>
 
         <MobileNav>
@@ -51,20 +41,12 @@ function App() {
               <a
                 key={item.link}
                 href={item.link}
-                className="text-sm font-medium text-neutral-700 dark:text-neutral-200"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground"
                 onClick={() => setIsOpen(false)}
               >
                 {item.name}
               </a>
             ))}
-            <div className="flex w-full flex-col gap-2">
-              <NavbarButton href="https://github.com/numberonebot/dsssp">
-                GitHub
-              </NavbarButton>
-              <NavbarButton href="#/demo-mode" variant="dark">
-                Try Demo
-              </NavbarButton>
-            </div>
           </MobileNavMenu>
         </MobileNav>
       </Navbar>
