@@ -17,11 +17,17 @@ function fallbackRender({ error }: { error: Error }) {
 export const router = createHashRouter([
   {
     path: '/',
-    element: <App />
-  },
-  {
-    path: '/demo-mode',
-    element: <DemoMode />
+    element: <App />,
+    children: [
+      {
+        index: true,
+        element: <div />
+      },
+      {
+        path: 'demo-mode',
+        element: <DemoMode />
+      }
+    ]
   }
 ])
 
