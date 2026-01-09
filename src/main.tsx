@@ -6,6 +6,7 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { createHashRouter, RouterProvider } from 'react-router-dom'
 
 import App from './App.tsx'
+import DemoMode from './pages/DemoMode.tsx'
 
 import './main.css'
 
@@ -17,6 +18,10 @@ export const router = createHashRouter([
   {
     path: '/',
     element: <App />
+  },
+  {
+    path: '/demo-mode',
+    element: <DemoMode />
   }
 ])
 
