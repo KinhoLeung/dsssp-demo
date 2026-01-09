@@ -40,6 +40,7 @@ export interface CodeHoverCardsProps {
   onCardHover?: (card: CardData) => void;
   disabled?: boolean;
   showBorder?: boolean;
+  showCode?: boolean;
   theme?: 'normal' | 'dark'; // retained for fallback
 }
 
@@ -69,6 +70,7 @@ const CodeHoverCards: React.FC<CodeHoverCardsProps> = ({
   onCardHover,
   disabled = false,
   showBorder = true,
+  showCode = true,
   theme = 'normal',
 }) => {
   const [mousePositions, setMousePositions] = useState<{ [key: string]: { x: number; y: number } }>({});
@@ -124,8 +126,8 @@ const CodeHoverCards: React.FC<CodeHoverCardsProps> = ({
   };
 
   return (
-    <div className={cn('w-full flex items-center justify-center px-0 py-4 bg-background text-foreground', className)}>
-      <div className="container mx-auto">
+    <div className={cn('w-full flex items-center justify-center px-0 py-4 text-foreground', className)}>
+      <div className="w-full">
         <div className={cn('grid', getColumnClass())} style={{ gap: cardGap }}>
           {cards.map((card) => {
             const IconComponent = card.icon;
@@ -170,38 +172,40 @@ const CodeHoverCards: React.FC<CodeHoverCardsProps> = ({
                   <div className="absolute inset-0 pointer-events-none z-[5]" />
 
                   {/* Character background */}
-                  <div
-                    className="absolute inset-0 font-mono text-sm leading-tight opacity-0 group-hover:opacity-100 transition-opacity duration-500 overflow-hidden break-all text-foreground"
-                    style={{
-                      WebkitMaskImage:
-                        'radial-gradient(' +
-                        maskRadius +
-                        'px circle at ' +
-                        position.x +
-                        'px ' +
-                        position.y +
-                        'px, #000 20%, rgba(0, 0, 0, 0.25), transparent)',
-                      maskImage:
-                        'radial-gradient(' +
-                        maskRadius +
-                        'px circle at ' +
-                        position.x +
-                        'px ' +
-                        position.y +
-                        'px, #000 20%, rgba(0, 0, 0, 0.25), transparent)',
-                      transform: 'scale(1.025)',
-                      transitionDuration: animationDuration + 's',
-                    }}
-                  >
-                    {randomText}
-                  </div>
+                  {showCode && (
+                    <div
+                      className="absolute inset-0 font-mono text-sm leading-tight opacity-0 group-hover:opacity-100 transition-opacity duration-500 overflow-hidden break-all text-foreground"
+                      style={{
+                        WebkitMaskImage:
+                          'radial-gradient(' +
+                          maskRadius +
+                          'px circle at ' +
+                          position.x +
+                          'px ' +
+                          position.y +
+                          'px, #000 20%, rgba(0, 0, 0, 0.25), transparent)',
+                        maskImage:
+                          'radial-gradient(' +
+                          maskRadius +
+                          'px circle at ' +
+                          position.x +
+                          'px ' +
+                          position.y +
+                          'px, #000 20%, rgba(0, 0, 0, 0.25), transparent)',
+                        transform: 'scale(1.025)',
+                        transitionDuration: animationDuration + 's',
+                      }}
+                    >
+                      {randomText}
+                    </div>
+                  )}
                 </div>
 
                 {/* Card info */}
                 {(card.title || card.description) && (
                   <div className="mt-4 text-center">
                     {card.title && (
-                      <h3 className="text-lg font-semibold text-foreground">{card.title}</h3>
+                      <h3 className="text-xl font-semibold text-foreground">{card.title}</h3>
                     )}
                     {card.description && (
                       <p className="text-sm text-muted-foreground">{card.description}</p>

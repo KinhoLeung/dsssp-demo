@@ -7,7 +7,9 @@ import { createHashRouter, RouterProvider } from 'react-router-dom'
 
 import App from './App.tsx'
 import Changelog from './pages/Changelog.tsx'
+import DemoMode from './pages/DemoMode.tsx'
 import Docs from './pages/Docs.tsx'
+import Home from './pages/Home.tsx'
 import './main.css'
 
 function fallbackRender({ error }: { error: Error }) {
@@ -21,7 +23,7 @@ export const router = createHashRouter([
     children: [
       {
         index: true,
-        element: <div />
+        element: <Home />
       },
       {
         path: 'docs',
@@ -30,6 +32,10 @@ export const router = createHashRouter([
       {
         path: 'changelog',
         element: <Changelog />
+      },
+      {
+        path: 'demo-mode',
+        element: <DemoMode />
       }
     ]
   }
