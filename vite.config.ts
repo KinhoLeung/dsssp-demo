@@ -4,6 +4,46 @@ import path from 'path'
 import { defineConfig } from 'vite'
 import svgr from 'vite-plugin-svgr'
 
+const logProxyPlugin = () => ({
+  name: 'log-proxy',
+  configureServer(server: { middlewares: { use: Function } }) {
+    server.middlewares.use('/__log', (req: any, res: any) => {
+      if (req.method !== 'POST') {
+        res.statusCode = 405
+        res.end()
+        return
+      }
+
+      let body = ''
+      req.on('data', (chunk: Buffer) => {
+        body += chunk.toString()
+        if (body.length > 1_000_000) {
+          res.statusCode = 413
+          res.end()
+          req.destroy()
+        }
+      })
+
+      req.on('end', () => {
+        try {
+          const payload = JSON.parse(body || '{}')
+          const level = typeof payload.level === 'string' ? payload.level : 'log'
+          const args = Array.isArray(payload.args) ? payload.args : [payload.args]
+          const ts = payload.ts ? new Date(payload.ts).toISOString() : new Date().toISOString()
+          const prefix = `[web:${level}] ${ts}`
+          const logger = (console as any)[level] || console.log
+          logger(prefix, ...args)
+        } catch {
+          console.log('[web:log] invalid payload')
+        }
+
+        res.statusCode = 204
+        res.end()
+      })
+    })
+  }
+})
+
 const getBase = (mode: string) => {
   switch (mode) {
     case 'github':
@@ -19,7 +59,7 @@ const getBase = (mode: string) => {
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   return {
-    plugins: [svgr(), react()],
+    plugins: [svgr(), react(), logProxyPlugin()],
     base: getBase(mode),
     resolve: {
       alias: {

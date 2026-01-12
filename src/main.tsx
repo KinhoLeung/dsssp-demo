@@ -1,5 +1,7 @@
 import '@fontsource/poppins/index.css'
 
+import './utils/consoleProxy'
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ErrorBoundary } from 'react-error-boundary'
