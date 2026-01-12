@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router-dom'
 
 import CodeHoverCards from '@/components/lightswind/code-hover-cards'
 import type { CardData } from '@/components/lightswind/code-hover-cards'
+import {
+  BLE_DEVICE_PROFILES,
+  HID_DEVICE_PROFILES,
+  uniqueBleServices,
+} from '@/configs/deviceProfiles'
 
 const cards = [
   {
@@ -31,7 +36,15 @@ function Home() {
         window.alert('当前浏览器不支持 WebHID。')
         return
       }
-      navigator.hid.requestDevice({ filters: [] })
+      const hidFilters = HID_DEVICE_PROFILES.map((profile) => ({
+        vendorId: profile.vendorId,
+        productId: profile.productId,
+      }))
+      if (hidFilters.length === 0) {
+        window.alert('未配置可用的 HID 设备。')
+        return
+      }
+      navigator.hid.requestDevice({ filters: hidFilters })
       return
     }
     if (card.id === 'ble') {
@@ -39,7 +52,17 @@ function Home() {
         window.alert('当前浏览器不支持 WebBLE。')
         return
       }
-      navigator.bluetooth.requestDevice({ acceptAllDevices: true })
+      const bleFilters = BLE_DEVICE_PROFILES.map((profile) => ({
+        services: [profile.service],
+      }))
+      if (bleFilters.length === 0) {
+        window.alert('未配置可用的 BLE 设备。')
+        return
+      }
+      navigator.bluetooth.requestDevice({
+        filters: bleFilters,
+        optionalServices: uniqueBleServices(),
+      })
       return
     }
     if (card.id === 'demo-mode') {
