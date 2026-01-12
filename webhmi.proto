@@ -1,0 +1,406 @@
+syntax = "proto3";
+
+package webhmi;
+
+// Payload protobuf definitions for `protocol.md`.
+// - Auth (0x0000): payload stays raw binary (not protobuf).
+// - Other msg_id: payload uses protobuf messages defined in this file.
+
+enum FilterType {
+  Peak = 0;
+  LowShelf = 1;
+  HighShelf = 2;
+  LowPass = 3;
+  HighPass = 4;
+  BandPass = 5;
+  Notch = 6;
+}
+
+enum InputSelect {
+  BT = 0;
+  UDISK = 1;
+  SPDIF = 2;
+  COA = 3;
+  USB_Audio = 4;
+  Auto_Input = 5;
+  Input1_BGM = 6;
+  Input2_aux = 7;
+}
+
+enum FbxMode {
+  Off = 0;
+  Level1 = 1;
+  Level2 = 2;
+  Level3 = 3;
+  Level4 = 4;
+  Level5 = 5;
+  Level6 = 6;
+}
+
+enum EqTarget {
+  MUSIC = 0;
+  MIC_A = 1;
+  MIC_B = 2;
+  REVERB = 3;
+  ECHO = 4;
+  MAIN_OUTPUT = 5;
+  SUB_OUTPUT = 6;
+  CENTER = 7;
+  SURROUND = 8;
+}
+
+// ======== Full DB schema (GetDbResponse.db) ========
+
+message EqPoint {
+  optional uint32 index = 1;
+  optional FilterType type = 2;
+  optional uint32 freq = 3; // Hz
+  optional float gain = 4;
+  optional float q = 5;
+
+  optional FilterType defaultType = 6;
+  optional uint32 defaultFreq = 7; // Hz
+  optional float defaultGain = 8;
+  optional float defaultQ = 9;
+}
+
+message Eq {
+  repeated EqPoint point = 1;
+  optional bool bypass = 2;
+
+  // UI helper lists (enum names are used in JSON examples).
+  repeated FilterType highPassTypeList = 3;
+  repeated FilterType typeList = 4;
+
+  // Note: `protocol.md` example uses `lowPasstypeList` (typo). The intended field is `lowPassTypeList`.
+  repeated FilterType lowPassTypeList = 5;
+}
+
+message NoiseGate {
+  optional float gate = 1;
+  optional uint32 frameTime = 2;
+  optional uint32 atkTime = 3;
+  optional uint32 relTime = 4;
+}
+
+message Compressor {
+  optional float threshold = 1;
+  optional uint32 ratio = 2;
+  optional uint32 attack = 3;
+  optional uint32 release = 4;
+  optional bool bypass = 5;
+}
+
+message SystemDb {
+  optional string bleName = 1;
+  optional bool panelLock = 2;
+  optional bool mute = 3;
+
+  optional uint32 musicMaxVolume = 4;
+  optional uint32 micMaxVolume = 5;
+  optional uint32 effectMaxVolume = 6;
+
+  optional uint32 musicDefaultVolume = 7;
+  optional uint32 micDefaultVolume = 8;
+  optional uint32 effectDefaultVolume = 9;
+
+  optional bool useDefaultVolume = 10;
+
+  repeated string modeList = 11;
+  optional uint32 currentModeIndex = 12;
+}
+
+message MusicDb {
+  optional Eq eq = 1;
+
+  optional int32 inputGain = 2;
+  optional int32 btGain = 3;
+  optional int32 udiskGain = 4;
+  optional float musicPitch = 5;
+  optional InputSelect inputSelect = 6;
+
+  optional float bass = 7;
+  optional float mid = 8;
+  optional uint32 midFreq = 9; // Hz
+  optional float treble = 10;
+
+  optional NoiseGate noise = 11;
+}
+
+message MicEqDb {
+  optional Eq eq = 1;
+}
+
+message MicDb {
+  optional MicEqDb micAEq = 1;
+  optional MicEqDb micBEq = 2;
+  optional bool micEqJointDebugging = 3;
+
+  optional uint32 micAVolume = 4;
+  optional uint32 micBVolume = 5;
+  optional FbxMode micFBX = 6;
+
+  optional float bass = 7;
+  optional float mid = 8;
+  optional uint32 midFreq = 9; // Hz
+  optional float treble = 10;
+
+  optional NoiseGate noise = 11;
+  optional Compressor compressor = 12;
+}
+
+message ReverbDb {
+  optional Eq eq = 1;
+
+  optional uint32 reverbLevel = 2;
+  optional uint32 micDirectLevel = 3;
+  optional uint32 reverbPredelay = 4;
+  optional uint32 reverbDecay = 5;
+}
+
+message EchoDb {
+  optional Eq eq = 1;
+
+  optional uint32 echoLevel = 2;
+  optional uint32 micDirectLevel = 3;
+  optional uint32 echoPredelay = 4;
+  optional uint32 echoDelayTime = 5;
+  optional uint32 echoRepeat = 6;
+  optional uint32 echoRightPredelay = 7;
+  optional uint32 echoRightDelay = 8;
+}
+
+message StereoOutput {
+  optional float leftChannelVolume = 1;
+  optional float rightChannelVolume = 2;
+  optional float leftDelay = 3;
+  optional float rightDelay = 4;
+  optional bool leftMute = 5;
+  optional bool rightMute = 6;
+}
+
+message MonoOutput {
+  optional float volume = 1;
+  optional float delay = 2;
+  optional bool mute = 3;
+}
+
+message Mixer {
+  optional uint32 micDirectLevel = 1;
+  optional uint32 musicLevel = 2;
+  optional uint32 reverbLevel = 3;
+  optional uint32 echoLevel = 4;
+}
+
+message MainOutputDb {
+  optional Eq eq = 1;
+  optional StereoOutput output = 2;
+  optional Mixer mixer = 3;
+  optional Compressor compressor = 4;
+}
+
+message SubOutputDb {
+  optional Eq eq = 1;
+  optional MonoOutput output = 2;
+  optional Mixer mixer = 3;
+  optional Compressor compressor = 4;
+}
+
+message CenterDb {
+  optional Eq eq = 1;
+  optional MonoOutput output = 2;
+  optional Mixer mixer = 3;
+  optional Compressor compressor = 4;
+}
+
+message SurroundDb {
+  optional Eq eq = 1;
+  optional StereoOutput output = 2;
+  optional Mixer mixer = 3;
+  optional Compressor compressor = 4;
+}
+
+message DeviceDb {
+  optional SystemDb system = 1;
+  optional MusicDb music = 2;
+  optional MicDb mic = 3;
+  optional ReverbDb reverb = 4;
+  optional EchoDb echo = 5;
+  optional MainOutputDb mainOutput = 6;
+  optional SubOutputDb subOutput = 7;
+  optional CenterDb center = 8;
+  optional SurroundDb surround = 9;
+}
+
+message GetDbRequest {}
+
+message GetDbResponse {
+  optional string deviceId = 1;
+  optional string firmwareVersion = 2;
+  optional DeviceDb db = 3;
+}
+
+// ======== Patch requests (Set*) ========
+
+message EqPointPatch {
+  optional uint32 index = 1;
+  optional FilterType type = 2;
+  optional uint32 freq = 3; // Hz
+  optional float gain = 4;
+  optional float q = 5;
+}
+
+message EqPatch {
+  optional EqTarget target = 1;
+  optional bool bypass = 2;
+  repeated EqPointPatch point = 3;
+}
+
+message SetEqRequest {
+  repeated EqPatch eq = 1;
+}
+
+message NoiseGatePatch {
+  optional int32 gate = 1;
+  optional uint32 frameTime = 2;
+  optional uint32 atkTime = 3;
+  optional uint32 relTime = 4;
+}
+
+message CompressorPatch {
+  optional float threshold = 1;
+  optional uint32 ratio = 2;
+  optional uint32 attack = 3;
+  optional uint32 release = 4;
+  optional bool bypass = 5;
+}
+
+message StereoOutputPatch {
+  optional float leftChannelVolume = 1;
+  optional float rightChannelVolume = 2;
+  optional float leftDelay = 3;
+  optional float rightDelay = 4;
+  optional bool leftMute = 5;
+  optional bool rightMute = 6;
+}
+
+message MonoOutputPatch {
+  optional float volume = 1;
+  optional float delay = 2;
+  optional bool mute = 3;
+}
+
+message MixerPatch {
+  optional uint32 micDirectLevel = 1;
+  optional uint32 musicLevel = 2;
+  optional uint32 reverbLevel = 3;
+  optional uint32 echoLevel = 4;
+}
+
+message SetSystemRequest {
+  optional string bleName = 1;
+  optional bool panelLock = 2;
+  optional bool mute = 3;
+
+  optional uint32 musicMaxVolume = 4;
+  optional uint32 micMaxVolume = 5;
+  optional uint32 effectMaxVolume = 6;
+
+  optional uint32 musicDefaultVolume = 7;
+  optional uint32 micDefaultVolume = 8;
+  optional uint32 effectDefaultVolume = 9;
+
+  optional bool useDefaultVolume = 10;
+  optional uint32 currentModeIndex = 11;
+}
+
+message SetMusicRequest {
+  optional int32 inputGain = 1;
+  optional int32 btGain = 2;
+  optional int32 udiskGain = 3;
+  optional float musicPitch = 4;
+  optional InputSelect inputSelect = 5;
+
+  optional float bass = 6;
+  optional float mid = 7;
+  optional uint32 midFreq = 8; // Hz
+  optional float treble = 9;
+
+  optional NoiseGatePatch noise = 10;
+}
+
+message SetMicRequest {
+  optional bool micEqJointDebugging = 1;
+  optional uint32 micAVolume = 2;
+  optional uint32 micBVolume = 3;
+  optional FbxMode micFBX = 4;
+
+  optional float bass = 5;
+  optional float mid = 6;
+  optional uint32 midFreq = 7; // Hz
+  optional float treble = 8;
+
+  optional NoiseGatePatch noise = 9;
+  optional CompressorPatch compressor = 10;
+}
+
+message SetReverbRequest {
+  optional uint32 reverbLevel = 1;
+  optional uint32 micDirectLevel = 2;
+  optional uint32 reverbPredelay = 3;
+  optional uint32 reverbDecay = 4;
+}
+
+message SetEchoRequest {
+  optional uint32 echoLevel = 1;
+  optional uint32 micDirectLevel = 2;
+  optional uint32 echoPredelay = 3;
+  optional uint32 echoDelayTime = 4;
+  optional uint32 echoRepeat = 5;
+  optional uint32 echoRightPredelay = 6;
+  optional uint32 echoRightDelay = 7;
+}
+
+message SetMainOutputRequest {
+  optional StereoOutputPatch output = 1;
+  optional MixerPatch mixer = 2;
+  optional CompressorPatch compressor = 3;
+}
+
+message SetSubOutputRequest {
+  optional MonoOutputPatch output = 1;
+  optional MixerPatch mixer = 2;
+  optional CompressorPatch compressor = 3;
+}
+
+// Protocol.md currently has no dedicated msg_id for these, but the DB contains these sections.
+message SetCenterRequest {
+  optional MonoOutputPatch output = 1;
+  optional MixerPatch mixer = 2;
+  optional CompressorPatch compressor = 3;
+}
+
+message SetSurroundRequest {
+  optional StereoOutputPatch output = 1;
+  optional MixerPatch mixer = 2;
+  optional CompressorPatch compressor = 3;
+}
+
+message SwitchCurrentModeRequest {
+  optional uint32 currentModeIndex = 1;
+}
+
+message SwitchCurrentModeResponse {
+  optional uint32 currentModeIndex = 1;
+  optional DeviceDb db = 2;
+}
+
+message ChangeModeParamRequest {
+  optional uint32 currentModeIndex = 1;
+  optional DeviceDb db = 2;
+}
+
+message ResetEqRequest {
+  optional EqTarget target = 1;
+  repeated uint32 index = 2; // empty = reset all points
+}

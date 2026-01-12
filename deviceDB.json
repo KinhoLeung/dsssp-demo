@@ -1,0 +1,610 @@
+{
+    "deviceId": "device demo",
+    "firmwareVersion": "1.0.0",
+    "db": {
+        "system": {
+            "bleName": "WebHMI",
+            "panelLock": false,
+            "mute": false,
+            "musicMaxVolume": 80,
+            "micMaxVolume": 80,
+            "effectMaxVolume": 80,
+            "musicDefaultVolume": 60,
+            "micDefaultVolume": 60,
+            "effectDefaultVolume": 60,
+            "useDefaultVolume": false,
+            "modeList": [
+                "mode1",
+                "mode2",
+                "mode3"
+            ],
+            "currentModeIndex": 0
+        },
+        "music": {
+            "eq": {
+                "point": [
+                    {
+                        "index": 0,
+                        "type": "HighPass",
+                        "freq": 20,
+                        "gain": 0.0,
+                        "q": 0.7,
+                        "defaultType": "HighPass",
+                        "defaultFreq": 20,
+                        "defaultGain": 0.0,
+                        "defaultQ": 0.7
+                    },
+                    {
+                        "index": 1,
+                        "type": "Peak",
+                        "freq": 666,
+                        "gain": 6.0,
+                        "q": 1.0,
+                        "defaultType": "Peak",
+                        "defaultFreq": 666,
+                        "defaultGain": 6.0,
+                        "defaultQ": 1.0
+                    },
+                    {
+                        "index": 2,
+                        "type": "LowPass",
+                        "freq": 20000,
+                        "gain": 0.0,
+                        "q": 0.7,
+                        "defaultType": "LowPass",
+                        "defaultFreq": 20000,
+                        "defaultGain": 0.0,
+                        "defaultQ": 0.7
+                    }
+                ],
+                "bypass": false,
+                "highPassTypeList": [
+                    "HighPass"
+                ],
+                "typeList": [
+                    "Peak",
+                    "LowShelf",
+                    "HighShelf"
+                ],
+                "lowPassTypeList": [
+                    "LowPass"
+                ]
+            },
+            "inputGain": 0,
+            "btGain": 0,
+            "udiskGain": 0,
+            "musicPitch": 0.0,
+            "inputSelect": "BT",
+            "bass": 0.0,
+            "mid": 0.0,
+            "midFreq": 1000,
+            "treble": 0.0,
+            "noise": {
+                "gate": -50.0,
+                "frameTime": 2000,
+                "atkTime": 500,
+                "relTime": 300
+            }
+        },
+        "mic": {
+            "micAEq": {
+                "eq": {
+                    "point": [
+                        {
+                            "index": 0,
+                            "type": "HighPass",
+                            "freq": 20,
+                            "gain": 0.0,
+                            "q": 0.7,
+                            "defaultType": "HighPass",
+                            "defaultFreq": 20,
+                            "defaultGain": 0.0,
+                            "defaultQ": 0.7
+                        },
+                        {
+                            "index": 1,
+                            "type": "Peak",
+                            "freq": 666,
+                            "gain": 6.0,
+                            "q": 1.0,
+                            "defaultType": "Peak",
+                            "defaultFreq": 666,
+                            "defaultGain": 6.0,
+                            "defaultQ": 1.0
+                        },
+                        {
+                            "index": 2,
+                            "type": "LowPass",
+                            "freq": 20000,
+                            "gain": 0.0,
+                            "q": 0.7,
+                            "defaultType": "LowPass",
+                            "defaultFreq": 20000,
+                            "defaultGain": 0.0,
+                            "defaultQ": 0.7
+                        }
+                    ],
+                    "bypass": false,
+                    "highPassTypeList": [
+                        "HighPass"
+                    ],
+                    "typeList": [
+                        "Peak",
+                        "LowShelf",
+                        "HighShelf"
+                    ],
+                    "lowPassTypeList": [
+                        "LowPass"
+                    ]
+                }
+            },
+            "micBEq": {
+                "eq": {
+                    "point": [
+                        {
+                            "index": 0,
+                            "type": "HighPass",
+                            "freq": 20,
+                            "gain": 0.0,
+                            "q": 0.7,
+                            "defaultType": "HighPass",
+                            "defaultFreq": 20,
+                            "defaultGain": 0.0,
+                            "defaultQ": 0.7
+                        },
+                        {
+                            "index": 1,
+                            "type": "Peak",
+                            "freq": 666,
+                            "gain": 6.0,
+                            "q": 1.0,
+                            "defaultType": "Peak",
+                            "defaultFreq": 666,
+                            "defaultGain": 6.0,
+                            "defaultQ": 1.0
+                        },
+                        {
+                            "index": 2,
+                            "type": "LowPass",
+                            "freq": 20000,
+                            "gain": 0.0,
+                            "q": 0.7,
+                            "defaultType": "LowPass",
+                            "defaultFreq": 20000,
+                            "defaultGain": 0.0,
+                            "defaultQ": 0.7
+                        }
+                    ],
+                    "bypass": false,
+                    "highPassTypeList": [
+                        "HighPass"
+                    ],
+                    "typeList": [
+                        "Peak",
+                        "LowShelf",
+                        "HighShelf"
+                    ],
+                    "lowPassTypeList": [
+                        "LowPass"
+                    ]
+                }
+            },
+            "micEqJointDebugging": false,
+            "micAVolume": 75,
+            "micBVolume": 75,
+            "micFBX": 0,
+            "bass": 0.0,
+            "mid": 0.0,
+            "midFreq": 1000,
+            "treble": 0.0,
+            "noise": {
+                "gate": -50.0,
+                "frameTime": 2000,
+                "atkTime": 500,
+                "relTime": 300
+            },
+            "compressor": {
+                "threshold": -1.0,
+                "ratio": 10,
+                "attack": 50,
+                "release": 200,
+                "bypass": false
+            }
+        },
+        "reverb": {
+            "eq": {
+                "point": [
+                    {
+                        "index": 0,
+                        "type": "HighPass",
+                        "freq": 20,
+                        "gain": 0.0,
+                        "q": 0.7,
+                        "defaultType": "HighPass",
+                        "defaultFreq": 20,
+                        "defaultGain": 0.0,
+                        "defaultQ": 0.7
+                    },
+                    {
+                        "index": 1,
+                        "type": "Peak",
+                        "freq": 666,
+                        "gain": 6.0,
+                        "q": 1.0,
+                        "defaultType": "Peak",
+                        "defaultFreq": 666,
+                        "defaultGain": 6.0,
+                        "defaultQ": 1.0
+                    },
+                    {
+                        "index": 2,
+                        "type": "LowPass",
+                        "freq": 20000,
+                        "gain": 0.0,
+                        "q": 0.7,
+                        "defaultType": "LowPass",
+                        "defaultFreq": 20000,
+                        "defaultGain": 0.0,
+                        "defaultQ": 0.7
+                    }
+                ],
+                "bypass": false,
+                "highPassTypeList": [
+                    "HighPass"
+                ],
+                "typeList": [
+                    "Peak",
+                    "LowShelf",
+                    "HighShelf"
+                ],
+                "lowPassTypeList": [
+                    "LowPass"
+                ]
+            },
+            "reverbLevel": 100,
+            "micDirectLevel": 100,
+            "reverbPredelay": 20,
+            "reverbDecay": 2625
+        },
+        "echo": {
+            "eq": {
+                "point": [
+                    {
+                        "index": 0,
+                        "type": "HighPass",
+                        "freq": 20,
+                        "gain": 0.0,
+                        "q": 0.7,
+                        "defaultType": "HighPass",
+                        "defaultFreq": 20,
+                        "defaultGain": 0.0,
+                        "defaultQ": 0.7
+                    },
+                    {
+                        "index": 1,
+                        "type": "Peak",
+                        "freq": 666,
+                        "gain": 6.0,
+                        "q": 1.0,
+                        "defaultType": "Peak",
+                        "defaultFreq": 666,
+                        "defaultGain": 6.0,
+                        "defaultQ": 1.0
+                    },
+                    {
+                        "index": 2,
+                        "type": "LowPass",
+                        "freq": 20000,
+                        "gain": 0.0,
+                        "q": 0.7,
+                        "defaultType": "LowPass",
+                        "defaultFreq": 20000,
+                        "defaultGain": 0.0,
+                        "defaultQ": 0.7
+                    }
+                ],
+                "bypass": false,
+                "highPassTypeList": [
+                    "HighPass"
+                ],
+                "typeList": [
+                    "Peak",
+                    "LowShelf",
+                    "HighShelf"
+                ],
+                "lowPassTypeList": [
+                    "LowPass"
+                ]
+            },
+            "echoLevel": 100,
+            "micDirectLevel": 100,
+            "echoPredelay": 0,
+            "echoDelayTime": 200,
+            "echoRepeat": 60,
+            "echoRightPredelay": 0,
+            "echoRightDelay": 0
+        },
+        "mainOutput": {
+            "eq": {
+                "point": [
+                    {
+                        "index": 0,
+                        "type": "HighPass",
+                        "freq": 20,
+                        "gain": 0.0,
+                        "q": 0.7,
+                        "defaultType": "HighPass",
+                        "defaultFreq": 20,
+                        "defaultGain": 0.0,
+                        "defaultQ": 0.7
+                    },
+                    {
+                        "index": 1,
+                        "type": "Peak",
+                        "freq": 666,
+                        "gain": 6.0,
+                        "q": 1.0,
+                        "defaultType": "Peak",
+                        "defaultFreq": 666,
+                        "defaultGain": 6.0,
+                        "defaultQ": 1.0
+                    },
+                    {
+                        "index": 2,
+                        "type": "LowPass",
+                        "freq": 20000,
+                        "gain": 0.0,
+                        "q": 0.7,
+                        "defaultType": "LowPass",
+                        "defaultFreq": 20000,
+                        "defaultGain": 0.0,
+                        "defaultQ": 0.7
+                    }
+                ],
+                "bypass": false,
+                "highPassTypeList": [
+                    "HighPass"
+                ],
+                "typeList": [
+                    "Peak",
+                    "LowShelf",
+                    "HighShelf"
+                ],
+                "lowPassTypeList": [
+                    "LowPass"
+                ]
+            },
+            "output": {
+                "leftChannelVolume": 0.0,
+                "rightChannelVolume": 0.0,
+                "leftDelay": 0.0,
+                "rightDelay": 0.0,
+                "leftMute": false,
+                "rightMute": false
+            },
+            "mixer": {
+                "micDirectLevel": 100,
+                "musicLevel": 100,
+                "reverbLevel": 100,
+                "echoLevel": 100
+            },
+            "compressor": {
+                "threshold": -1.0,
+                "ratio": 10,
+                "attack": 50,
+                "release": 200,
+                "bypass": false
+            }
+        },
+        "subOutput": {
+            "eq": {
+                "point": [
+                    {
+                        "index": 0,
+                        "type": "HighPass",
+                        "freq": 20,
+                        "gain": 0.0,
+                        "q": 0.7,
+                        "defaultType": "HighPass",
+                        "defaultFreq": 20,
+                        "defaultGain": 0.0,
+                        "defaultQ": 0.7
+                    },
+                    {
+                        "index": 1,
+                        "type": "Peak",
+                        "freq": 666,
+                        "gain": 6.0,
+                        "q": 1.0,
+                        "defaultType": "Peak",
+                        "defaultFreq": 666,
+                        "defaultGain": 6.0,
+                        "defaultQ": 1.0
+                    },
+                    {
+                        "index": 2,
+                        "type": "LowPass",
+                        "freq": 20000,
+                        "gain": 0.0,
+                        "q": 0.7,
+                        "defaultType": "LowPass",
+                        "defaultFreq": 20000,
+                        "defaultGain": 0.0,
+                        "defaultQ": 0.7
+                    }
+                ],
+                "bypass": false,
+                "highPassTypeList": [
+                    "HighPass"
+                ],
+                "typeList": [
+                    "Peak",
+                    "LowShelf",
+                    "HighShelf"
+                ],
+                "lowPassTypeList": [
+                    "LowPass"
+                ]
+            },
+            "output": {
+                "volume": 0.0,
+                "delay": 0.0,
+                "mute": false
+            },
+            "mixer": {
+                "micDirectLevel": 100,
+                "musicLevel": 100,
+                "reverbLevel": 100,
+                "echoLevel": 100
+            },
+            "compressor": {
+                "threshold": -1.0,
+                "ratio": 10,
+                "attack": 50,
+                "release": 200,
+                "bypass": false
+            }
+        },
+        "center": {
+            "eq": {
+                "point": [
+                    {
+                        "index": 0,
+                        "type": "HighPass",
+                        "freq": 20,
+                        "gain": 0.0,
+                        "q": 0.7,
+                        "defaultType": "HighPass",
+                        "defaultFreq": 20,
+                        "defaultGain": 0.0,
+                        "defaultQ": 0.7
+                    },
+                    {
+                        "index": 1,
+                        "type": "Peak",
+                        "freq": 666,
+                        "gain": 6.0,
+                        "q": 1.0,
+                        "defaultType": "Peak",
+                        "defaultFreq": 666,
+                        "defaultGain": 6.0,
+                        "defaultQ": 1.0
+                    },
+                    {
+                        "index": 2,
+                        "type": "LowPass",
+                        "freq": 20000,
+                        "gain": 0.0,
+                        "q": 0.7,
+                        "defaultType": "LowPass",
+                        "defaultFreq": 20000,
+                        "defaultGain": 0.0,
+                        "defaultQ": 0.7
+                    }
+                ],
+                "bypass": false,
+                "highPassTypeList": [
+                    "HighPass"
+                ],
+                "typeList": [
+                    "Peak",
+                    "LowShelf",
+                    "HighShelf"
+                ],
+                "lowPassTypeList": [
+                    "LowPass"
+                ]
+            },
+            "output": {
+                "volume": 0.0,
+                "delay": 0.0,
+                "mute": false
+            },
+            "mixer": {
+                "micDirectLevel": 100,
+                "musicLevel": 100,
+                "reverbLevel": 100,
+                "echoLevel": 100
+            },
+            "compressor": {
+                "threshold": -1.0,
+                "ratio": 10,
+                "attack": 50,
+                "release": 200,
+                "bypass": false
+            }
+        },
+        "surround": {
+            "eq": {
+                "point": [
+                    {
+                        "index": 0,
+                        "type": "HighPass",
+                        "freq": 20,
+                        "gain": 0.0,
+                        "q": 0.7,
+                        "defaultType": "HighPass",
+                        "defaultFreq": 20,
+                        "defaultGain": 0.0,
+                        "defaultQ": 0.7
+                    },
+                    {
+                        "index": 1,
+                        "type": "Peak",
+                        "freq": 666,
+                        "gain": 6.0,
+                        "q": 1.0,
+                        "defaultType": "Peak",
+                        "defaultFreq": 666,
+                        "defaultGain": 6.0,
+                        "defaultQ": 1.0
+                    },
+                    {
+                        "index": 2,
+                        "type": "LowPass",
+                        "freq": 20000,
+                        "gain": 0.0,
+                        "q": 0.7,
+                        "defaultType": "LowPass",
+                        "defaultFreq": 20000,
+                        "defaultGain": 0.0,
+                        "defaultQ": 0.7
+                    }
+                ],
+                "bypass": false,
+                "highPassTypeList": [
+                    "HighPass"
+                ],
+                "typeList": [
+                    "Peak",
+                    "LowShelf",
+                    "HighShelf"
+                ],
+                "lowPassTypeList": [
+                    "LowPass"
+                ]
+            },
+            "output": {
+                "leftChannelVolume": 0.0,
+                "rightChannelVolume": 0.0,
+                "leftDelay": 0.0,
+                "rightDelay": 0.0,
+                "leftMute": false,
+                "rightMute": false
+            },
+            "mixer": {
+                "micDirectLevel": 100,
+                "musicLevel": 100,
+                "reverbLevel": 100,
+                "echoLevel": 100
+            },
+            "compressor": {
+                "threshold": -1.0,
+                "ratio": 10,
+                "attack": 50,
+                "release": 200,
+                "bypass": false
+            }
+        }
+    }
+}
