@@ -9,10 +9,11 @@ import { createHashRouter, RouterProvider } from 'react-router-dom'
 
 import App from './App.tsx'
 import Changelog from './pages/Changelog.tsx'
-import Device from './pages/Device.tsx'
 import DemoMode from './pages/DemoMode.tsx'
+import DeviceDemo from './pages/DeviceDemo.tsx'
 import Docs from './pages/Docs.tsx'
 import Home from './pages/Home.tsx'
+import { RequireDeviceReady } from './routes/RequireDeviceReady.tsx'
 import './main.css'
 
 function fallbackRender({ error }: { error: Error }) {
@@ -37,8 +38,12 @@ export const router = createHashRouter([
         element: <Changelog />
       },
       {
-        path: 'device',
-        element: <Device />
+        path: 'device-demo',
+        element: (
+          <RequireDeviceReady>
+            <DeviceDemo />
+          </RequireDeviceReady>
+        )
       },
       {
         path: 'demo-mode',

@@ -9,6 +9,7 @@ import {
   uniqueBleServices,
 } from '@/configs/deviceProfiles'
 import { setSelectedBleDevice, setSelectedHidDevice } from '@/device/selectedDevices'
+import { useDeviceSessionContext } from '@/device/session/deviceSessionContext'
 
 const cards = [
   {
@@ -30,6 +31,7 @@ const cards = [
 
 function Home() {
   const navigate = useNavigate()
+  const { actions } = useDeviceSessionContext()
 
   const handleCardClick = async (card: CardData) => {
     if (card.id === 'usb') {
@@ -49,7 +51,8 @@ function Home() {
         const [device] = await navigator.hid.requestDevice({ filters: hidFilters })
         if (!device) return
         setSelectedHidDevice(device)
-        navigate('/device?transport=hid')
+        const ok = await actions.connectHid({ interactive: false })
+        if (ok) navigate('/device-demo?transport=hid')
       } catch {
         // ignored (user cancelled)
       }
@@ -73,7 +76,8 @@ function Home() {
           optionalServices: uniqueBleServices(),
         })
         setSelectedBleDevice(device)
-        navigate('/device?transport=ble')
+        const ok = await actions.connectBle({ interactive: false })
+        if (ok) navigate('/device-demo?transport=ble')
       } catch {
         // ignored (user cancelled)
       }

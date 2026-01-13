@@ -115,6 +115,7 @@ export type DeviceSessionState = {
   authError: string
   db: webhmi.IGetDbResponse | null
   dbJson: string
+  dbFetchId: number
   dirty: boolean
   flushing: boolean
   flushError: string
@@ -170,6 +171,7 @@ export function useDeviceSession(options: { preferredTransport?: 'hid' | 'ble' |
     authError: '',
     db: null,
     dbJson: '',
+    dbFetchId: 0,
     dirty: false,
     flushing: false,
     flushError: '',
@@ -212,6 +214,7 @@ export function useDeviceSession(options: { preferredTransport?: 'hid' | 'ble' |
         transport: null,
         db: null,
         dbJson: '',
+        dbFetchId: 0,
         authOk: null,
         authError: '',
         flushing: false,
@@ -264,7 +267,7 @@ export function useDeviceSession(options: { preferredTransport?: 'hid' | 'ble' |
       console.warn('[GetDbResponse]', pretty)
 
       resetPending()
-      setState((s) => ({ ...s, db, dbJson: pretty }))
+      setState((s) => ({ ...s, db, dbJson: pretty, dbFetchId: s.dbFetchId + 1 }))
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
       console.error('[GetDbResponse] failed', message)
@@ -294,10 +297,10 @@ export function useDeviceSession(options: { preferredTransport?: 'hid' | 'ble' |
   }, [])
 
   const connectHid = useCallback(
-    async (options: { interactive?: boolean } = {}) => {
+    async (options: { interactive?: boolean } = {}): Promise<boolean> => {
       if (!navigator.hid) {
         window.alert('当前浏览器不支持 WebHID。')
-        return
+        return false
       }
       const interactive = options.interactive !== false
 
@@ -317,7 +320,7 @@ export function useDeviceSession(options: { preferredTransport?: 'hid' | 'ble' |
               )[0]
             : null)
 
-        if (!device) throw new Error('No HID device selected')
+        if (!device) return false
         setSelectedHidDevice(device)
 
         const profile =
@@ -341,9 +344,12 @@ export function useDeviceSession(options: { preferredTransport?: 'hid' | 'ble' |
         })
 
         const ok = await doAuth(nextClient)
-        if (ok) await refreshDb()
+        if (!ok) return false
+        await refreshDb()
+        return true
       } catch (e) {
         setState((s) => ({ ...s, error: e instanceof Error ? e.message : String(e) }))
+        return false
       } finally {
         setState((s) => ({ ...s, busy: false }))
       }
@@ -352,16 +358,16 @@ export function useDeviceSession(options: { preferredTransport?: 'hid' | 'ble' |
   )
 
   const connectBle = useCallback(
-    async (options: { interactive?: boolean } = {}) => {
+    async (options: { interactive?: boolean } = {}): Promise<boolean> => {
       if (!navigator.bluetooth) {
         window.alert('当前浏览器不支持 WebBLE。')
-        return
+        return false
       }
       const interactive = options.interactive !== false
       const profile = BLE_DEVICE_PROFILES[0]
       if (!profile) {
         window.alert('未配置可用的 BLE 设备。')
-        return
+        return false
       }
 
       setState((s) => ({ ...s, busy: true, error: '' }))
@@ -376,7 +382,7 @@ export function useDeviceSession(options: { preferredTransport?: 'hid' | 'ble' |
               })
             : null)
 
-        if (!device) throw new Error('No BLE device selected')
+        if (!device) return false
         setSelectedBleDevice(device)
 
         const transport = new BleTransport(device, {
@@ -398,9 +404,12 @@ export function useDeviceSession(options: { preferredTransport?: 'hid' | 'ble' |
         })
 
         const ok = await doAuth(nextClient)
-        if (ok) await refreshDb()
+        if (!ok) return false
+        await refreshDb()
+        return true
       } catch (e) {
         setState((s) => ({ ...s, error: e instanceof Error ? e.message : String(e) }))
+        return false
       } finally {
         setState((s) => ({ ...s, busy: false }))
       }

@@ -11,6 +11,7 @@ import {
   NavBody,
   NavItems,
 } from '@/components/ui/resizable-navbar'
+import { DeviceSessionProvider } from '@/device/session/deviceSessionContext'
 
 const navItems = [
   { name: 'Docs', link: '#/docs' },
@@ -53,7 +54,9 @@ function App() {
       </Navbar>
 
       <main className="mx-auto w-full max-w-7xl px-4 py-10">
-        <Outlet />
+        <DeviceSessionProvider>
+          <Outlet />
+        </DeviceSessionProvider>
       </main>
     </div>
   )
