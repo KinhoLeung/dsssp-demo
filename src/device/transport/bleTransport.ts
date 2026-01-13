@@ -7,6 +7,29 @@ type BleTransportOptions = {
   chunkSize?: number
 }
 
+async function writeValueWithRetry(
+  characteristic: BluetoothRemoteGATTCharacteristic,
+  value: Uint8Array,
+  options: { retries?: number; delayMs?: number } = {},
+) {
+  const retries = typeof options.retries === 'number' ? options.retries : 8
+  const delayMs = typeof options.delayMs === 'number' ? options.delayMs : 20
+
+  let lastError: unknown
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      await characteristic.writeValue(value)
+      return
+    } catch (e) {
+      lastError = e
+      const message = e instanceof Error ? e.message : String(e)
+      if (!message.toLowerCase().includes('gatt') || !message.toLowerCase().includes('progress')) throw e
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError))
+}
+
 export class BleTransport implements Transport {
   public readonly kind = 'ble' as const
 
@@ -78,27 +101,4 @@ export class BleTransport implements Transport {
     this.handlers.add(handler)
     return () => this.handlers.delete(handler)
   }
-}
-
-const writeValueWithRetry = async (
-  characteristic: BluetoothRemoteGATTCharacteristic,
-  value: Uint8Array,
-  options: { retries?: number; delayMs?: number } = {},
-) => {
-  const retries = typeof options.retries === 'number' ? options.retries : 8
-  const delayMs = typeof options.delayMs === 'number' ? options.delayMs : 20
-
-  let lastError: unknown
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      await characteristic.writeValue(value)
-      return
-    } catch (e) {
-      lastError = e
-      const message = e instanceof Error ? e.message : String(e)
-      if (!message.toLowerCase().includes('gatt') || !message.toLowerCase().includes('progress')) throw e
-      await new Promise((resolve) => setTimeout(resolve, delayMs))
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error(String(lastError))
 }

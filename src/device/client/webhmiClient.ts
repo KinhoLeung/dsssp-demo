@@ -1,8 +1,46 @@
-import { RpcSession } from '../session'
-import type { Transport } from '../transport'
 import type { webhmi } from '../proto/generated/webhmi'
 import { MsgId } from '../proto/msgId'
 import { getWebhmiNamespace } from '../proto/webhmi'
+import { RpcSession } from '../session'
+import type { Transport } from '../transport'
+
+function concatBytes(a: Uint8Array, b: Uint8Array) {
+  const out = new Uint8Array(a.length + b.length)
+  out.set(a)
+  out.set(b, a.length)
+  return out
+}
+
+function derEncodeInteger(bytes: Uint8Array) {
+  let start = 0
+  while (start < bytes.length && bytes[start] === 0) start++
+  const trimmed = bytes.subarray(start)
+  const needsLeadingZero = trimmed.length > 0 && trimmed[0] > 0x7f
+  const value = needsLeadingZero ? concatBytes(new Uint8Array([0]), trimmed) : trimmed.length ? trimmed : new Uint8Array([0])
+
+  const out = new Uint8Array(2 + value.length)
+  out[0] = 0x02
+  out[1] = value.length
+  out.set(value, 2)
+  return out
+}
+
+function rawP256SigToDer(raw: Uint8Array) {
+  if (raw.length !== 64) throw new Error('Expected raw P-256 signature (64 bytes)')
+  const r = raw.subarray(0, 32)
+  const s = raw.subarray(32, 64)
+
+  const rDer = derEncodeInteger(r)
+  const sDer = derEncodeInteger(s)
+  const seqLen = rDer.length + sDer.length
+
+  const out = new Uint8Array(2 + seqLen)
+  out[0] = 0x30
+  out[1] = seqLen
+  out.set(rDer, 2)
+  out.set(sDer, 2 + rDer.length)
+  return out
+}
 
 export class WebhmiClient {
   private readonly session: RpcSession
@@ -56,13 +94,16 @@ export class WebhmiClient {
     return false
   }
 
-  async getDb(): Promise<any> {
+  async getDb(options: { timeoutMs?: number } = {}): Promise<webhmi.GetDbResponse> {
     const payload = this.pb.GetDbRequest?.encode?.({})?.finish?.() ?? new Uint8Array()
-    const frame = await this.session.request(MsgId.GetDb, payload, { timeoutMs: 8_000 })
-    const message = this.pb.GetDbResponse.decode(frame.payload)
+    const frame = await this.session.request(MsgId.GetDb, payload, { timeoutMs: options.timeoutMs ?? 15_000 })
+    return this.pb.GetDbResponse.decode(frame.payload)
+  }
+
+  getDbToObject(message: webhmi.GetDbResponse, options: { enums?: unknown; longs?: unknown } = {}) {
     return this.pb.GetDbResponse.toObject(message, {
-      enums: String,
-      longs: String,
+      enums: options.enums ?? String,
+      longs: options.longs ?? String,
       defaults: false,
       arrays: true,
       objects: true,
@@ -136,42 +177,4 @@ export class WebhmiClient {
     const payload = this.pb.ResetEqRequest.encode(request).finish()
     await this.session.request(MsgId.ResetEq, payload)
   }
-}
-
-const rawP256SigToDer = (raw: Uint8Array) => {
-  if (raw.length !== 64) throw new Error('Expected raw P-256 signature (64 bytes)')
-  const r = raw.subarray(0, 32)
-  const s = raw.subarray(32, 64)
-
-  const rDer = derEncodeInteger(r)
-  const sDer = derEncodeInteger(s)
-  const seqLen = rDer.length + sDer.length
-
-  const out = new Uint8Array(2 + seqLen)
-  out[0] = 0x30
-  out[1] = seqLen
-  out.set(rDer, 2)
-  out.set(sDer, 2 + rDer.length)
-  return out
-}
-
-const derEncodeInteger = (bytes: Uint8Array) => {
-  let start = 0
-  while (start < bytes.length && bytes[start] === 0) start++
-  const trimmed = bytes.subarray(start)
-  const needsLeadingZero = trimmed.length > 0 && (trimmed[0] & 0x80) !== 0
-  const value = needsLeadingZero ? concatBytes(new Uint8Array([0]), trimmed) : trimmed.length ? trimmed : new Uint8Array([0])
-
-  const out = new Uint8Array(2 + value.length)
-  out[0] = 0x02
-  out[1] = value.length
-  out.set(value, 2)
-  return out
-}
-
-const concatBytes = (a: Uint8Array, b: Uint8Array) => {
-  const out = new Uint8Array(a.length + b.length)
-  out.set(a)
-  out.set(b, a.length)
-  return out
 }
