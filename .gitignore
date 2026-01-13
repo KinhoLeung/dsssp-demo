@@ -27,3 +27,7 @@ ec_private_pkcs8.der
 ec_public_spki.der
 ec_private.pem
 ec_public.pem
+
+# Auto-generated protobuf bindings
+src/device/proto/generated/*
+!src/device/proto/generated/README.md

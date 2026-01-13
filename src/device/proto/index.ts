@@ -1,3 +1,2 @@
-export * from './wire'
+export * from './msgId'
 export * from './webhmi'
-

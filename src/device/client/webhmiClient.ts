@@ -1,42 +1,12 @@
 import { RpcSession } from '../session'
 import type { Transport } from '../transport'
-import {
-  decodeGetDbResponse,
-  decodeSwitchCurrentModeResponse,
-  encodeChangeModeParamRequest,
-  encodeGetDbRequest,
-  encodeResetEqRequest,
-  encodeSetCenterRequest,
-  encodeSetEchoRequest,
-  encodeSetEqRequest,
-  encodeSetMainOutputRequest,
-  encodeSetMicRequest,
-  encodeSetMusicRequest,
-  encodeSetReverbRequest,
-  encodeSetSubOutputRequest,
-  encodeSetSurroundRequest,
-  encodeSetSystemRequest,
-  encodeSwitchCurrentModeRequest,
-  MsgId,
-  type ChangeModeParamRequest,
-  type GetDbResponse,
-  type ResetEqRequest,
-  type SetCenterRequest,
-  type SetEchoRequest,
-  type SetEqRequest,
-  type SetMainOutputRequest,
-  type SetMicRequest,
-  type SetMusicRequest,
-  type SetReverbRequest,
-  type SetSubOutputRequest,
-  type SetSurroundRequest,
-  type SetSystemRequest,
-  type SwitchCurrentModeRequest,
-  type SwitchCurrentModeResponse,
-} from '../proto/webhmi'
+import type { webhmi } from '../proto/generated/webhmi'
+import { MsgId } from '../proto/msgId'
+import { getWebhmiNamespace } from '../proto/webhmi'
 
 export class WebhmiClient {
   private readonly session: RpcSession
+  private readonly pb = getWebhmiNamespace()
 
   constructor(transport: Transport, options: { defaultTimeoutMs?: number } = {}) {
     this.session = new RpcSession(transport, { defaultTimeoutMs: options.defaultTimeoutMs })
@@ -86,63 +56,77 @@ export class WebhmiClient {
     return false
   }
 
-  async getDb(): Promise<GetDbResponse> {
-    const frame = await this.session.request(MsgId.GetDb, encodeGetDbRequest({}))
-    return decodeGetDbResponse(frame.payload)
+  async getDb(): Promise<webhmi.IGetDbResponse> {
+    const payload = this.pb.GetDbRequest?.encode?.({})?.finish?.() ?? new Uint8Array()
+    const frame = await this.session.request(MsgId.GetDb, payload)
+    return this.pb.GetDbResponse.decode(frame.payload)
   }
 
-  async setEq(request: SetEqRequest) {
-    await this.session.request(MsgId.SetEq, encodeSetEqRequest(request))
+  async setEq(request: webhmi.ISetEqRequest) {
+    const payload = this.pb.SetEqRequest.encode(request).finish()
+    await this.session.request(MsgId.SetEq, payload)
   }
 
-  async setSystem(request: SetSystemRequest) {
-    await this.session.request(MsgId.SetSystem, encodeSetSystemRequest(request))
+  async setSystem(request: webhmi.ISetSystemRequest) {
+    const payload = this.pb.SetSystemRequest.encode(request).finish()
+    await this.session.request(MsgId.SetSystem, payload)
   }
 
-  async setMusic(request: SetMusicRequest) {
-    await this.session.request(MsgId.SetMusic, encodeSetMusicRequest(request))
+  async setMusic(request: webhmi.ISetMusicRequest) {
+    const payload = this.pb.SetMusicRequest.encode(request).finish()
+    await this.session.request(MsgId.SetMusic, payload)
   }
 
-  async setMic(request: SetMicRequest) {
-    await this.session.request(MsgId.SetMic, encodeSetMicRequest(request))
+  async setMic(request: webhmi.ISetMicRequest) {
+    const payload = this.pb.SetMicRequest.encode(request).finish()
+    await this.session.request(MsgId.SetMic, payload)
   }
 
-  async setReverb(request: SetReverbRequest) {
-    await this.session.request(MsgId.SetReverb, encodeSetReverbRequest(request))
+  async setReverb(request: webhmi.ISetReverbRequest) {
+    const payload = this.pb.SetReverbRequest.encode(request).finish()
+    await this.session.request(MsgId.SetReverb, payload)
   }
 
-  async setEcho(request: SetEchoRequest) {
-    await this.session.request(MsgId.SetEcho, encodeSetEchoRequest(request))
+  async setEcho(request: webhmi.ISetEchoRequest) {
+    const payload = this.pb.SetEchoRequest.encode(request).finish()
+    await this.session.request(MsgId.SetEcho, payload)
   }
 
-  async setMainOutput(request: SetMainOutputRequest) {
-    await this.session.request(MsgId.SetMainOutput, encodeSetMainOutputRequest(request))
+  async setMainOutput(request: webhmi.ISetMainOutputRequest) {
+    const payload = this.pb.SetMainOutputRequest.encode(request).finish()
+    await this.session.request(MsgId.SetMainOutput, payload)
   }
 
-  async setSubOutput(request: SetSubOutputRequest) {
-    await this.session.request(MsgId.SetSubOutput, encodeSetSubOutputRequest(request))
+  async setSubOutput(request: webhmi.ISetSubOutputRequest) {
+    const payload = this.pb.SetSubOutputRequest.encode(request).finish()
+    await this.session.request(MsgId.SetSubOutput, payload)
   }
 
-  async setCenter(request: SetCenterRequest) {
-    await this.session.request(MsgId.SetCenter, encodeSetCenterRequest(request))
+  async setCenter(request: webhmi.ISetCenterRequest) {
+    const payload = this.pb.SetCenterRequest.encode(request).finish()
+    await this.session.request(MsgId.SetCenter, payload)
   }
 
-  async setSurround(request: SetSurroundRequest) {
-    await this.session.request(MsgId.SetSurround, encodeSetSurroundRequest(request))
+  async setSurround(request: webhmi.ISetSurroundRequest) {
+    const payload = this.pb.SetSurroundRequest.encode(request).finish()
+    await this.session.request(MsgId.SetSurround, payload)
   }
 
-  async switchCurrentMode(request: SwitchCurrentModeRequest): Promise<SwitchCurrentModeResponse> {
-    const frame = await this.session.request(MsgId.SwitchCurrentMode, encodeSwitchCurrentModeRequest(request))
+  async switchCurrentMode(request: webhmi.ISwitchCurrentModeRequest): Promise<webhmi.ISwitchCurrentModeResponse> {
+    const payload = this.pb.SwitchCurrentModeRequest.encode(request).finish()
+    const frame = await this.session.request(MsgId.SwitchCurrentMode, payload)
     if (frame.payload.length === 0) return {}
-    return decodeSwitchCurrentModeResponse(frame.payload)
+    return this.pb.SwitchCurrentModeResponse.decode(frame.payload)
   }
 
-  async changeModeParam(request: ChangeModeParamRequest) {
-    await this.session.request(MsgId.ChangeModeParam, encodeChangeModeParamRequest(request))
+  async changeModeParam(request: webhmi.IChangeModeParamRequest) {
+    const payload = this.pb.ChangeModeParamRequest.encode(request).finish()
+    await this.session.request(MsgId.ChangeModeParam, payload)
   }
 
-  async resetEq(request: ResetEqRequest) {
-    await this.session.request(MsgId.ResetEq, encodeResetEqRequest(request))
+  async resetEq(request: webhmi.IResetEqRequest) {
+    const payload = this.pb.ResetEqRequest.encode(request).finish()
+    await this.session.request(MsgId.ResetEq, payload)
   }
 }
 
@@ -183,4 +167,3 @@ const concatBytes = (a: Uint8Array, b: Uint8Array) => {
   out.set(b, a.length)
   return out
 }
-
