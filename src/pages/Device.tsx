@@ -25,9 +25,20 @@ function Device() {
   const [dbJson, setDbJson] = useState<string>('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string>('')
+  const [authOk, setAuthOk] = useState<boolean | null>(null)
+  const [authError, setAuthError] = useState<string>('')
 
   const hidProfile = useMemo(() => HID_DEVICE_PROFILES[0], [])
   const bleProfile = useMemo(() => BLE_DEVICE_PROFILES[0], [])
+  const publicKeySpkiDer = useMemo(() => {
+    const b64 = (import.meta.env.VITE_AUTH_PUBLIC_KEY_B64 as string | undefined) ?? ''
+    if (!b64) return null
+    try {
+      return base64ToBytes(b64)
+    } catch {
+      return null
+    }
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -43,10 +54,32 @@ function Device() {
       setClient(null)
       setConnectedTransport(null)
       setDbJson('')
+      setAuthOk(null)
+      setAuthError('')
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
       setBusy(false)
+    }
+  }
+
+  const doAuth = async (targetClient: WebhmiClient) => {
+    setAuthOk(null)
+    setAuthError('')
+
+    if (!publicKeySpkiDer) {
+      setAuthOk(false)
+      setAuthError('Missing/invalid VITE_AUTH_PUBLIC_KEY_B64 in .env')
+      return
+    }
+
+    try {
+      const ok = await targetClient.authVerify(publicKeySpkiDer)
+      setAuthOk(ok)
+      if (!ok) setAuthError('Signature verification failed')
+    } catch (e) {
+      setAuthOk(false)
+      setAuthError(e instanceof Error ? e.message : String(e))
     }
   }
 
@@ -87,6 +120,7 @@ function Device() {
       setClient(nextClient)
       setConnectedTransport('hid')
       setDbJson('')
+      await doAuth(nextClient)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -129,6 +163,7 @@ function Device() {
       setClient(nextClient)
       setConnectedTransport('ble')
       setDbJson('')
+      await doAuth(nextClient)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -179,6 +214,13 @@ function Device() {
             Status: {client ? `connected (${connectedTransport})` : 'disconnected'}
           </div>
 
+          {client ? (
+            <div className="text-sm text-muted-foreground">
+              Auth: {authOk === null ? 'pending/unknown' : authOk ? 'ok' : 'failed'}
+              {authError ? ` (${authError})` : ''}
+            </div>
+          ) : null}
+
           {error ? <pre className="text-xs text-red-500 whitespace-pre-wrap">{error}</pre> : null}
         </CardContent>
       </Card>
@@ -195,3 +237,13 @@ function Device() {
 }
 
 export default Device
+
+const base64ToBytes = (b64: string) => {
+  let normalized = b64.replace(/[\r\n\s]/g, '').replace(/-/g, '+').replace(/_/g, '/')
+  const pad = normalized.length % 4
+  if (pad) normalized += '='.repeat(4 - pad)
+  const bin = atob(normalized)
+  const out = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i)
+  return out
+}
