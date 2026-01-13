@@ -9,6 +9,7 @@ import { createHashRouter, RouterProvider } from 'react-router-dom'
 
 import App from './App.tsx'
 import Changelog from './pages/Changelog.tsx'
+import Device from './pages/Device.tsx'
 import DemoMode from './pages/DemoMode.tsx'
 import Docs from './pages/Docs.tsx'
 import Home from './pages/Home.tsx'
@@ -34,6 +35,10 @@ export const router = createHashRouter([
       {
         path: 'changelog',
         element: <Changelog />
+      },
+      {
+        path: 'device',
+        element: <Device />
       },
       {
         path: 'demo-mode',

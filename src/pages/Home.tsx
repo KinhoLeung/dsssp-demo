@@ -8,6 +8,7 @@ import {
   HID_DEVICE_PROFILES,
   uniqueBleServices,
 } from '@/configs/deviceProfiles'
+import { setSelectedBleDevice, setSelectedHidDevice } from '@/device/selectedDevices'
 
 const cards = [
   {
@@ -30,7 +31,7 @@ const cards = [
 function Home() {
   const navigate = useNavigate()
 
-  const handleCardClick = (card: CardData) => {
+  const handleCardClick = async (card: CardData) => {
     if (card.id === 'usb') {
       if (!navigator.hid) {
         window.alert('当前浏览器不支持 WebHID。')
@@ -44,7 +45,14 @@ function Home() {
         window.alert('未配置可用的 HID 设备。')
         return
       }
-      navigator.hid.requestDevice({ filters: hidFilters })
+      try {
+        const [device] = await navigator.hid.requestDevice({ filters: hidFilters })
+        if (!device) return
+        setSelectedHidDevice(device)
+        navigate('/device?transport=hid')
+      } catch {
+        // ignored (user cancelled)
+      }
       return
     }
     if (card.id === 'ble') {
@@ -59,10 +67,16 @@ function Home() {
         window.alert('未配置可用的 BLE 设备。')
         return
       }
-      navigator.bluetooth.requestDevice({
-        filters: bleFilters,
-        optionalServices: uniqueBleServices(),
-      })
+      try {
+        const device = await navigator.bluetooth.requestDevice({
+          filters: bleFilters,
+          optionalServices: uniqueBleServices(),
+        })
+        setSelectedBleDevice(device)
+        navigate('/device?transport=ble')
+      } catch {
+        // ignored (user cancelled)
+      }
       return
     }
     if (card.id === 'demo-mode') {
