@@ -56,10 +56,18 @@ export class WebhmiClient {
     return false
   }
 
-  async getDb(): Promise<webhmi.IGetDbResponse> {
+  async getDb(): Promise<any> {
     const payload = this.pb.GetDbRequest?.encode?.({})?.finish?.() ?? new Uint8Array()
-    const frame = await this.session.request(MsgId.GetDb, payload)
-    return this.pb.GetDbResponse.decode(frame.payload)
+    const frame = await this.session.request(MsgId.GetDb, payload, { timeoutMs: 8_000 })
+    const message = this.pb.GetDbResponse.decode(frame.payload)
+    return this.pb.GetDbResponse.toObject(message, {
+      enums: String,
+      longs: String,
+      defaults: false,
+      arrays: true,
+      objects: true,
+      oneofs: true,
+    })
   }
 
   async setEq(request: webhmi.ISetEqRequest) {

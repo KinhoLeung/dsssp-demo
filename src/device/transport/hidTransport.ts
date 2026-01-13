@@ -13,7 +13,12 @@ export class HidTransport implements Transport {
 
   private readonly onInputReport = (event: HIDInputReportEvent) => {
     const view = event.data
-    const chunk = new Uint8Array(view.buffer, view.byteOffset, view.byteLength)
+    let chunk = new Uint8Array(view.buffer, view.byteOffset, view.byteLength)
+    if (chunk.length === this.options.reportSize + 1 && chunk[0] === event.reportId) {
+      chunk = chunk.subarray(1)
+    } else if (chunk.length > this.options.reportSize) {
+      chunk = chunk.subarray(0, this.options.reportSize)
+    }
     for (const handler of this.handlers) handler(chunk)
   }
 
@@ -54,4 +59,3 @@ export class HidTransport implements Transport {
     return () => this.handlers.delete(handler)
   }
 }
-

@@ -70,7 +70,7 @@ export class BleTransport implements Transport {
     const chunkSize = typeof this.options.chunkSize === 'number' ? this.options.chunkSize : 20
     for (let offset = 0; offset < bytes.length; offset += chunkSize) {
       const chunk = bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length))
-      await characteristic.writeValue(chunk)
+      await writeValueWithRetry(characteristic, chunk)
     }
   }
 
@@ -80,3 +80,25 @@ export class BleTransport implements Transport {
   }
 }
 
+const writeValueWithRetry = async (
+  characteristic: BluetoothRemoteGATTCharacteristic,
+  value: Uint8Array,
+  options: { retries?: number; delayMs?: number } = {},
+) => {
+  const retries = typeof options.retries === 'number' ? options.retries : 8
+  const delayMs = typeof options.delayMs === 'number' ? options.delayMs : 20
+
+  let lastError: unknown
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      await characteristic.writeValue(value)
+      return
+    } catch (e) {
+      lastError = e
+      const message = e instanceof Error ? e.message : String(e)
+      if (!message.toLowerCase().includes('gatt') || !message.toLowerCase().includes('progress')) throw e
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError))
+}

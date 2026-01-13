@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
@@ -30,6 +30,7 @@ function Device() {
 
   const hidProfile = useMemo(() => HID_DEVICE_PROFILES[0], [])
   const bleProfile = useMemo(() => BLE_DEVICE_PROFILES[0], [])
+  const didAutoConnect = useRef(false)
   const publicKeySpkiDer = useMemo(() => {
     const b64 = (import.meta.env.VITE_AUTH_PUBLIC_KEY_B64 as string | undefined) ?? ''
     if (!b64) return null
@@ -70,16 +71,32 @@ function Device() {
     if (!publicKeySpkiDer) {
       setAuthOk(false)
       setAuthError('Missing/invalid VITE_AUTH_PUBLIC_KEY_B64 in .env')
-      return
+      return false
     }
 
     try {
       const ok = await targetClient.authVerify(publicKeySpkiDer)
       setAuthOk(ok)
       if (!ok) setAuthError('Signature verification failed')
+      return ok
     } catch (e) {
       setAuthOk(false)
       setAuthError(e instanceof Error ? e.message : String(e))
+      return false
+    }
+  }
+
+  const doGetDb = async (targetClient: WebhmiClient) => {
+    setError('')
+    try {
+      const db = await targetClient.getDb()
+      const pretty = JSON.stringify(db, null, 2)
+      console.info('[GetDbResponse]', pretty)
+      setDbJson(pretty)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      setError(message)
+      console.error('[GetDbResponse] failed', message)
     }
   }
 
@@ -120,7 +137,8 @@ function Device() {
       setClient(nextClient)
       setConnectedTransport('hid')
       setDbJson('')
-      await doAuth(nextClient)
+      const ok = await doAuth(nextClient)
+      if (ok) await doGetDb(nextClient)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -163,7 +181,8 @@ function Device() {
       setClient(nextClient)
       setConnectedTransport('ble')
       setDbJson('')
-      await doAuth(nextClient)
+      const ok = await doAuth(nextClient)
+      if (ok) await doGetDb(nextClient)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -174,18 +193,13 @@ function Device() {
   const getDb = async () => {
     if (!client) return
     setBusy(true)
-    setError('')
-    try {
-      const db = await client.getDb()
-      setDbJson(JSON.stringify(db, null, 2))
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setBusy(false)
-    }
+    await doGetDb(client)
+    setBusy(false)
   }
 
   useEffect(() => {
+    if (didAutoConnect.current) return
+    didAutoConnect.current = true
     if (preferredTransport === 'hid') void connectHid()
     if (preferredTransport === 'ble') void connectBle()
     // eslint-disable-next-line react-hooks/exhaustive-deps
