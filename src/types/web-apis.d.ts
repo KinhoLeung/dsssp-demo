@@ -36,6 +36,7 @@ declare global {
   }
 
   interface BluetoothRemoteGATTServer {
+    connected: boolean
     connect(): Promise<BluetoothRemoteGATTServer>
     disconnect(): void
     getPrimaryService(service: number | string): Promise<BluetoothRemoteGATTService>

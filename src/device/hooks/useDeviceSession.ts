@@ -139,7 +139,9 @@ type PendingPatches = {
   eq: Map<number, PendingEqTarget>
 }
 
-export function useDeviceSession(options: { preferredTransport?: 'hid' | 'ble' | null } = {}) {
+export function useDeviceSession(
+  options: { preferredTransport?: 'hid' | 'ble' | null; onTransportDisconnected?: () => void } = {},
+) {
   const publicKeySpkiDer = useMemo(() => {
     const b64 = (import.meta.env.VITE_AUTH_PUBLIC_KEY_B64 as string | undefined) ?? ''
     if (!b64) return null
@@ -226,6 +228,12 @@ export function useDeviceSession(options: { preferredTransport?: 'hid' | 'ble' |
       setState((s) => ({ ...s, busy: false }))
     }
   }, [resetPending])
+
+  const handleTransportDisconnected = useCallback(async () => {
+    if (!clientRef.current) return
+    await disconnect()
+    options.onTransportDisconnected?.()
+  }, [disconnect, options.onTransportDisconnected])
 
   useEffect(() => {
     return () => {
@@ -335,7 +343,7 @@ export function useDeviceSession(options: { preferredTransport?: 'hid' | 'ble' |
         const onDisconnect = (event: HIDConnectionEvent) => {
           if (event.device !== device) return
           console.warn('[HID] disconnected')
-          void disconnect()
+          void handleTransportDisconnected()
         }
         navigator.hid.addEventListener('disconnect', onDisconnect)
 
@@ -354,7 +362,7 @@ export function useDeviceSession(options: { preferredTransport?: 'hid' | 'ble' |
         setState((s) => ({ ...s, busy: false }))
       }
     },
-    [disconnect, doAuth, refreshDb, setConnectedClient],
+    [doAuth, handleTransportDisconnected, refreshDb, setConnectedClient],
   )
 
   const connectBle = useCallback(
@@ -395,12 +403,21 @@ export function useDeviceSession(options: { preferredTransport?: 'hid' | 'ble' |
 
         const onDisconnect = () => {
           console.warn('[BLE] disconnected')
-          void disconnect()
+          void handleTransportDisconnected()
         }
         device.addEventListener('gattserverdisconnected', onDisconnect)
 
+        const gattPollId = window.setInterval(() => {
+          const connected = device.gatt?.connected
+          if (connected === true) return
+          window.clearInterval(gattPollId)
+          console.warn('[BLE] gatt.connected=false')
+          void handleTransportDisconnected()
+        }, 200)
+
         setConnectedClient(nextClient, 'ble', () => {
           device.removeEventListener('gattserverdisconnected', onDisconnect)
+          window.clearInterval(gattPollId)
         })
 
         const ok = await doAuth(nextClient)
@@ -414,7 +431,7 @@ export function useDeviceSession(options: { preferredTransport?: 'hid' | 'ble' |
         setState((s) => ({ ...s, busy: false }))
       }
     },
-    [disconnect, doAuth, refreshDb, setConnectedClient],
+    [doAuth, handleTransportDisconnected, refreshDb, setConnectedClient],
   )
 
   const hasPending = () => {
