@@ -318,6 +318,17 @@ function DspPanel({
 
 function DeviceDemo() {
   const { state, actions } = useDeviceSessionContext()
+  const disconnect = actions.disconnect
+  const didMountOnceRef = useRef(false)
+
+  useEffect(() => {
+    const shouldDisconnectOnCleanup = didMountOnceRef.current
+    didMountOnceRef.current = true
+    return () => {
+      if (!shouldDisconnectOnCleanup) return
+      void disconnect()
+    }
+  }, [disconnect])
 
   const panels: PanelDef[] = useMemo(
     () => [

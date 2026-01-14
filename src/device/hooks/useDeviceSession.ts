@@ -522,6 +522,7 @@ export function useDeviceSession(
         window.alert('当前浏览器不支持 WebHID。')
         return false
       }
+      if (clientRef.current) await disconnect()
       const interactive = options.interactive !== false
 
       setState((s) => ({ ...s, busy: true, error: '' }))
@@ -574,7 +575,7 @@ export function useDeviceSession(
         setState((s) => ({ ...s, busy: false }))
       }
     },
-    [doAuth, handleTransportDisconnected, refreshDb, setConnectedClient],
+    [disconnect, doAuth, handleTransportDisconnected, refreshDb, setConnectedClient],
   )
 
   const connectBle = useCallback(
@@ -583,6 +584,7 @@ export function useDeviceSession(
         window.alert('当前浏览器不支持 WebBLE。')
         return false
       }
+      if (clientRef.current) await disconnect()
       const interactive = options.interactive !== false
       const profile = BLE_DEVICE_PROFILES[0]
       if (!profile) {
