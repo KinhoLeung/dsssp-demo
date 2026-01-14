@@ -8,7 +8,7 @@ import {
   PointerTracker,
   FrequencyResponseCurve
 } from 'dsssp'
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import tailwindColors from 'tailwindcss/colors'
 
 import styles from './DemoMode.module.css'
@@ -91,10 +91,9 @@ function DspPanel({
               {powered ? (
                 <>
                   {filters.map((filter, index) => (
-                    <>
+                    <Fragment key={index}>
                       <FilterGradient
                         fill={true}
-                        key={index}
                         index={index}
                         filter={filter}
                         id={`filter-${index}`}
@@ -102,13 +101,12 @@ function DspPanel({
 
                       <FilterCurve
                         showPin
-                        key={index}
                         index={index}
                         filter={filter}
                         active={activeIndex === index}
                         gradientId={`filter-${index}`}
                       />
-                    </>
+                    </Fragment>
                   ))}
                   <CompositeCurve filters={filters} />
                   {filters.map((filter, index) => (

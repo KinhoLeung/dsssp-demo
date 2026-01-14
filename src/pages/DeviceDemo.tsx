@@ -9,7 +9,7 @@ import {
   type FilterChangeEvent,
   type GraphFilter,
 } from 'dsssp'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import tailwindColors from 'tailwindcss/colors'
 
 import { FilterCard } from '../components'
@@ -181,18 +181,17 @@ function DspPanel({
               {powered ? (
                 <>
                   {filters.map((filter, index) => (
-                    <>
-                      <FilterGradient fill={true} key={index} index={index} filter={filter} id={`filter-${index}`} />
+                    <Fragment key={index}>
+                      <FilterGradient fill={true} index={index} filter={filter} id={`filter-${index}`} />
 
                       <FilterCurve
                         showPin
-                        key={index}
                         index={index}
                         filter={filter}
                         active={activeIndex === index}
                         gradientId={`filter-${index}`}
                       />
-                    </>
+                    </Fragment>
                   ))}
                   <CompositeCurve filters={filters} />
                   {filters.map((filter, index) => (
