@@ -196,6 +196,9 @@ type PendingPatches = {
 export function useDeviceSession(
   options: { preferredTransport?: 'hid' | 'ble' | null; onTransportDisconnected?: () => void } = {},
 ) {
+  const USER_DEBOUNCE_MS = 200
+  const USER_THROTTLE_MS = 200
+
   const publicKeySpkiDer = useMemo(() => {
     const b64 = (import.meta.env.VITE_AUTH_PUBLIC_KEY_B64 as string | undefined) ?? ''
     if (!b64) return null
@@ -212,6 +215,9 @@ export function useDeviceSession(
   const pendingRef = useRef<PendingPatches>({ eq: new Map() })
   const baseDbRef = useRef<webhmi.IGetDbResponse | null>(null)
   const flushTimerRef = useRef<number | null>(null)
+  const userBurstStartAtRef = useRef<number | null>(null)
+  const userLastChangeAtRef = useRef<number | null>(null)
+  const lastTxAtRef = useRef<number | null>(null)
   const flushInFlightRef = useRef(false)
   const flushRetryDelayRef = useRef<number>(0)
   const flushRequestedRef = useRef(false)
@@ -245,10 +251,23 @@ export function useDeviceSession(
     }
   }
 
+  const scheduleFlush = useCallback((delayMs: number) => {
+    if (flushTimerRef.current) {
+      window.clearTimeout(flushTimerRef.current)
+      flushTimerRef.current = null
+    }
+    flushTimerRef.current = window.setTimeout(() => {
+      void flushNowRef.current()
+    }, delayMs)
+  }, [])
+
   const resetPending = useCallback(() => {
     pendingRef.current = { eq: new Map() }
     flushRetryDelayRef.current = 0
     flushRequestedRef.current = false
+    userBurstStartAtRef.current = null
+    userLastChangeAtRef.current = null
+    lastTxAtRef.current = null
     clearFlushTimer()
     setState((s) => ({ ...s, dirty: false, flushError: '' }))
   }, [])
@@ -492,7 +511,7 @@ export function useDeviceSession(
     [doAuth, handleTransportDisconnected, refreshDb, setConnectedClient],
   )
 
-  const hasPending = () => {
+  const hasPending = useCallback(() => {
     const p = pendingRef.current
     return (
       !!p.system ||
@@ -506,7 +525,7 @@ export function useDeviceSession(
       !!p.surround ||
       p.eq.size > 0
     )
-  }
+  }, [])
 
   const updateDbDraft = (updater: (draft: webhmi.IGetDbResponse) => webhmi.IGetDbResponse) => {
     setState((s) => {
@@ -517,12 +536,36 @@ export function useDeviceSession(
     })
   }
 
-  const scheduleFlush = useCallback((delayMs: number) => {
-    clearFlushTimer()
-    flushTimerRef.current = window.setTimeout(() => {
-      void flushNowRef.current()
-    }, delayMs)
-  }, [])
+  const rescheduleUserFlush = useCallback(() => {
+    if (flushInFlightRef.current) {
+      flushRequestedRef.current = true
+      return
+    }
+    if (!clientRef.current) return
+    if (!hasPending()) return
+    if (stateRef.current.authOk !== true) return
+
+    const now = Date.now()
+    const burstStartAt = userBurstStartAtRef.current ?? now
+    const lastChangeAt = userLastChangeAtRef.current ?? now
+    const burstAgeMs = now - burstStartAt
+    const sinceTxMs = lastTxAtRef.current == null ? Number.POSITIVE_INFINITY : now - lastTxAtRef.current
+
+    if (burstAgeMs >= USER_THROTTLE_MS && sinceTxMs >= USER_THROTTLE_MS) {
+      scheduleFlush(0)
+      return
+    }
+
+    const debounceDelay = Math.max(0, lastChangeAt + USER_DEBOUNCE_MS - now)
+    scheduleFlush(debounceDelay)
+  }, [hasPending, scheduleFlush])
+
+  const markUserChange = useCallback(() => {
+    const now = Date.now()
+    userLastChangeAtRef.current = now
+    if (userBurstStartAtRef.current == null) userBurstStartAtRef.current = now
+    rescheduleUserFlush()
+  }, [rescheduleUserFlush])
 
   const flushNow = useCallback(async () => {
     const targetClient = clientRef.current
@@ -538,8 +581,55 @@ export function useDeviceSession(
     flushInFlightRef.current = true
     setState((s) => ({ ...s, flushing: true }))
 
+    let flushSucceeded = false
+    let snapshot: PendingPatches | null = null
+
+    const mergePendingAfterFailure = (sent: PendingPatches) => {
+      const current = pendingRef.current
+      const mergedEq = new Map<number, PendingEqTarget>()
+
+      const mergeEqTarget = (base: PendingEqTarget | undefined, patch: PendingEqTarget | undefined): PendingEqTarget => {
+        const basePoints = base?.points ?? new Map<number, webhmi.IEqPointPatch>()
+        const patchPoints = patch?.points ?? new Map<number, webhmi.IEqPointPatch>()
+        const points = new Map<number, webhmi.IEqPointPatch>()
+        for (const [idx, pp] of basePoints.entries()) points.set(idx, pp)
+        for (const [idx, pp] of patchPoints.entries()) {
+          const prev = points.get(idx) ?? { index: idx }
+          points.set(idx, mergePatch(prev, pp))
+        }
+        const out: PendingEqTarget = { points }
+        if (typeof base?.bypass === 'boolean') out.bypass = base.bypass
+        if (typeof patch?.bypass === 'boolean') out.bypass = patch.bypass
+        return out
+      }
+
+      for (const [t, entry] of sent.eq.entries()) mergedEq.set(t, mergeEqTarget(undefined, entry))
+      for (const [t, entry] of current.eq.entries()) mergedEq.set(t, mergeEqTarget(mergedEq.get(t), entry))
+
+      const merged: PendingPatches = { eq: mergedEq }
+      if (sent.system || current.system) merged.system = mergePatch(sent.system, current.system ?? {})
+      if (sent.music || current.music) merged.music = mergePatch(sent.music, current.music ?? {})
+      if (sent.mic || current.mic) merged.mic = mergePatch(sent.mic, current.mic ?? {})
+      if (sent.reverb || current.reverb) merged.reverb = mergePatch(sent.reverb, current.reverb ?? {})
+      if (sent.echo || current.echo) merged.echo = mergePatch(sent.echo, current.echo ?? {})
+      if (sent.mainOutput || current.mainOutput) merged.mainOutput = mergePatch(sent.mainOutput, current.mainOutput ?? {})
+      if (sent.subOutput || current.subOutput) merged.subOutput = mergePatch(sent.subOutput, current.subOutput ?? {})
+      if (sent.center || current.center) merged.center = mergePatch(sent.center, current.center ?? {})
+      if (sent.surround || current.surround) merged.surround = mergePatch(sent.surround, current.surround ?? {})
+
+      pendingRef.current = merged
+    }
+
     try {
       const p = pendingRef.current
+      snapshot = p
+      pendingRef.current = { eq: new Map() }
+      clearFlushTimer()
+      flushRequestedRef.current = false
+      userBurstStartAtRef.current = null
+      userLastChangeAtRef.current = null
+      lastTxAtRef.current = Date.now()
+
       const ops: Array<Promise<void>> = []
 
       if (p.system) ops.push(targetClient.setSystem(p.system))
@@ -552,16 +642,48 @@ export function useDeviceSession(
       if (p.center) ops.push(targetClient.setCenter(p.center))
       if (p.surround) ops.push(targetClient.setSurround(p.surround))
 
+      let sentEq: webhmi.IEqPatch[] = []
       if (p.eq.size > 0) {
-        const eq = buildEqPatchesFromPending(p.eq, baseDbRef.current)
-        if (eq.length > 0) ops.push(targetClient.setEq({ eq }))
+        sentEq = buildEqPatchesFromPending(p.eq, baseDbRef.current)
+        if (sentEq.length > 0) ops.push(targetClient.setEq({ eq: sentEq }))
       }
 
       for (const op of ops) await op
+      flushSucceeded = true
 
-      if (stateRef.current.db) baseDbRef.current = cloneObject(stateRef.current.db)
-      resetPending()
+      const baseDb = baseDbRef.current
+      if (baseDb?.db) {
+        if (p.system) baseDb.db.system = applySectionPatch(baseDb.db.system, p.system) ?? baseDb.db.system
+        if (p.music) baseDb.db.music = applySectionPatch(baseDb.db.music, p.music) ?? baseDb.db.music
+        if (p.mic) baseDb.db.mic = applySectionPatch(baseDb.db.mic, p.mic) ?? baseDb.db.mic
+        if (p.reverb) baseDb.db.reverb = applySectionPatch(baseDb.db.reverb, p.reverb) ?? baseDb.db.reverb
+        if (p.echo) baseDb.db.echo = applySectionPatch(baseDb.db.echo, p.echo) ?? baseDb.db.echo
+        if (p.mainOutput) baseDb.db.mainOutput = applySectionPatch(baseDb.db.mainOutput, p.mainOutput) ?? baseDb.db.mainOutput
+        if (p.subOutput) baseDb.db.subOutput = applySectionPatch(baseDb.db.subOutput, p.subOutput) ?? baseDb.db.subOutput
+        if (p.center) baseDb.db.center = applySectionPatch(baseDb.db.center, p.center) ?? baseDb.db.center
+        if (p.surround) baseDb.db.surround = applySectionPatch(baseDb.db.surround, p.surround) ?? baseDb.db.surround
+      }
+      if (baseDb && sentEq.length > 0) {
+        for (const eqPatch of sentEq) {
+          if (typeof eqPatch.target !== 'number') continue
+          if (typeof eqPatch.bypass === 'boolean') applyEqBypassPatch(baseDb, eqPatch.target as webhmi.EqTarget, eqPatch.bypass)
+          for (const pointPatch of eqPatch.point ?? []) {
+            applyEqPointPatch(baseDb, eqPatch.target as webhmi.EqTarget, pointPatch)
+          }
+        }
+      }
+
+      flushRetryDelayRef.current = 0
+      if (!hasPending()) {
+        setState((s) => ({ ...s, dirty: false, flushError: '' }))
+      } else {
+        setState((s) => ({ ...s, dirty: true, flushError: '' }))
+      }
     } catch (e) {
+      // Put the snapshot back so we don't drop user changes on a failed flush.
+      // Note: This may re-send some patches if the transport failed after partially writing.
+      // The protocol is patch-based so re-sending is acceptable.
+      if (snapshot) mergePendingAfterFailure(snapshot)
       const message = e instanceof Error ? e.message : String(e)
       console.warn('[Flush] failed:', message)
       setState((s) => ({ ...s, flushError: message, dirty: true }))
@@ -572,12 +694,9 @@ export function useDeviceSession(
     } finally {
       setState((s) => ({ ...s, flushing: false }))
       flushInFlightRef.current = false
-      if (flushRequestedRef.current) {
-        flushRequestedRef.current = false
-        scheduleFlush(0)
-      }
+      if (flushSucceeded && (flushRequestedRef.current || hasPending())) rescheduleUserFlush()
     }
-  }, [resetPending, scheduleFlush])
+  }, [hasPending, rescheduleUserFlush, scheduleFlush])
 
   useEffect(() => {
     flushNowRef.current = flushNow
@@ -591,9 +710,9 @@ export function useDeviceSession(
         return db
       })
       setState((s) => ({ ...s, dirty: true, flushError: '' }))
-      scheduleFlush(500)
+      markUserChange()
     },
-    [scheduleFlush],
+    [markUserChange],
   )
 
   const queueMusic = useCallback(
@@ -604,9 +723,9 @@ export function useDeviceSession(
         return db
       })
       setState((s) => ({ ...s, dirty: true, flushError: '' }))
-      scheduleFlush(500)
+      markUserChange()
     },
-    [scheduleFlush],
+    [markUserChange],
   )
 
   const queueMic = useCallback(
@@ -617,9 +736,9 @@ export function useDeviceSession(
         return db
       })
       setState((s) => ({ ...s, dirty: true, flushError: '' }))
-      scheduleFlush(500)
+      markUserChange()
     },
-    [scheduleFlush],
+    [markUserChange],
   )
 
   const queueReverb = useCallback(
@@ -630,9 +749,9 @@ export function useDeviceSession(
         return db
       })
       setState((s) => ({ ...s, dirty: true, flushError: '' }))
-      scheduleFlush(500)
+      markUserChange()
     },
-    [scheduleFlush],
+    [markUserChange],
   )
 
   const queueEcho = useCallback(
@@ -643,9 +762,9 @@ export function useDeviceSession(
         return db
       })
       setState((s) => ({ ...s, dirty: true, flushError: '' }))
-      scheduleFlush(500)
+      markUserChange()
     },
-    [scheduleFlush],
+    [markUserChange],
   )
 
   const queueMainOutput = useCallback(
@@ -656,9 +775,9 @@ export function useDeviceSession(
         return db
       })
       setState((s) => ({ ...s, dirty: true, flushError: '' }))
-      scheduleFlush(500)
+      markUserChange()
     },
-    [scheduleFlush],
+    [markUserChange],
   )
 
   const queueSubOutput = useCallback(
@@ -669,9 +788,9 @@ export function useDeviceSession(
         return db
       })
       setState((s) => ({ ...s, dirty: true, flushError: '' }))
-      scheduleFlush(500)
+      markUserChange()
     },
-    [scheduleFlush],
+    [markUserChange],
   )
 
   const queueCenter = useCallback(
@@ -682,9 +801,9 @@ export function useDeviceSession(
         return db
       })
       setState((s) => ({ ...s, dirty: true, flushError: '' }))
-      scheduleFlush(500)
+      markUserChange()
     },
-    [scheduleFlush],
+    [markUserChange],
   )
 
   const queueSurround = useCallback(
@@ -695,9 +814,9 @@ export function useDeviceSession(
         return db
       })
       setState((s) => ({ ...s, dirty: true, flushError: '' }))
-      scheduleFlush(500)
+      markUserChange()
     },
-    [scheduleFlush],
+    [markUserChange],
   )
 
   const queueEqBypass = useCallback(
@@ -708,9 +827,9 @@ export function useDeviceSession(
 
       updateDbDraft((db) => applyEqBypassPatch(db, target, bypass))
       setState((s) => ({ ...s, dirty: true, flushError: '' }))
-      scheduleFlush(500)
+      markUserChange()
     },
-    [scheduleFlush],
+    [markUserChange],
   )
 
   const queueEqPoint = useCallback(
@@ -724,9 +843,9 @@ export function useDeviceSession(
 
       updateDbDraft((db) => applyEqPointPatch(db, target, patch))
       setState((s) => ({ ...s, dirty: true, flushError: '' }))
-      scheduleFlush(500)
+      markUserChange()
     },
-    [scheduleFlush],
+    [markUserChange],
   )
 
   const didAutoConnect = useRef(false)

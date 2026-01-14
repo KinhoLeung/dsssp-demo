@@ -9,7 +9,7 @@ import {
   type FilterChangeEvent,
   type GraphFilter,
 } from 'dsssp'
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import tailwindColors from 'tailwindcss/colors'
 
 import { FilterCard } from '../components'
@@ -45,6 +45,27 @@ type PanelDef = {
 type PanelState = {
   filters: GraphFilter[]
   pointIndexByUiIndex: number[]
+}
+
+const nearlyEqual = (a: number, b: number, eps = 1e-6) => Math.abs(a - b) <= eps
+
+const panelStateEqual = (a: PanelState, b: PanelState) => {
+  if (a.pointIndexByUiIndex.length !== b.pointIndexByUiIndex.length) return false
+  for (let i = 0; i < a.pointIndexByUiIndex.length; i++) {
+    if (a.pointIndexByUiIndex[i] !== b.pointIndexByUiIndex[i]) return false
+  }
+
+  if (a.filters.length !== b.filters.length) return false
+  for (let i = 0; i < a.filters.length; i++) {
+    const fa = a.filters[i]
+    const fb = b.filters[i]
+    if (fa.type !== fb.type) return false
+    if (!nearlyEqual(fa.freq, fb.freq)) return false
+    if (!nearlyEqual(fa.gain, fb.gain)) return false
+    if (!nearlyEqual(fa.q, fb.q)) return false
+  }
+
+  return true
 }
 
 function mapFilterTypeToGraphType(type: webhmi.FilterType | null | undefined): GraphFilter['type'] {
@@ -278,14 +299,37 @@ function DeviceDemo() {
     return out
   })
 
+  const panelStateByKeyRef = useRef(panelStateByKey)
+  useEffect(() => {
+    panelStateByKeyRef.current = panelStateByKey
+  }, [panelStateByKey])
+
+  const actionsRef = useRef(actions)
+  useEffect(() => {
+    actionsRef.current = actions
+  }, [actions])
+
   useEffect(() => {
     const out = {} as Record<PanelKey, PanelState>
     for (const panel of panels) {
       const eq = panel.getEq(state.db)
       out[panel.key] = buildPanelStateFromEq(eq)
     }
-    setPanelStateByKey(out)
-  }, [panels, state.db, state.dbFetchId])
+    setPanelStateByKey((prev) => {
+      let changed = false
+      const next = { ...prev }
+      for (const panel of panels) {
+        const key = panel.key
+        const desired = out[key]
+        const existing = prev[key]
+        if (!existing || !panelStateEqual(existing, desired)) {
+          next[key] = desired
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [panels, state.dbFetchId])
 
   const handleMouseLeave = () => {
     if (!dragging) setActiveIndex(-1)
@@ -295,40 +339,119 @@ function DeviceDemo() {
     if (!dragging) setActiveIndex(index)
   }
 
-  const makeHandleFilterChange = (key: PanelKey) => {
-    return (filterEvent: FilterChangeEvent) => {
+  const uiRafIdRef = useRef<number | null>(null)
+  const pendingUiPatchesRef = useRef<Map<PanelKey, Map<number, Partial<GraphFilter>>>>(new Map())
+
+  const graphFilterEqual = (a: GraphFilter, b: GraphFilter) =>
+    a.type === b.type && nearlyEqual(a.freq, b.freq) && nearlyEqual(a.gain, b.gain) && nearlyEqual(a.q, b.q)
+
+  const applyUiPatches = useCallback((patchesByKey: Map<PanelKey, Map<number, Partial<GraphFilter>>>) => {
+    if (patchesByKey.size === 0) return
+    setPanelStateByKey((prev) => {
+      let changed = false
+      const next = { ...prev }
+
+      for (const [key, patchesByIndex] of patchesByKey.entries()) {
+        if (patchesByIndex.size === 0) continue
+        let keyChanged = false
+        const current = next[key] ?? { filters: [], pointIndexByUiIndex: [] }
+        const nextFilters = [...current.filters]
+
+        for (const [uiIndex, patch] of patchesByIndex.entries()) {
+          const existing = nextFilters[uiIndex]
+          if (!existing) {
+            nextFilters[uiIndex] = patch as GraphFilter
+            keyChanged = true
+            continue
+          }
+          const merged = { ...existing, ...patch }
+          if (!graphFilterEqual(existing, merged)) {
+            nextFilters[uiIndex] = merged
+            keyChanged = true
+          }
+        }
+
+        if (keyChanged) {
+          next[key] = { ...current, filters: nextFilters }
+          changed = true
+        }
+      }
+
+      return changed ? next : prev
+    })
+  }, [])
+
+  const scheduleUiFlush = useCallback(() => {
+    if (uiRafIdRef.current != null) return
+    uiRafIdRef.current = window.requestAnimationFrame(() => {
+      uiRafIdRef.current = null
+      const pending = pendingUiPatchesRef.current
+      pendingUiPatchesRef.current = new Map()
+      applyUiPatches(pending)
+    })
+  }, [applyUiPatches])
+
+  useEffect(() => {
+    return () => {
+      if (uiRafIdRef.current != null) window.cancelAnimationFrame(uiRafIdRef.current)
+    }
+  }, [])
+
+  const handleFilterChangeForKey = useCallback(
+    (key: PanelKey, filterEvent: FilterChangeEvent) => {
       const def = panelByKey[key]
-      const stateForPanel = panelStateByKey[key]
+      const stateForPanel = panelStateByKeyRef.current[key]
       if (!def || !stateForPanel) return
 
       const { index: uiIndex, ended, ...filter } = filterEvent
-      setPanelStateByKey((prev) => {
-        const next: Record<PanelKey, PanelState> = { ...prev }
-        const current = next[key] ?? { filters: [], pointIndexByUiIndex: [] }
-        const nextFilters = [...current.filters]
-        nextFilters[uiIndex] = { ...nextFilters[uiIndex], ...filter }
-        next[key] = { ...current, filters: nextFilters }
-        return next
-      })
+
+      if (ended) {
+        const pendingForKey = pendingUiPatchesRef.current.get(key)
+        if (pendingForKey) {
+          pendingForKey.delete(uiIndex)
+          if (pendingForKey.size === 0) pendingUiPatchesRef.current.delete(key)
+        }
+
+        const patches = new Map<PanelKey, Map<number, Partial<GraphFilter>>>()
+        patches.set(key, new Map([[uiIndex, filter]]))
+        applyUiPatches(patches)
+      } else {
+        const byIndex = pendingUiPatchesRef.current.get(key) ?? new Map<number, Partial<GraphFilter>>()
+        byIndex.set(uiIndex, filter)
+        pendingUiPatchesRef.current.set(key, byIndex)
+        scheduleUiFlush()
+      }
 
       const deviceIndex = stateForPanel.pointIndexByUiIndex[uiIndex] ?? uiIndex
       const filterType = mapGraphTypeToFilterType(filter.type)
       const gain = filter.type === 'BYPASS' ? 0 : filter.gain
       const q = filter.type === 'BYPASS' ? 1 : filter.q
 
-      actions.queueEqPoint(def.target, {
+      actionsRef.current.queueEqPoint(def.target, {
         index: deviceIndex,
         type: filterType,
         freq: Math.max(1, Math.round(filter.freq)),
         gain,
         q,
       })
+    },
+    [applyUiPatches, panelByKey, scheduleUiFlush],
+  )
 
-      if (ended) {
-        // The transport layer already debounces/merges; this keeps the UI responsive without extra logic here.
-      }
-    }
-  }
+  const handleFilterChangeByKey = useMemo(
+    () =>
+      ({
+        music: (e: FilterChangeEvent) => handleFilterChangeForKey('music', e),
+        mica: (e: FilterChangeEvent) => handleFilterChangeForKey('mica', e),
+        reverb: (e: FilterChangeEvent) => handleFilterChangeForKey('reverb', e),
+        echo: (e: FilterChangeEvent) => handleFilterChangeForKey('echo', e),
+        mainoutput: (e: FilterChangeEvent) => handleFilterChangeForKey('mainoutput', e),
+        suboutput: (e: FilterChangeEvent) => handleFilterChangeForKey('suboutput', e),
+        center: (e: FilterChangeEvent) => handleFilterChangeForKey('center', e),
+        surround: (e: FilterChangeEvent) => handleFilterChangeForKey('surround', e),
+      }) satisfies Record<PanelKey, (e: FilterChangeEvent) => void>,
+    [handleFilterChangeForKey],
+  )
 
   const getPanelPower = (key: PanelKey) => {
     const eq = panelByKey[key]?.getEq(state.db)
@@ -358,7 +481,7 @@ function DeviceDemo() {
               filters={panelStateByKey.music.filters}
               activeIndex={activeIndex}
               dragging={dragging}
-              handleFilterChange={makeHandleFilterChange('music')}
+              handleFilterChange={handleFilterChangeByKey.music}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
@@ -373,7 +496,7 @@ function DeviceDemo() {
               filters={panelStateByKey.mica.filters}
               activeIndex={activeIndex}
               dragging={dragging}
-              handleFilterChange={makeHandleFilterChange('mica')}
+              handleFilterChange={handleFilterChangeByKey.mica}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
@@ -388,7 +511,7 @@ function DeviceDemo() {
               filters={panelStateByKey.reverb.filters}
               activeIndex={activeIndex}
               dragging={dragging}
-              handleFilterChange={makeHandleFilterChange('reverb')}
+              handleFilterChange={handleFilterChangeByKey.reverb}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
@@ -403,7 +526,7 @@ function DeviceDemo() {
               filters={panelStateByKey.echo.filters}
               activeIndex={activeIndex}
               dragging={dragging}
-              handleFilterChange={makeHandleFilterChange('echo')}
+              handleFilterChange={handleFilterChangeByKey.echo}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
@@ -418,7 +541,7 @@ function DeviceDemo() {
               filters={panelStateByKey.mainoutput.filters}
               activeIndex={activeIndex}
               dragging={dragging}
-              handleFilterChange={makeHandleFilterChange('mainoutput')}
+              handleFilterChange={handleFilterChangeByKey.mainoutput}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
@@ -433,7 +556,7 @@ function DeviceDemo() {
               filters={panelStateByKey.suboutput.filters}
               activeIndex={activeIndex}
               dragging={dragging}
-              handleFilterChange={makeHandleFilterChange('suboutput')}
+              handleFilterChange={handleFilterChangeByKey.suboutput}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
@@ -448,7 +571,7 @@ function DeviceDemo() {
               filters={panelStateByKey.center.filters}
               activeIndex={activeIndex}
               dragging={dragging}
-              handleFilterChange={makeHandleFilterChange('center')}
+              handleFilterChange={handleFilterChangeByKey.center}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
@@ -463,7 +586,7 @@ function DeviceDemo() {
               filters={panelStateByKey.surround.filters}
               activeIndex={activeIndex}
               dragging={dragging}
-              handleFilterChange={makeHandleFilterChange('surround')}
+              handleFilterChange={handleFilterChangeByKey.surround}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
