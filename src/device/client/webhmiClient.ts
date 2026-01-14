@@ -112,6 +112,20 @@ export class WebhmiClient {
   }
 
   async setEq(request: webhmi.ISetEqRequest) {
+    try {
+      const message = this.pb.SetEqRequest.fromObject(request)
+      const prettyObject = this.pb.SetEqRequest.toObject(message, {
+        enums: String,
+        longs: String,
+        defaults: false,
+        arrays: true,
+        objects: true,
+        oneofs: true,
+      })
+      console.warn('[SetEqRequest]', JSON.stringify(prettyObject, null, 2))
+    } catch (e) {
+      console.warn('[SetEqRequest] failed to pretty-print:', e instanceof Error ? e.message : String(e))
+    }
     const payload = this.pb.SetEqRequest.encode(request).finish()
     await this.session.request(MsgId.SetEq, payload, { expectResponse: false })
   }

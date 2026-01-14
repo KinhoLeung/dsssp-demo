@@ -106,6 +106,60 @@ const applyEqPointPatch = (db: webhmi.IGetDbResponse, target: webhmi.EqTarget, p
   return db
 }
 
+const hasValue = (v: unknown): v is NonNullable<unknown> => v !== undefined && v !== null
+
+const nearlyEqual = (a: number, b: number, eps = 1e-6) => Math.abs(a - b) <= eps
+
+const buildEqPatchesFromPending = (
+  pendingEq: Map<number, PendingEqTarget>,
+  baseDb: webhmi.IGetDbResponse | null,
+): webhmi.IEqPatch[] => {
+  const out: webhmi.IEqPatch[] = []
+
+  for (const [targetRaw, entry] of pendingEq.entries()) {
+    const target = targetRaw as webhmi.EqTarget
+    const baseEq = baseDb ? getEqRefByTarget(baseDb, target) : null
+
+    const patch: webhmi.IEqPatch = { target }
+
+    if (typeof entry.bypass === 'boolean') {
+      const baseBypass = !!baseEq?.bypass
+      if (entry.bypass !== baseBypass) patch.bypass = entry.bypass
+    }
+
+    const points: webhmi.IEqPointPatch[] = []
+    for (const pointPatch of entry.points.values()) {
+      if (typeof pointPatch.index !== 'number') continue
+      const basePoint = baseEq?.point?.find((p) => p?.index === pointPatch.index) ?? null
+
+      const minimized: webhmi.IEqPointPatch = { index: pointPatch.index }
+
+      if (hasValue(pointPatch.type) && (basePoint == null || pointPatch.type !== basePoint.type)) {
+        minimized.type = pointPatch.type
+      }
+      if (hasValue(pointPatch.freq) && (basePoint == null || pointPatch.freq !== basePoint.freq)) {
+        minimized.freq = pointPatch.freq
+      }
+      if (
+        hasValue(pointPatch.gain) &&
+        (basePoint == null || !hasValue(basePoint.gain) || !nearlyEqual(pointPatch.gain, basePoint.gain))
+      ) {
+        minimized.gain = pointPatch.gain
+      }
+      if (hasValue(pointPatch.q) && (basePoint == null || !hasValue(basePoint.q) || !nearlyEqual(pointPatch.q, basePoint.q))) {
+        minimized.q = pointPatch.q
+      }
+
+      if (Object.keys(minimized).length > 1) points.push(minimized)
+    }
+
+    if (points.length > 0) patch.point = points
+    if (patch.bypass !== undefined || (patch.point?.length ?? 0) > 0) out.push(patch)
+  }
+
+  return out
+}
+
 export type DeviceSessionState = {
   connected: boolean
   transport: 'hid' | 'ble' | null
@@ -156,6 +210,7 @@ export function useDeviceSession(
   const disconnectCleanupRef = useRef<(() => void) | null>(null)
 
   const pendingRef = useRef<PendingPatches>({ eq: new Map() })
+  const baseDbRef = useRef<webhmi.IGetDbResponse | null>(null)
   const flushTimerRef = useRef<number | null>(null)
   const flushInFlightRef = useRef(false)
   const flushRetryDelayRef = useRef<number>(0)
@@ -203,6 +258,7 @@ export function useDeviceSession(
     try {
       clearFlushTimer()
       resetPending()
+      baseDbRef.current = null
 
       disconnectCleanupRef.current?.()
       disconnectCleanupRef.current = null
@@ -275,6 +331,7 @@ export function useDeviceSession(
       console.warn('[GetDbResponse]', pretty)
 
       resetPending()
+      baseDbRef.current = cloneObject(db)
       setState((s) => ({ ...s, db, dbJson: pretty, dbFetchId: s.dbFetchId + 1 }))
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
@@ -289,6 +346,7 @@ export function useDeviceSession(
     clientRef.current = nextClient
     disconnectCleanupRef.current?.()
     disconnectCleanupRef.current = cleanup
+    baseDbRef.current = null
     setState((s) => ({
       ...s,
       connected: true,
@@ -495,16 +553,13 @@ export function useDeviceSession(
       if (p.surround) ops.push(targetClient.setSurround(p.surround))
 
       if (p.eq.size > 0) {
-        const eq = Array.from(p.eq.entries()).map(([target, entry]) => ({
-          target,
-          bypass: entry.bypass,
-          point: Array.from(entry.points.values()),
-        }))
-        ops.push(targetClient.setEq({ eq }))
+        const eq = buildEqPatchesFromPending(p.eq, baseDbRef.current)
+        if (eq.length > 0) ops.push(targetClient.setEq({ eq }))
       }
 
       for (const op of ops) await op
 
+      if (stateRef.current.db) baseDbRef.current = cloneObject(stateRef.current.db)
       resetPending()
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
