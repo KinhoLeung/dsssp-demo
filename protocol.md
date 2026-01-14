@@ -146,7 +146,7 @@ crc16（2 bytes）
 | 0x0007 | SetEcho           | 设置 Echo 参数（patch）       |
 | 0x0008 | SetMainOutput     | 设置 MainOutput 参数（patch） |
 | 0x0009 | SetSubOutput      | 设置 SubOutput 参数（patch）  |
-| 0x000a | SetCenter         | 设置 SubOutput 参数（patch）  |
+| 0x000a | SetCenter         | 设置 Center 参数（patch）     |
 | 0x000b | SetSurround       | 设置 Surround 参数（patch）  |
 | 0x000c | SwitchCurrentMode | 切换当前模式                  |
 | 0x000d | ChangeModeParam   | 改变模式参数                  |
@@ -897,24 +897,44 @@ payload：protobuf `webhmi.SetSubOutputRequest`
 
 payload：protobuf `webhmi.SetSubOutputRequest`
 
-### 5.11 切换当前模式（SwitchCurrentMode）0x000a
+### 5.11 设置 SubCenter 参数（SetCenter）0x000a
 
-#### 5.11.1 SwitchCurrentModeRequest（上位机→设备，msg_id=SwitchCurrentMode 0x000a，RESPONSE=1）
+#### 5.11.1 SetCenterRequest（上位机→设备，msg_id=SetSubOutput 0x000a，RESPONSE=0）
+
+payload：protobuf `webhmi.SetCenterRequest`
+
+#### 5.11.2 SetCenterReport（设备→上位机，msg_id=SetCenter 0x000a，RESPONSE=0，EVENT=1）
+
+payload：protobuf `webhmi.SetCenterRequest`
+
+### 5.12 设置 Surround 参数（SetSurround）0x000b
+
+#### 5.12.1 SetSurroundRequest（上位机→设备，msg_id=SetSurrounb 0x000a，RESPONSE=0）
+
+payload：protobuf `webhmi.SetSurroundRequest`
+
+#### 5.12.2 SetSurroundReport（设备→上位机，msg_id=SetSurrounb 0x000a，RESPONSE=0，EVENT=1）
+
+payload：protobuf `webhmi.SetSurroundRequest`
+
+### 5.13 切换当前模式（SwitchCurrentMode）0x000c
+
+#### 5.13.1 SwitchCurrentModeRequest（上位机→设备，msg_id=SwitchCurrentMode 0x000c，RESPONSE=1）
 
 payload：protobuf `webhmi.SwitchCurrentModeRequest`
 
-#### 5.11.2 SwitchCurrentModeResponse（设备→上位机，msg_id=SwitchCurrentMode 0x000a，RESPONSE=1）
+#### 5.13.2 SwitchCurrentModeResponse（设备→上位机，msg_id=SwitchCurrentMode 0x000c，RESPONSE=1）
 
 payload：protobuf `webhmi.SwitchCurrentModeResponse`
 
-### 5.12 保存参数（ChangeModeParam）0x000b
+### 5.14 保存参数（ChangeModeParam）0x000d
 
-#### 5.12.1 ChangeModeParamRequest（上位机→设备，msg_id=ChangeModeParam 0x000b，RESPONSE=0）
+#### 5.14.1 ChangeModeParamRequest（上位机→设备，msg_id=ChangeModeParam 0x000d，RESPONSE=0）
 
 payload：protobuf `webhmi.ChangeModeParamRequest`
 
-### 5.13 重置EQ参数（ResetEq）0x000c
+### 5.15 重置EQ参数（ResetEq）0x000e
 
-#### 5.13.1 ResetEqRequest（上位机→设备，msg_id=ResetEq 0x000c，RESPONSE=0）
+#### 5.15.1 ResetEqRequest（上位机→设备，msg_id=ResetEq 0x000e，RESPONSE=0）
 
 payload：protobuf `webhmi.ResetEqRequest`

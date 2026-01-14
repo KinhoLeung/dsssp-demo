@@ -91,6 +91,17 @@ const applyEqBypassPatch = (db: webhmi.IGetDbResponse, target: webhmi.EqTarget, 
   return db
 }
 
+const getEqPointRefByTargetAndIndex = (
+  db: webhmi.IGetDbResponse,
+  target: webhmi.EqTarget,
+  index: number,
+): webhmi.IEqPoint | null => {
+  const eq = getEqRefByTarget(db, target)
+  const points = eq?.point
+  if (!Array.isArray(points)) return null
+  return points.find((p) => p?.index === index) ?? null
+}
+
 const applyEqPointPatch = (db: webhmi.IGetDbResponse, target: webhmi.EqTarget, patch: webhmi.IEqPointPatch) => {
   const eq = getEqRefByTarget(db, target)
   if (!eq) return db
@@ -103,6 +114,25 @@ const applyEqPointPatch = (db: webhmi.IGetDbResponse, target: webhmi.EqTarget, p
   } else {
     eq.point.push({ ...patch })
   }
+  return db
+}
+
+const applyEqPointDefaults = (db: webhmi.IGetDbResponse, target: webhmi.EqTarget, indices?: number[]) => {
+  const eq = getEqRefByTarget(db, target)
+  if (!eq?.point?.length) return db
+
+  const allow = indices?.length ? new Set(indices) : null
+  for (const p of eq.point) {
+    if (!p) continue
+    const index = p.index
+    if (allow && (typeof index !== 'number' || !allow.has(index))) continue
+
+    if (typeof p.defaultType === 'number') p.type = p.defaultType
+    if (typeof p.defaultFreq === 'number') p.freq = p.defaultFreq
+    if (typeof p.defaultGain === 'number') p.gain = p.defaultGain
+    if (typeof p.defaultQ === 'number') p.q = p.defaultQ
+  }
+
   return db
 }
 
@@ -251,6 +281,22 @@ export function useDeviceSession(
     }
   }
 
+  const hasPending = useCallback(() => {
+    const p = pendingRef.current
+    return (
+      !!p.system ||
+      !!p.music ||
+      !!p.mic ||
+      !!p.reverb ||
+      !!p.echo ||
+      !!p.mainOutput ||
+      !!p.subOutput ||
+      !!p.center ||
+      !!p.surround ||
+      p.eq.size > 0
+    )
+  }, [])
+
   const scheduleFlush = useCallback((delayMs: number) => {
     if (flushTimerRef.current) {
       window.clearTimeout(flushTimerRef.current)
@@ -360,6 +406,95 @@ export function useDeviceSession(
       setState((s) => ({ ...s, busy: false }))
     }
   }, [resetPending])
+
+  const resetEq = useCallback(async (target: webhmi.EqTarget, indices?: number[]) => {
+    const targetClient = clientRef.current
+    if (!targetClient) return
+    if (stateRef.current.authOk !== true) return
+
+    setState((s) => ({ ...s, busy: true, error: '' }))
+    try {
+      const index = indices?.length ? indices : []
+      await targetClient.resetEq({ target, index })
+
+      const pending = pendingRef.current.eq.get(target)
+      if (pending) {
+        pending.points.clear()
+        if (pending.bypass === undefined) pendingRef.current.eq.delete(target)
+      }
+      if (!hasPending()) clearFlushTimer()
+
+      if (baseDbRef.current) applyEqPointDefaults(baseDbRef.current, target, indices)
+
+      setState((s) => {
+        if (!s.db) {
+          return { ...s, busy: false, dirty: hasPending(), flushError: '', dbFetchId: s.dbFetchId + 1 }
+        }
+        const nextDb = applyEqPointDefaults(cloneObject(s.db), target, indices)
+        const nextJson = s.dbJson ? JSON.stringify(nextDb, null, 2) : s.dbJson
+        return {
+          ...s,
+          busy: false,
+          db: nextDb,
+          dbJson: nextJson,
+          dbFetchId: s.dbFetchId + 1,
+          dirty: hasPending(),
+          flushError: '',
+        }
+      })
+    } catch (e) {
+      setState((s) => ({ ...s, error: e instanceof Error ? e.message : String(e) }))
+    } finally {
+      setState((s) => ({ ...s, busy: false }))
+    }
+  }, [hasPending])
+
+  const resetEqPointToDefault = useCallback(
+    async (target: webhmi.EqTarget, index: number) => {
+      const targetClient = clientRef.current
+      if (!targetClient) return
+      if (stateRef.current.authOk !== true) return
+
+      const sourceDb = stateRef.current.db ?? baseDbRef.current
+      if (!sourceDb) return
+
+      const point = getEqPointRefByTargetAndIndex(sourceDb, target, index)
+      if (!point) return
+
+      const patch: webhmi.IEqPointPatch = { index }
+      if (typeof point.defaultType === 'number') patch.type = point.defaultType
+      if (typeof point.defaultFreq === 'number') patch.freq = point.defaultFreq
+      if (typeof point.defaultGain === 'number') patch.gain = point.defaultGain
+      if (typeof point.defaultQ === 'number') patch.q = point.defaultQ
+      if (Object.keys(patch).length <= 1) return
+
+      setState((s) => ({ ...s, busy: true, error: '' }))
+      try {
+        await targetClient.setEq({ eq: [{ target, point: [patch] }] })
+
+        const pending = pendingRef.current.eq.get(target)
+        if (pending) {
+          pending.points.delete(index)
+          if (pending.points.size === 0 && pending.bypass === undefined) pendingRef.current.eq.delete(target)
+        }
+        if (!hasPending()) clearFlushTimer()
+
+        if (baseDbRef.current) applyEqPointPatch(baseDbRef.current, target, patch)
+
+        setState((s) => {
+          if (!s.db) return { ...s, dirty: hasPending(), flushError: '', dbFetchId: s.dbFetchId + 1 }
+          const nextDb = applyEqPointPatch(cloneObject(s.db), target, patch)
+          const nextJson = s.dbJson ? JSON.stringify(nextDb, null, 2) : s.dbJson
+          return { ...s, db: nextDb, dbJson: nextJson, dbFetchId: s.dbFetchId + 1, dirty: hasPending(), flushError: '' }
+        })
+      } catch (e) {
+        setState((s) => ({ ...s, error: e instanceof Error ? e.message : String(e) }))
+      } finally {
+        setState((s) => ({ ...s, busy: false }))
+      }
+    },
+    [hasPending],
+  )
 
   const setConnectedClient = useCallback((nextClient: WebhmiClient, transport: 'hid' | 'ble', cleanup: () => void) => {
     clientRef.current = nextClient
@@ -510,22 +645,6 @@ export function useDeviceSession(
     },
     [doAuth, handleTransportDisconnected, refreshDb, setConnectedClient],
   )
-
-  const hasPending = useCallback(() => {
-    const p = pendingRef.current
-    return (
-      !!p.system ||
-      !!p.music ||
-      !!p.mic ||
-      !!p.reverb ||
-      !!p.echo ||
-      !!p.mainOutput ||
-      !!p.subOutput ||
-      !!p.center ||
-      !!p.surround ||
-      p.eq.size > 0
-    )
-  }, [])
 
   const updateDbDraft = (updater: (draft: webhmi.IGetDbResponse) => webhmi.IGetDbResponse) => {
     setState((s) => {
@@ -863,6 +982,8 @@ export function useDeviceSession(
       connectBle,
       disconnect,
       refreshDb,
+      resetEq,
+      resetEqPointToDefault,
       flushNow,
       queueSystem,
       queueMusic,

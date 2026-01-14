@@ -7,6 +7,7 @@ import {
   FrequencyResponseGraph,
   PointerTracker,
   type FilterChangeEvent,
+  type FilterPointEvent,
   type FilterType,
   type GraphFilter,
 } from 'dsssp'
@@ -194,6 +195,7 @@ type DspPanelProps = {
   activeIndex: number
   dragging: boolean
   handleFilterChange: (filterEvent: FilterChangeEvent) => void
+  handlePointDoubleClick: (filterEvent: FilterPointEvent) => void
   handleMouseEnter: ({ index }: { index: number }) => void
   handleMouseLeave: () => void
   setDragging: (dragging: boolean) => void
@@ -209,6 +211,7 @@ function DspPanel({
   activeIndex,
   dragging,
   handleFilterChange,
+  handlePointDoubleClick,
   handleMouseEnter,
   handleMouseLeave,
   setDragging,
@@ -273,6 +276,7 @@ function DspPanel({
                       onDrag={setDragging}
                       onEnter={handleMouseEnter}
                       onLeave={handleMouseLeave}
+                      onDoubleClick={handlePointDoubleClick}
                       onChange={handleFilterChange}
                     />
                   ))}
@@ -488,6 +492,19 @@ function DeviceDemo() {
     [applyUiPatches, panelByKey, scheduleUiFlush],
   )
 
+  const handlePointDoubleClickForKey = useCallback(
+    (key: PanelKey, filterEvent: FilterPointEvent) => {
+      const def = panelByKey[key]
+      const stateForPanel = panelStateByKeyRef.current[key]
+      if (!def || !stateForPanel) return
+
+      const uiIndex = filterEvent.index
+      const deviceIndex = stateForPanel.pointIndexByUiIndex[uiIndex] ?? uiIndex
+      void actionsRef.current.resetEqPointToDefault(def.target, deviceIndex)
+    },
+    [panelByKey],
+  )
+
   const handleFilterChangeByKey = useMemo(
     () =>
       ({
@@ -501,6 +518,21 @@ function DeviceDemo() {
         surround: (e: FilterChangeEvent) => handleFilterChangeForKey('surround', e),
       }) satisfies Record<PanelKey, (e: FilterChangeEvent) => void>,
     [handleFilterChangeForKey],
+  )
+
+  const handlePointDoubleClickByKey = useMemo(
+    () =>
+      ({
+        music: (e: FilterPointEvent) => handlePointDoubleClickForKey('music', e),
+        mica: (e: FilterPointEvent) => handlePointDoubleClickForKey('mica', e),
+        reverb: (e: FilterPointEvent) => handlePointDoubleClickForKey('reverb', e),
+        echo: (e: FilterPointEvent) => handlePointDoubleClickForKey('echo', e),
+        mainoutput: (e: FilterPointEvent) => handlePointDoubleClickForKey('mainoutput', e),
+        suboutput: (e: FilterPointEvent) => handlePointDoubleClickForKey('suboutput', e),
+        center: (e: FilterPointEvent) => handlePointDoubleClickForKey('center', e),
+        surround: (e: FilterPointEvent) => handlePointDoubleClickForKey('surround', e),
+      }) satisfies Record<PanelKey, (e: FilterPointEvent) => void>,
+    [handlePointDoubleClickForKey],
   )
 
   const getPanelPower = (key: PanelKey) => {
@@ -533,10 +565,11 @@ function DeviceDemo() {
               activeIndex={activeIndex}
               dragging={dragging}
               handleFilterChange={handleFilterChangeByKey.music}
+              handlePointDoubleClick={handlePointDoubleClickByKey.music}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
-              onReset={() => void actions.refreshDb()}
+              onReset={() => void actions.resetEq(webhmi.EqTarget.MUSIC)}
               onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.MUSIC, pressed)}
             />
           </TabsContent>
@@ -549,10 +582,11 @@ function DeviceDemo() {
               activeIndex={activeIndex}
               dragging={dragging}
               handleFilterChange={handleFilterChangeByKey.mica}
+              handlePointDoubleClick={handlePointDoubleClickByKey.mica}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
-              onReset={() => void actions.refreshDb()}
+              onReset={() => void actions.resetEq(webhmi.EqTarget.MIC_A)}
               onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.MIC_A, pressed)}
             />
           </TabsContent>
@@ -565,10 +599,11 @@ function DeviceDemo() {
               activeIndex={activeIndex}
               dragging={dragging}
               handleFilterChange={handleFilterChangeByKey.reverb}
+              handlePointDoubleClick={handlePointDoubleClickByKey.reverb}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
-              onReset={() => void actions.refreshDb()}
+              onReset={() => void actions.resetEq(webhmi.EqTarget.REVERB)}
               onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.REVERB, pressed)}
             />
           </TabsContent>
@@ -581,10 +616,11 @@ function DeviceDemo() {
               activeIndex={activeIndex}
               dragging={dragging}
               handleFilterChange={handleFilterChangeByKey.echo}
+              handlePointDoubleClick={handlePointDoubleClickByKey.echo}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
-              onReset={() => void actions.refreshDb()}
+              onReset={() => void actions.resetEq(webhmi.EqTarget.ECHO)}
               onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.ECHO, pressed)}
             />
           </TabsContent>
@@ -597,10 +633,11 @@ function DeviceDemo() {
               activeIndex={activeIndex}
               dragging={dragging}
               handleFilterChange={handleFilterChangeByKey.mainoutput}
+              handlePointDoubleClick={handlePointDoubleClickByKey.mainoutput}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
-              onReset={() => void actions.refreshDb()}
+              onReset={() => void actions.resetEq(webhmi.EqTarget.MAIN_OUTPUT)}
               onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.MAIN_OUTPUT, pressed)}
             />
           </TabsContent>
@@ -613,10 +650,11 @@ function DeviceDemo() {
               activeIndex={activeIndex}
               dragging={dragging}
               handleFilterChange={handleFilterChangeByKey.suboutput}
+              handlePointDoubleClick={handlePointDoubleClickByKey.suboutput}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
-              onReset={() => void actions.refreshDb()}
+              onReset={() => void actions.resetEq(webhmi.EqTarget.SUB_OUTPUT)}
               onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.SUB_OUTPUT, pressed)}
             />
           </TabsContent>
@@ -629,10 +667,11 @@ function DeviceDemo() {
               activeIndex={activeIndex}
               dragging={dragging}
               handleFilterChange={handleFilterChangeByKey.center}
+              handlePointDoubleClick={handlePointDoubleClickByKey.center}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
-              onReset={() => void actions.refreshDb()}
+              onReset={() => void actions.resetEq(webhmi.EqTarget.CENTER)}
               onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.CENTER, pressed)}
             />
           </TabsContent>
@@ -645,10 +684,11 @@ function DeviceDemo() {
               activeIndex={activeIndex}
               dragging={dragging}
               handleFilterChange={handleFilterChangeByKey.surround}
+              handlePointDoubleClick={handlePointDoubleClickByKey.surround}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
-              onReset={() => void actions.refreshDb()}
+              onReset={() => void actions.resetEq(webhmi.EqTarget.SURROUND)}
               onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.SURROUND, pressed)}
             />
           </TabsContent>
