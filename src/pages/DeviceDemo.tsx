@@ -11,7 +11,7 @@ import {
   type FilterType,
   type GraphFilter,
 } from 'dsssp'
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import tailwindColors from 'tailwindcss/colors'
 
 import { FilterCard } from '../components'
@@ -24,12 +24,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Toggle } from '@/components/ui/toggle'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { webhmi } from '@/device/proto/generated/webhmi'
 import { useDeviceSessionContext } from '@/device/session/deviceSessionContext'
 
 type PanelKey =
   | 'music'
   | 'mica'
+  | 'micb'
   | 'reverb'
   | 'echo'
   | 'mainoutput'
@@ -194,6 +196,7 @@ type DspPanelProps = {
   allowedTypesByUiIndex: Array<FilterType[] | null>
   activeIndex: number
   dragging: boolean
+  headerExtra?: ReactNode
   handleFilterChange: (filterEvent: FilterChangeEvent) => void
   handlePointDoubleClick: (filterEvent: FilterPointEvent) => void
   handleMouseEnter: ({ index }: { index: number }) => void
@@ -210,6 +213,7 @@ function DspPanel({
   allowedTypesByUiIndex,
   activeIndex,
   dragging,
+  headerExtra,
   handleFilterChange,
   handlePointDoubleClick,
   handleMouseEnter,
@@ -240,10 +244,11 @@ function DspPanel({
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="flex items-center justify-between pb-3">
+        <div className="grid grid-cols-[auto,1fr,auto] items-center gap-3 pb-3">
           <Button variant="secondary" onClick={onReset}>
             Reset
           </Button>
+          <div className="justify-self-center">{headerExtra}</div>
           <Toggle aria-label="Bypass" variant="outline" pressed={bypass} onPressedChange={onBypassChange}>
             Bypass
           </Toggle>
@@ -318,6 +323,7 @@ function DeviceDemo() {
     () => [
       { key: 'music', label: 'Music', target: webhmi.EqTarget.MUSIC, getEq: (db) => db?.db?.music?.eq ?? null },
       { key: 'mica', label: 'Mic', target: webhmi.EqTarget.MIC_A, getEq: (db) => db?.db?.mic?.micAEq?.eq ?? null },
+      { key: 'micb', label: 'Mic', target: webhmi.EqTarget.MIC_B, getEq: (db) => db?.db?.mic?.micBEq?.eq ?? null },
       { key: 'reverb', label: 'Reverb', target: webhmi.EqTarget.REVERB, getEq: (db) => db?.db?.reverb?.eq ?? null },
       { key: 'echo', label: 'Echo', target: webhmi.EqTarget.ECHO, getEq: (db) => db?.db?.echo?.eq ?? null },
       {
@@ -510,6 +516,7 @@ function DeviceDemo() {
       ({
         music: (e: FilterChangeEvent) => handleFilterChangeForKey('music', e),
         mica: (e: FilterChangeEvent) => handleFilterChangeForKey('mica', e),
+        micb: (e: FilterChangeEvent) => handleFilterChangeForKey('micb', e),
         reverb: (e: FilterChangeEvent) => handleFilterChangeForKey('reverb', e),
         echo: (e: FilterChangeEvent) => handleFilterChangeForKey('echo', e),
         mainoutput: (e: FilterChangeEvent) => handleFilterChangeForKey('mainoutput', e),
@@ -525,6 +532,7 @@ function DeviceDemo() {
       ({
         music: (e: FilterPointEvent) => handlePointDoubleClickForKey('music', e),
         mica: (e: FilterPointEvent) => handlePointDoubleClickForKey('mica', e),
+        micb: (e: FilterPointEvent) => handlePointDoubleClickForKey('micb', e),
         reverb: (e: FilterPointEvent) => handlePointDoubleClickForKey('reverb', e),
         echo: (e: FilterPointEvent) => handlePointDoubleClickForKey('echo', e),
         mainoutput: (e: FilterPointEvent) => handlePointDoubleClickForKey('mainoutput', e),
@@ -541,6 +549,20 @@ function DeviceDemo() {
     const bypass = !!eq.bypass
     return { powered: !bypass, bypass }
   }
+
+  type MicPanelKey = 'mica' | 'micb'
+  const [micKey, setMicKey] = useState<MicPanelKey>('mica')
+  const hasMicA = !!panelByKey.mica?.getEq(state.db)
+  const hasMicB = !!panelByKey.micb?.getEq(state.db)
+  const showMicSelector = hasMicA && hasMicB
+
+  useEffect(() => {
+    const desired: MicPanelKey = hasMicA ? 'mica' : hasMicB ? 'micb' : 'mica'
+    if ((micKey === 'mica' && !hasMicA && hasMicB) || (micKey === 'micb' && !hasMicB && hasMicA)) {
+      setMicKey(desired)
+    }
+    if (!hasMicA && !hasMicB && micKey !== 'mica') setMicKey('mica')
+  }, [hasMicA, hasMicB, micKey])
 
   return (
     <div className="text-white text-sans min-h-screen flex flex-col items-center">
@@ -576,18 +598,36 @@ function DeviceDemo() {
 
           <TabsContent value="mic">
             <DspPanel
-              {...getPanelPower('mica')}
-              filters={panelStateByKey.mica.filters}
-              allowedTypesByUiIndex={panelStateByKey.mica.allowedTypesByUiIndex}
+              {...getPanelPower(micKey)}
+              filters={panelStateByKey[micKey].filters}
+              allowedTypesByUiIndex={panelStateByKey[micKey].allowedTypesByUiIndex}
               activeIndex={activeIndex}
               dragging={dragging}
-              handleFilterChange={handleFilterChangeByKey.mica}
-              handlePointDoubleClick={handlePointDoubleClickByKey.mica}
+              headerExtra={
+                showMicSelector ? (
+                  <ToggleGroup
+                    type="single"
+                    variant="outline"
+                    value={micKey}
+                    onValueChange={(v) => v && setMicKey(v as MicPanelKey)}
+                    className="gap-0"
+                  >
+                    <ToggleGroupItem value="mica" className="rounded-r-none">
+                      Mic A
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="micb" className="rounded-l-none border-l-0">
+                      Mic B
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                ) : null
+              }
+              handleFilterChange={handleFilterChangeByKey[micKey]}
+              handlePointDoubleClick={handlePointDoubleClickByKey[micKey]}
               handleMouseEnter={handleMouseEnter}
               handleMouseLeave={handleMouseLeave}
               setDragging={setDragging}
-              onReset={() => void actions.resetEq(webhmi.EqTarget.MIC_A)}
-              onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.MIC_A, pressed)}
+              onReset={() => void actions.resetEq(panelByKey[micKey].target)}
+              onBypassChange={(pressed) => actions.queueEqBypass(panelByKey[micKey].target, pressed)}
             />
           </TabsContent>
 
