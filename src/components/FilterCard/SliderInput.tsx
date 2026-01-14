@@ -16,7 +16,8 @@ const SliderInput = ({
   log = false,
   disabled,
   focusColor,
-  precision = 2
+  precision = 2,
+  className
 }: {
   value: number
   onChange: (value: number, ended: boolean) => void
@@ -29,6 +30,7 @@ const SliderInput = ({
   disabled?: boolean
   focusColor?: string
   precision?: number
+  className?: string
 }) => {
   const dragging = useRef(false)
   const dragStartValue = useRef(value)
@@ -69,7 +71,7 @@ const SliderInput = ({
   }
 
   return (
-    <div>
+    <div className={clsx('flex-1 min-w-0', className)}>
       {label && (
         <div
           className={clsx(
