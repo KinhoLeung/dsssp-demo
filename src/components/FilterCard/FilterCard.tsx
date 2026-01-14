@@ -4,6 +4,7 @@ import {
   getZeroGain,
   getZeroQ,
   type FilterChangeEvent,
+  type FilterType,
   type GraphFilter
 } from 'dsssp'
 import { useEffect, useMemo, useState } from 'react'
@@ -19,6 +20,7 @@ const FilterCard = ({
   index = -1,
   active,
   filter,
+  allowedTypes,
   disabled,
   onEnter,
   onLeave,
@@ -27,6 +29,7 @@ const FilterCard = ({
   index: number
   active: boolean
   filter: GraphFilter
+  allowedTypes?: FilterType[] | null
   disabled: boolean
   onLeave?: () => void
   onEnter?: (event: FilterChangeEvent) => void
@@ -69,6 +72,7 @@ const FilterCard = ({
       <FilterSelect
         color={color}
         filter={filter}
+        allowedTypes={allowedTypes}
         disabled={disabled}
         onChange={(type) => onChange({ ...filter, index, type, ended: true })}
       />

@@ -7,6 +7,7 @@ import {
   FrequencyResponseGraph,
   PointerTracker,
   type FilterChangeEvent,
+  type FilterType,
   type GraphFilter,
 } from 'dsssp'
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -45,6 +46,7 @@ type PanelDef = {
 type PanelState = {
   filters: GraphFilter[]
   pointIndexByUiIndex: number[]
+  allowedTypesByUiIndex: Array<FilterType[] | null>
 }
 
 const nearlyEqual = (a: number, b: number, eps = 1e-6) => Math.abs(a - b) <= eps
@@ -63,6 +65,18 @@ const panelStateEqual = (a: PanelState, b: PanelState) => {
     if (!nearlyEqual(fa.freq, fb.freq)) return false
     if (!nearlyEqual(fa.gain, fb.gain)) return false
     if (!nearlyEqual(fa.q, fb.q)) return false
+  }
+
+  if (a.allowedTypesByUiIndex.length !== b.allowedTypesByUiIndex.length) return false
+  for (let i = 0; i < a.allowedTypesByUiIndex.length; i++) {
+    const aa = a.allowedTypesByUiIndex[i]
+    const bb = b.allowedTypesByUiIndex[i]
+    if (aa == null && bb == null) continue
+    if (aa == null || bb == null) return false
+    if (aa.length !== bb.length) return false
+    for (let j = 0; j < aa.length; j++) {
+      if (aa[j] !== bb[j]) return false
+    }
   }
 
   return true
@@ -122,27 +136,61 @@ function buildPanelStateFromEq(eq: webhmi.IEq | null): PanelState {
 
   const filters: GraphFilter[] = []
   const pointIndexByUiIndex: number[] = []
+  const allowedTypesByUiIndex: Array<FilterType[] | null> = []
+
+  const toUniqueGraphTypes = (types: Array<webhmi.FilterType | null | undefined> | null | undefined) => {
+    const out: FilterType[] = []
+    for (const t of types ?? []) {
+      const mapped = mapFilterTypeToGraphType(t)
+      if (!out.includes(mapped)) out.push(mapped)
+    }
+    return out
+  }
+
+  const allCount = sorted.length
+  const highPassList = toUniqueGraphTypes(eq?.highPassTypeList)
+  const midList = toUniqueGraphTypes(eq?.typeList)
+  const lowPassList = toUniqueGraphTypes(eq?.lowPassTypeList)
 
   for (let uiIndex = 0; uiIndex < sorted.length; uiIndex++) {
     const p = sorted[uiIndex] ?? {}
     const pointIndex = typeof p.index === 'number' ? p.index : uiIndex
     pointIndexByUiIndex.push(pointIndex)
 
+    const graphType = mapFilterTypeToGraphType(p.type)
     filters.push({
-      type: mapFilterTypeToGraphType(p.type),
+      type: graphType,
       freq: typeof p.freq === 'number' ? p.freq : 1000,
       gain: typeof p.gain === 'number' ? p.gain : 0,
       q: typeof p.q === 'number' ? p.q : 0.7,
     })
+
+    let allowed: FilterType[] | null = null
+    if (allCount <= 1) {
+      allowed = [...highPassList, ...midList, ...lowPassList]
+    } else if (uiIndex === 0) {
+      allowed = highPassList.length ? highPassList : midList
+    } else if (uiIndex === allCount - 1) {
+      allowed = lowPassList.length ? lowPassList : midList
+    } else {
+      allowed = midList.length ? midList : [...highPassList, ...lowPassList]
+    }
+
+    if (allowed.length === 0) {
+      allowedTypesByUiIndex.push(null)
+    } else {
+      allowedTypesByUiIndex.push(allowed.includes(graphType) ? allowed : [graphType, ...allowed])
+    }
   }
 
-  return { filters, pointIndexByUiIndex }
+  return { filters, pointIndexByUiIndex, allowedTypesByUiIndex }
 }
 
 type DspPanelProps = {
   powered: boolean
   bypass: boolean
   filters: GraphFilter[]
+  allowedTypesByUiIndex: Array<FilterType[] | null>
   activeIndex: number
   dragging: boolean
   handleFilterChange: (filterEvent: FilterChangeEvent) => void
@@ -157,6 +205,7 @@ function DspPanel({
   powered,
   bypass,
   filters,
+  allowedTypesByUiIndex,
   activeIndex,
   dragging,
   handleFilterChange,
@@ -244,6 +293,7 @@ function DspPanel({
               key={index}
               index={index}
               filter={filter}
+              allowedTypes={allowedTypesByUiIndex[index] ?? undefined}
               disabled={!powered}
               active={activeIndex === index}
               onLeave={handleMouseLeave}
@@ -295,7 +345,7 @@ function DeviceDemo() {
   const [activeIndex, setActiveIndex] = useState<number>(-1)
   const [panelStateByKey, setPanelStateByKey] = useState<Record<PanelKey, PanelState>>(() => {
     const out = {} as Record<PanelKey, PanelState>
-    for (const panel of panels) out[panel.key] = { filters: [], pointIndexByUiIndex: [] }
+    for (const panel of panels) out[panel.key] = { filters: [], pointIndexByUiIndex: [], allowedTypesByUiIndex: [] }
     return out
   })
 
@@ -479,6 +529,7 @@ function DeviceDemo() {
             <DspPanel
               {...getPanelPower('music')}
               filters={panelStateByKey.music.filters}
+              allowedTypesByUiIndex={panelStateByKey.music.allowedTypesByUiIndex}
               activeIndex={activeIndex}
               dragging={dragging}
               handleFilterChange={handleFilterChangeByKey.music}
@@ -494,6 +545,7 @@ function DeviceDemo() {
             <DspPanel
               {...getPanelPower('mica')}
               filters={panelStateByKey.mica.filters}
+              allowedTypesByUiIndex={panelStateByKey.mica.allowedTypesByUiIndex}
               activeIndex={activeIndex}
               dragging={dragging}
               handleFilterChange={handleFilterChangeByKey.mica}
@@ -509,6 +561,7 @@ function DeviceDemo() {
             <DspPanel
               {...getPanelPower('reverb')}
               filters={panelStateByKey.reverb.filters}
+              allowedTypesByUiIndex={panelStateByKey.reverb.allowedTypesByUiIndex}
               activeIndex={activeIndex}
               dragging={dragging}
               handleFilterChange={handleFilterChangeByKey.reverb}
@@ -524,6 +577,7 @@ function DeviceDemo() {
             <DspPanel
               {...getPanelPower('echo')}
               filters={panelStateByKey.echo.filters}
+              allowedTypesByUiIndex={panelStateByKey.echo.allowedTypesByUiIndex}
               activeIndex={activeIndex}
               dragging={dragging}
               handleFilterChange={handleFilterChangeByKey.echo}
@@ -539,6 +593,7 @@ function DeviceDemo() {
             <DspPanel
               {...getPanelPower('mainoutput')}
               filters={panelStateByKey.mainoutput.filters}
+              allowedTypesByUiIndex={panelStateByKey.mainoutput.allowedTypesByUiIndex}
               activeIndex={activeIndex}
               dragging={dragging}
               handleFilterChange={handleFilterChangeByKey.mainoutput}
@@ -554,6 +609,7 @@ function DeviceDemo() {
             <DspPanel
               {...getPanelPower('suboutput')}
               filters={panelStateByKey.suboutput.filters}
+              allowedTypesByUiIndex={panelStateByKey.suboutput.allowedTypesByUiIndex}
               activeIndex={activeIndex}
               dragging={dragging}
               handleFilterChange={handleFilterChangeByKey.suboutput}
@@ -569,6 +625,7 @@ function DeviceDemo() {
             <DspPanel
               {...getPanelPower('center')}
               filters={panelStateByKey.center.filters}
+              allowedTypesByUiIndex={panelStateByKey.center.allowedTypesByUiIndex}
               activeIndex={activeIndex}
               dragging={dragging}
               handleFilterChange={handleFilterChangeByKey.center}
@@ -584,6 +641,7 @@ function DeviceDemo() {
             <DspPanel
               {...getPanelPower('surround')}
               filters={panelStateByKey.surround.filters}
+              allowedTypesByUiIndex={panelStateByKey.surround.allowedTypesByUiIndex}
               activeIndex={activeIndex}
               dragging={dragging}
               handleFilterChange={handleFilterChangeByKey.surround}

@@ -46,16 +46,23 @@ const FilterSelect = ({
   color,
   filter,
   disabled,
+  allowedTypes,
   onChange
 }: {
   color?: string
   filter: GraphFilter
   disabled: boolean
+  allowedTypes?: FilterType[] | null
   onChange: (type: FilterType) => void
 }) => {
   const [opened, setOpened] = useState<boolean>(false)
   // temporary solution to hide broken dsssp icons from dropdowns
   const safariBrowser = useMemo(() => isSafari(), [])
+  const options = useMemo(() => {
+    const base = (allowedTypes?.length ? allowedTypes : filterTypeKeys) as FilterType[]
+    const unique = Array.from(new Set(base))
+    return unique.includes(filter.type) ? unique : ([filter.type, ...unique] as FilterType[])
+  }, [allowedTypes, filter.type])
 
   return (
     <div
@@ -79,7 +86,7 @@ const FilterSelect = ({
           }}
           className="bg-transparent text-transparent appearance-none w-[130px] h-full px-1 cursor-pointer focus:outline-none focus:ring-0"
         >
-          {filterTypeKeys.map((type: FilterType) => (
+          {options.map((type: FilterType) => (
             <option
               key={type}
               value={type}
