@@ -35,7 +35,11 @@ const FilterCard = ({
   onEnter?: (event: FilterChangeEvent) => void
   onChange: (event: FilterChangeEvent) => void
 }) => {
-  const { minFreq, maxFreq } = scale
+  const { minFreq, maxFreq, minGain, maxGain, gainPrecision, minQ, maxQ, qPrecision } = scale
+  const resolvedGainPrecision = typeof gainPrecision === 'number' ? gainPrecision : 1
+  const resolvedQPrecision = typeof qPrecision === 'number' ? qPrecision : 1
+  const gainStep = Math.pow(10, -resolvedGainPrecision)
+  const qStep = Math.pow(10, -resolvedQPrecision)
   const [noiseDataUrl, setNoiseDataUrl] = useState<string>('')
   // eslint-disable-next-line no-param-reassign
   if (disabled) filter = { type: 'BYPASS', freq: 0, gain: 0, q: 1 }
@@ -81,6 +85,7 @@ const FilterCard = ({
         suffix="Hz"
         min={minFreq}
         max={maxFreq}
+        step={1}
         precision={0}
         label="Frequency"
         value={filter.freq}
@@ -90,10 +95,10 @@ const FilterCard = ({
 
       <div className="flex flex-row gap-2 w-full">
         <SliderInput
-          max={10}
-          min={-10}
-          step={0.1}
-          precision={1}
+          max={maxGain}
+          min={minGain}
+          step={gainStep}
+          precision={resolvedGainPrecision}
           className="flex-1"
           label="Gain"
           value={filter.gain}
@@ -105,10 +110,10 @@ const FilterCard = ({
 
         <SliderInput
           log
-          max={10}
-          min={0.1}
-          step={0.1}
-          precision={1}
+          max={maxQ}
+          min={minQ}
+          step={qStep}
+          precision={resolvedQPrecision}
           className="flex-1"
           label="Q"
           value={filter.q}

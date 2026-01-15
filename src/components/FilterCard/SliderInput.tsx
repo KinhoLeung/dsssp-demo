@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
 import { AbstractlySlider } from '../AbstractlySlider'
 
@@ -35,6 +35,16 @@ const SliderInput = ({
   const dragging = useRef(false)
   const dragStartValue = useRef(value)
   const lastValue = useRef(value)
+  const wheelTargetRef = useRef<HTMLDivElement | null>(null)
+  const latestRef = useRef({
+    value,
+    min,
+    max,
+    step,
+    precision,
+    disabled,
+    onChange
+  })
 
   const linearToLog = (linear: number): number => {
     const minv = Math.log(min)
@@ -63,6 +73,37 @@ const SliderInput = ({
     }
   }
 
+  useEffect(() => {
+    latestRef.current = {
+      value,
+      min,
+      max,
+      step,
+      precision,
+      disabled,
+      onChange
+    }
+  }, [value, min, max, step, precision, disabled, onChange])
+
+  useEffect(() => {
+    const element = wheelTargetRef.current
+    if (!element) return
+    const handleWheel = (event: WheelEvent) => {
+      const latest = latestRef.current
+      if (latest.disabled) return
+      event.preventDefault()
+      const direction = event.deltaY < 0 ? 1 : -1
+      const next = Math.min(
+        Math.max(latest.value + direction * latest.step, latest.min),
+        latest.max
+      )
+      const roundedNext = Number(next.toFixed(latest.precision))
+      latest.onChange(roundedNext, true)
+    }
+    element.addEventListener('wheel', handleWheel, { passive: false })
+    return () => element.removeEventListener('wheel', handleWheel)
+  }, [])
+
   const handlePointerDownCapture = () => {
     if (disabled) return
     dragging.current = true
@@ -90,6 +131,7 @@ const SliderInput = ({
               'opacity-50 pointer-events-none': disabled
             }
           )}
+          ref={wheelTargetRef}
           onPointerDownCapture={handlePointerDownCapture}
           onPointerUp={commitEndIfChanged}
           onPointerCancel={commitEndIfChanged}
@@ -129,6 +171,7 @@ const SliderInput = ({
           value={value}
           min={min}
           max={max}
+          step={step}
           precision={precision}
           disabled={disabled}
           onChange={(value) => onChange(value, true)}

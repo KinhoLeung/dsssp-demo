@@ -6,6 +6,7 @@ const FilterInput = ({
   value,
   min = -Infinity,
   max = Infinity,
+  step,
   onChange,
   prefix,
   suffix,
@@ -16,6 +17,7 @@ const FilterInput = ({
   value: number
   min?: number
   max?: number
+  step?: number
   onChange?: (value: number) => void
   prefix?: string
   suffix?: string
@@ -24,11 +26,60 @@ const FilterInput = ({
   precision?: number
 }) => {
   const oldValue = useRef<number>(value)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const latestRef = useRef({
+    value,
+    min,
+    max,
+    step,
+    precision,
+    disabled,
+    onChange
+  })
   const [inputValue, setInputValue] = useState<string>(value.toFixed(precision))
+  const resolvedStep =
+    typeof step === 'number'
+      ? step
+      : precision === 0
+        ? 1
+        : Math.pow(10, -precision)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value)
   }
+
+  useEffect(() => {
+    latestRef.current = {
+      value,
+      min,
+      max,
+      step,
+      precision,
+      disabled,
+      onChange
+    }
+  }, [value, min, max, step, precision, disabled, onChange])
+
+  useEffect(() => {
+    const element = containerRef.current
+    if (!element) return
+    const handleWheel = (event: WheelEvent) => {
+      const latest = latestRef.current
+      if (latest.disabled) return
+      event.preventDefault()
+      const direction = event.deltaY < 0 ? 1 : -1
+      const next = Math.min(
+        Math.max(latest.value + direction * resolvedStep, latest.min),
+        latest.max
+      )
+      const roundedNext = Number(next.toFixed(latest.precision))
+      setInputValue(roundedNext.toFixed(latest.precision))
+      oldValue.current = roundedNext
+      latest.onChange?.(roundedNext)
+    }
+    element.addEventListener('wheel', handleWheel, { passive: false })
+    return () => element.removeEventListener('wheel', handleWheel)
+  }, [resolvedStep])
 
   const validateInput = () => {
     const num = Number(inputValue)
@@ -61,6 +112,7 @@ const FilterInput = ({
 
   return (
     <div
+      ref={containerRef}
       className={clsx('flex flex-col transition-opacity duration-150', {
         'opacity-50 pointer-events-none': disabled
       })}
@@ -75,7 +127,7 @@ const FilterInput = ({
           type="number"
           min={min}
           max={max}
-          step={precision === 0 ? 1 : 0.1}
+          step={resolvedStep}
           value={disabled ? '' : inputValue}
           onFocus={handleFocus}
           onChange={handleChange}

@@ -212,17 +212,48 @@ NumberField.displayName = "NumberField"
 export type NumberFieldGroupProps = React.HTMLAttributes<HTMLDivElement>
 
 const NumberFieldGroup = React.forwardRef<HTMLDivElement, NumberFieldGroupProps>(
-  ({ className, ...props }, ref) => (
-    <div
-      data-slot="number-field-group"
-      className={cn(
-        "focus-within:border-ring focus-within:ring-ring/50 border-input has-aria-invalid:ring-destructive/20 dark:has-aria-invalid:ring-destructive/40 has-aria-invalid:border-destructive relative rounded-md border transition-shadow focus-within:ring-[3px]",
-        className
-      )}
-      ref={ref}
-      {...props}
-    />
-  )
+  ({ className, ...props }, ref) => {
+    const context = useNumberFieldContext("NumberFieldGroup")
+    const groupRef = React.useRef<HTMLDivElement | null>(null)
+
+    const setRefs = React.useCallback(
+      (node: HTMLDivElement | null) => {
+        groupRef.current = node
+        if (typeof ref === "function") {
+          ref(node)
+        } else if (ref) {
+          ref.current = node
+        }
+      },
+      [ref]
+    )
+
+    React.useEffect(() => {
+      const element = groupRef.current
+      if (!element) return
+      const handleWheel = (event: WheelEvent) => {
+        if (context.disabled || context.readOnly) return
+        if (event.deltaY === 0) return
+        event.preventDefault()
+        const direction: 1 | -1 = event.deltaY < 0 ? 1 : -1
+        context.stepBy(direction)
+      }
+      element.addEventListener("wheel", handleWheel, { passive: false })
+      return () => element.removeEventListener("wheel", handleWheel)
+    }, [context.disabled, context.readOnly, context.stepBy])
+
+    return (
+      <div
+        data-slot="number-field-group"
+        className={cn(
+          "focus-within:border-ring focus-within:ring-ring/50 border-input has-aria-invalid:ring-destructive/20 dark:has-aria-invalid:ring-destructive/40 has-aria-invalid:border-destructive relative rounded-md border transition-shadow focus-within:ring-[3px]",
+          className
+        )}
+        ref={setRefs}
+        {...props}
+      />
+    )
+  }
 )
 NumberFieldGroup.displayName = "NumberFieldGroup"
 
