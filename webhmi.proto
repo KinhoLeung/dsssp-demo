@@ -108,6 +108,10 @@ message SystemDb {
 
   repeated string modeList = 11;
   optional uint32 currentModeIndex = 12;
+
+  optional uint32 musicVolume = 13;
+  optional uint32 micVolume = 14;
+  optional uint32 effectVolume = 15;
 }
 
 message MusicDb {
@@ -312,6 +316,10 @@ message SetSystemRequest {
 
   optional bool useDefaultVolume = 10;
   optional uint32 currentModeIndex = 11;
+
+  optional uint32 musicVolume = 12;
+  optional uint32 micVolume = 13;
+  optional uint32 effectVolume = 14;
 }
 
 message SetMusicRequest {

@@ -577,7 +577,7 @@ function DeviceDemo() {
 
   return (
     <div className="text-white text-sans min-h-screen flex flex-col items-center">
-      <div className="max-w-[840px] pt-1 flex flex-col gap-1">
+      <div className="w-full max-w-[1200px] pt-1 flex flex-col gap-1">
         <Tabs defaultValue="music">
           <TabsList>
             <TabsTrigger value="music">Music</TabsTrigger>

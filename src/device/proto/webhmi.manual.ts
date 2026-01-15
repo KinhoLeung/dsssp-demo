@@ -109,6 +109,9 @@ export type SystemDb = {
   useDefaultVolume?: boolean
   modeList?: string[]
   currentModeIndex?: number
+  musicVolume?: number
+  micVolume?: number
+  effectVolume?: number
 }
 
 export type MusicDb = {
@@ -298,6 +301,9 @@ export type SetSystemRequest = {
   effectDefaultVolume?: number
   useDefaultVolume?: boolean
   currentModeIndex?: number
+  musicVolume?: number
+  micVolume?: number
+  effectVolume?: number
 }
 
 export type SetMusicRequest = {
@@ -435,6 +441,9 @@ export const encodeSetSystemRequest = (message: SetSystemRequest) => {
   writer.uint32(9, message.effectDefaultVolume)
   writer.bool(10, message.useDefaultVolume)
   writer.uint32(11, message.currentModeIndex)
+  writer.uint32(12, message.musicVolume)
+  writer.uint32(13, message.micVolume)
+  writer.uint32(14, message.effectVolume)
   return writer.finish()
 }
 
@@ -774,6 +783,9 @@ const encodeSystemDb = (message: SystemDb) => {
   writer.bool(10, message.useDefaultVolume)
   for (const v of message.modeList ?? []) writer.string(11, v)
   writer.uint32(12, message.currentModeIndex)
+  writer.uint32(13, message.musicVolume)
+  writer.uint32(14, message.micVolume)
+  writer.uint32(15, message.effectVolume)
   return writer.finish()
 }
 
@@ -823,6 +835,15 @@ const decodeSystemDb = (bytes: Uint8Array): SystemDb => {
         break
       case 12:
         message.currentModeIndex = reader.uint32()
+        break
+      case 13:
+        message.musicVolume = reader.uint32()
+        break
+      case 14:
+        message.micVolume = reader.uint32()
+        break
+      case 15:
+        message.effectVolume = reader.uint32()
         break
       default:
         reader.skip(wire)
@@ -1482,4 +1503,3 @@ const encodeMixerPatch = (message: MixerPatch) => {
   writer.uint32(4, message.echoLevel)
   return writer.finish()
 }
-

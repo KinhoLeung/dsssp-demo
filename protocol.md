@@ -221,7 +221,10 @@ payload为空
                 "mode2",
                 "mode3"
             ],
-            "currentModeIndex": 0
+            "currentModeIndex": 0,
+            "musicVolume": 60,
+            "micVolume": 60,
+            "effectVolume": 60
         },
         "music": {
             "eq": {
