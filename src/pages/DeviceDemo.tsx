@@ -25,7 +25,9 @@ import styles from './DemoMode.module.css'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   NumberField,
   NumberFieldDecrementTrigger,
@@ -51,7 +53,7 @@ type PanelKey =
   | 'center'
   | 'surround'
 
-type MainTabKey = 'music' | 'mic' | 'reverb' | 'echo' | 'mainoutput' | 'suboutput' | 'center' | 'surround'
+type MainTabKey = 'music' | 'mic' | 'reverb' | 'echo' | 'mainoutput' | 'suboutput' | 'center' | 'surround' | 'system'
 
 type PanelDef = {
   key: PanelKey
@@ -211,13 +213,18 @@ function buildPanelStateFromEq(eq: webhmi.IEq | null): PanelState {
   const highPassList = toUniqueGraphTypes(eq?.highPassTypeList)
   const midList = toUniqueGraphTypes(eq?.typeList)
   const lowPassList = toUniqueGraphTypes(eq?.lowPassTypeList)
+  const graphTypeByUiIndex = sorted.map((p) => mapFilterTypeToGraphType(p.type))
+  const highPassSlot = graphTypeByUiIndex.findIndex((t) => t.includes('HIGHPASS'))
+  const lowPassSlot = graphTypeByUiIndex.findIndex((t) => t.includes('LOWPASS'))
+  const highPassSlotIndex = highPassSlot >= 0 ? highPassSlot : 0
+  const lowPassSlotIndex = lowPassSlot >= 0 ? lowPassSlot : Math.max(0, allCount - 1)
 
   for (let uiIndex = 0; uiIndex < sorted.length; uiIndex++) {
     const p = sorted[uiIndex] ?? {}
     const pointIndex = typeof p.index === 'number' ? p.index : uiIndex
     pointIndexByUiIndex.push(pointIndex)
 
-    const graphType = mapFilterTypeToGraphType(p.type)
+    const graphType = graphTypeByUiIndex[uiIndex] ?? mapFilterTypeToGraphType(p.type)
     filters.push({
       type: graphType,
       freq: typeof p.freq === 'number' ? p.freq : 1000,
@@ -228,9 +235,9 @@ function buildPanelStateFromEq(eq: webhmi.IEq | null): PanelState {
     let allowed: FilterType[] | null = null
     if (allCount <= 1) {
       allowed = [...highPassList, ...midList, ...lowPassList]
-    } else if (uiIndex === 0) {
+    } else if (uiIndex === highPassSlotIndex) {
       allowed = highPassList.length ? highPassList : midList
-    } else if (uiIndex === allCount - 1) {
+    } else if (uiIndex === lowPassSlotIndex) {
       allowed = lowPassList.length ? lowPassList : midList
     } else {
       allowed = midList.length ? midList : [...highPassList, ...lowPassList]
@@ -251,6 +258,7 @@ type DspPanelProps = {
   bypass: boolean
   filters: GraphFilter[]
   allowedTypesByUiIndex: Array<FilterType[] | null>
+  pointIndexByUiIndex: number[]
   activeIndex: number
   dragging: boolean
   headerExtra?: ReactNode
@@ -268,6 +276,7 @@ function DspPanel({
   bypass,
   filters,
   allowedTypesByUiIndex,
+  pointIndexByUiIndex,
   activeIndex,
   dragging,
   headerExtra,
@@ -317,15 +326,18 @@ function DspPanel({
                 <>
                   {filters.map((filter, index) => (
                     <Fragment key={index}>
-                      <FilterGradient fill={true} index={index} filter={filter} id={`filter-${index}`} />
-
-                      <FilterCurve
-                        showPin
-                        index={index}
-                        filter={filter}
-                        active={activeIndex === index}
-                        gradientId={`filter-${index}`}
-                      />
+                      {activeIndex === index && (
+                        <>
+                          <FilterGradient fill={true} index={index} filter={filter} id={`filter-${index}`} />
+                          <FilterCurve
+                            showPin
+                            index={index}
+                            filter={filter}
+                            active
+                            gradientId={`filter-${index}`}
+                          />
+                        </>
+                      )}
                     </Fragment>
                   ))}
                   <CompositeCurve filters={filters} />
@@ -335,6 +347,17 @@ function DspPanel({
                       index={index}
                       filter={filter}
                       active={activeIndex === index}
+                      showIcon={filter.type.includes('LOWPASS') || filter.type.includes('HIGHPASS')}
+                      label={
+                        filter.type.includes('LOWPASS') || filter.type.includes('HIGHPASS')
+                          ? ''
+                          : String(pointIndexByUiIndex[index] ?? index)
+                      }
+                      labelColor="inherit"
+                      zeroColor={
+                        activeIndex === index ? theme.filters?.colors?.[index]?.active : theme.filters?.colors?.[index]?.point
+                      }
+                      zeroBackground={theme.filters?.colors?.[index]?.background}
                       onDrag={setDragging}
                       onEnter={handleMouseEnter}
                       onLeave={handleMouseLeave}
@@ -615,6 +638,7 @@ function DeviceDemo() {
 
   const db = state.db?.db ?? null
   const baseDisabled = !db || state.authOk !== true
+  const systemDb = db?.system ?? null
   const musicDb = db?.music ?? null
   const micDb = db?.mic ?? null
   const reverbDb = db?.reverb ?? null
@@ -625,6 +649,13 @@ function DeviceDemo() {
   const surroundDb = db?.surround ?? null
   const musicInputSelectValue = typeof musicDb?.inputSelect === 'number' ? String(musicDb.inputSelect) : undefined
   const micFbxValue = typeof micDb?.micFBX === 'number' ? String(micDb.micFBX) : undefined
+  const systemModeValue = useMemo(() => {
+    const index = systemDb?.currentModeIndex
+    if (typeof index !== 'number') return undefined
+    const modes = systemDb?.modeList ?? []
+    if (index < 0 || index >= modes.length) return undefined
+    return String(index)
+  }, [systemDb?.currentModeIndex, systemDb?.modeList])
   const musicDisabled = baseDisabled || !musicDb
   const micDisabled = baseDisabled || !micDb
   const reverbDisabled = baseDisabled || !reverbDb
@@ -633,6 +664,18 @@ function DeviceDemo() {
   const subOutputDisabled = baseDisabled || !subOutputDb
   const centerDisabled = baseDisabled || !centerDb
   const surroundDisabled = baseDisabled || !surroundDb
+  const systemDisabled = baseDisabled || !systemDb
+
+  const systemModeOptions = useMemo<SelectOption[]>(() => {
+    const modes = systemDb?.modeList ?? []
+    return modes.map((label, index) => ({ value: String(index), label }))
+  }, [systemDb?.modeList])
+
+  const [bleNameDraft, setBleNameDraft] = useState('')
+  useEffect(() => {
+    const next = systemDb?.bleName ?? ''
+    setBleNameDraft((prev) => (prev === next ? prev : next))
+  }, [systemDb?.bleName])
 
   const showMusicParamsCard = hasAny(
     musicDb?.inputGain,
@@ -979,8 +1022,9 @@ function DeviceDemo() {
     if (subOutputDb) out.push('suboutput')
     if (centerDb) out.push('center')
     if (surroundDb) out.push('surround')
+    if (systemDb) out.push('system')
     return out
-  }, [centerDb, echoDb, mainOutputDb, micDb, musicDb, reverbDb, subOutputDb, surroundDb])
+  }, [centerDb, echoDb, mainOutputDb, micDb, musicDb, reverbDb, subOutputDb, surroundDb, systemDb])
 
   const [activeTab, setActiveTab] = useState<MainTabKey>(() => {
     if (musicDb) return 'music'
@@ -991,6 +1035,7 @@ function DeviceDemo() {
     if (subOutputDb) return 'suboutput'
     if (centerDb) return 'center'
     if (surroundDb) return 'surround'
+    if (systemDb) return 'system'
     return 'music'
   })
 
@@ -1018,20 +1063,193 @@ function DeviceDemo() {
             {subOutputDb && <TabsTrigger value="suboutput">Sub Output</TabsTrigger>}
             {centerDb && <TabsTrigger value="center">Center</TabsTrigger>}
             {surroundDb && <TabsTrigger value="surround">Surround</TabsTrigger>}
+            {systemDb && <TabsTrigger value="system">System</TabsTrigger>}
           </TabsList>
+
+          {systemDb && (
+            <TabsContent value="system">
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <ParameterCard title="System" contentClassName="sm:grid-cols-2">
+                    <div className="grid gap-1 sm:col-span-2">
+                      <Label className="text-xs text-muted-foreground">BLE Name</Label>
+                      <Label className="text-sm">{systemDb.bleName || '-'}</Label>
+                    </div>
+                    <div className="grid gap-1 sm:col-span-2">
+                      <Label className="text-xs text-muted-foreground">New BLE Name</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={bleNameDraft}
+                          disabled={systemDisabled}
+                          onChange={(e) => setBleNameDraft(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key !== 'Enter') return
+                            e.preventDefault()
+                            const next = bleNameDraft.trim()
+                            if (systemDisabled) return
+                            if (!next) return
+                            if (next === (systemDb.bleName ?? '')) return
+                            actions.queueSystem({ bleName: next })
+                            void actions.flushNow()
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          disabled={
+                            systemDisabled || !bleNameDraft.trim() || bleNameDraft.trim() === (systemDb.bleName ?? '')
+                          }
+                          onClick={() => {
+                            const next = bleNameDraft.trim()
+                            if (!next) return
+                            if (next === (systemDb.bleName ?? '')) return
+                            actions.queueSystem({ bleName: next })
+                            void actions.flushNow()
+                          }}
+                        >
+                          Send
+                        </Button>
+                      </div>
+                    </div>
+                    <ToggleControl
+                      label="Panel Lock"
+                      pressed={systemDb.panelLock ?? undefined}
+                      disabled={systemDisabled}
+                      onChange={(pressed) => actions.queueSystem({ panelLock: pressed })}
+                    />
+                    <ToggleControl
+                      label="Mute"
+                      pressed={systemDb.mute ?? undefined}
+                      disabled={systemDisabled}
+                      onChange={(pressed) => actions.queueSystem({ mute: pressed })}
+                    />
+                    {systemModeOptions.length > 0 && (
+                      <div className="grid gap-1">
+                        <Label className="text-xs text-muted-foreground">Mode</Label>
+                        <Select
+                          value={systemModeValue}
+                          onValueChange={(value) => actions.queueSystem({ currentModeIndex: Number(value) })}
+                          disabled={systemDisabled}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select mode" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {systemModeOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </ParameterCard>
+
+                  <ParameterCard title="Volumes" contentClassName="sm:grid-cols-2">
+                    <NumberControl
+                      label="Music Volume"
+                      value={systemDb.musicVolume ?? undefined}
+                      min={0}
+                      max={typeof systemDb.musicMaxVolume === 'number' ? systemDb.musicMaxVolume : undefined}
+                      disabled={systemDisabled}
+                      onChange={(value) => actions.queueSystem({ musicVolume: Math.round(value) })}
+                    />
+                    <NumberControl
+                      label="Mic Volume"
+                      value={systemDb.micVolume ?? undefined}
+                      min={0}
+                      max={typeof systemDb.micMaxVolume === 'number' ? systemDb.micMaxVolume : undefined}
+                      disabled={systemDisabled}
+                      onChange={(value) => actions.queueSystem({ micVolume: Math.round(value) })}
+                    />
+                    <NumberControl
+                      label="Effect Volume"
+                      value={systemDb.effectVolume ?? undefined}
+                      min={0}
+                      max={typeof systemDb.effectMaxVolume === 'number' ? systemDb.effectMaxVolume : undefined}
+                      disabled={systemDisabled}
+                      onChange={(value) => actions.queueSystem({ effectVolume: Math.round(value) })}
+                    />
+                  </ParameterCard>
+
+                  <ParameterCard title="Defaults" contentClassName="sm:grid-cols-2">
+                    <ToggleControl
+                      label="Use Default Volume"
+                      pressed={systemDb.useDefaultVolume ?? undefined}
+                      disabled={systemDisabled}
+                      onChange={(pressed) => actions.queueSystem({ useDefaultVolume: pressed })}
+                    />
+                    <NumberControl
+                      label="Music Default"
+                      value={systemDb.musicDefaultVolume ?? undefined}
+                      min={0}
+                      max={typeof systemDb.musicMaxVolume === 'number' ? systemDb.musicMaxVolume : undefined}
+                      disabled={systemDisabled}
+                      onChange={(value) => actions.queueSystem({ musicDefaultVolume: Math.round(value) })}
+                    />
+                    <NumberControl
+                      label="Mic Default"
+                      value={systemDb.micDefaultVolume ?? undefined}
+                      min={0}
+                      max={typeof systemDb.micMaxVolume === 'number' ? systemDb.micMaxVolume : undefined}
+                      disabled={systemDisabled}
+                      onChange={(value) => actions.queueSystem({ micDefaultVolume: Math.round(value) })}
+                    />
+                    <NumberControl
+                      label="Effect Default"
+                      value={systemDb.effectDefaultVolume ?? undefined}
+                      min={0}
+                      max={typeof systemDb.effectMaxVolume === 'number' ? systemDb.effectMaxVolume : undefined}
+                      disabled={systemDisabled}
+                      onChange={(value) => actions.queueSystem({ effectDefaultVolume: Math.round(value) })}
+                    />
+                  </ParameterCard>
+
+                  <ParameterCard title="Limits" contentClassName="sm:grid-cols-2">
+                    <NumberControl
+                      label="Music Max"
+                      value={systemDb.musicMaxVolume ?? undefined}
+                      min={0}
+                      max={80}
+                      disabled={systemDisabled}
+                      onChange={(value) => actions.queueSystem({ musicMaxVolume: Math.round(value) })}
+                    />
+                    <NumberControl
+                      label="Mic Max"
+                      value={systemDb.micMaxVolume ?? undefined}
+                      min={0}
+                      max={80}
+                      disabled={systemDisabled}
+                      onChange={(value) => actions.queueSystem({ micMaxVolume: Math.round(value) })}
+                    />
+                    <NumberControl
+                      label="Effect Max"
+                      value={systemDb.effectMaxVolume ?? undefined}
+                      min={0}
+                      max={80}
+                      disabled={systemDisabled}
+                      onChange={(value) => actions.queueSystem({ effectMaxVolume: Math.round(value) })}
+                    />
+                  </ParameterCard>
+                </div>
+              </div>
+            </TabsContent>
+          )}
 
           {musicDb && (
             <TabsContent value="music">
             <div className="flex flex-col gap-4">
               <DspPanel
-                {...getPanelPower('music')}
-                filters={panelStateByKey.music.filters}
-                allowedTypesByUiIndex={panelStateByKey.music.allowedTypesByUiIndex}
-                activeIndex={activeIndex}
-                dragging={dragging}
-                handleFilterChange={handleFilterChangeByKey.music}
-                handlePointDoubleClick={handlePointDoubleClickByKey.music}
-                handleMouseEnter={handleMouseEnter}
+                  {...getPanelPower('music')}
+                  filters={panelStateByKey.music.filters}
+                  allowedTypesByUiIndex={panelStateByKey.music.allowedTypesByUiIndex}
+                  pointIndexByUiIndex={panelStateByKey.music.pointIndexByUiIndex}
+                  activeIndex={activeIndex}
+                  dragging={dragging}
+                  handleFilterChange={handleFilterChangeByKey.music}
+                  handlePointDoubleClick={handlePointDoubleClickByKey.music}
+                  handleMouseEnter={handleMouseEnter}
                 handleMouseLeave={handleMouseLeave}
                 setDragging={setDragging}
                 onReset={() => void actions.resetEq(webhmi.EqTarget.MUSIC)}
@@ -1176,15 +1394,16 @@ function DeviceDemo() {
           {micDb && (
             <TabsContent value="mic">
             <div className="flex flex-col gap-4">
-              <DspPanel
-                {...getPanelPower(micKey)}
-                filters={panelStateByKey[micKey].filters}
-                allowedTypesByUiIndex={panelStateByKey[micKey].allowedTypesByUiIndex}
-                activeIndex={activeIndex}
-                dragging={dragging}
-                headerExtra={
-                  showMicSelector ? (
-                    <ToggleGroup
+                <DspPanel
+                  {...getPanelPower(micKey)}
+                  filters={panelStateByKey[micKey].filters}
+                  allowedTypesByUiIndex={panelStateByKey[micKey].allowedTypesByUiIndex}
+                  pointIndexByUiIndex={panelStateByKey[micKey].pointIndexByUiIndex}
+                  activeIndex={activeIndex}
+                  dragging={dragging}
+                  headerExtra={
+                    showMicSelector ? (
+                      <ToggleGroup
                       type="single"
                       variant="outline"
                       value={micKey}
@@ -1397,15 +1616,16 @@ function DeviceDemo() {
           {reverbDb && (
             <TabsContent value="reverb">
             <div className="flex flex-col gap-4">
-              <DspPanel
-                {...getPanelPower('reverb')}
-                filters={panelStateByKey.reverb.filters}
-                allowedTypesByUiIndex={panelStateByKey.reverb.allowedTypesByUiIndex}
-                activeIndex={activeIndex}
-                dragging={dragging}
-                handleFilterChange={handleFilterChangeByKey.reverb}
-                handlePointDoubleClick={handlePointDoubleClickByKey.reverb}
-                handleMouseEnter={handleMouseEnter}
+                <DspPanel
+                  {...getPanelPower('reverb')}
+                  filters={panelStateByKey.reverb.filters}
+                  allowedTypesByUiIndex={panelStateByKey.reverb.allowedTypesByUiIndex}
+                  pointIndexByUiIndex={panelStateByKey.reverb.pointIndexByUiIndex}
+                  activeIndex={activeIndex}
+                  dragging={dragging}
+                  handleFilterChange={handleFilterChangeByKey.reverb}
+                  handlePointDoubleClick={handlePointDoubleClickByKey.reverb}
+                  handleMouseEnter={handleMouseEnter}
                 handleMouseLeave={handleMouseLeave}
                 setDragging={setDragging}
                 onReset={() => void actions.resetEq(webhmi.EqTarget.REVERB)}
@@ -1460,15 +1680,16 @@ function DeviceDemo() {
           {echoDb && (
             <TabsContent value="echo">
             <div className="flex flex-col gap-4">
-              <DspPanel
-                {...getPanelPower('echo')}
-                filters={panelStateByKey.echo.filters}
-                allowedTypesByUiIndex={panelStateByKey.echo.allowedTypesByUiIndex}
-                activeIndex={activeIndex}
-                dragging={dragging}
-                handleFilterChange={handleFilterChangeByKey.echo}
-                handlePointDoubleClick={handlePointDoubleClickByKey.echo}
-                handleMouseEnter={handleMouseEnter}
+                <DspPanel
+                  {...getPanelPower('echo')}
+                  filters={panelStateByKey.echo.filters}
+                  allowedTypesByUiIndex={panelStateByKey.echo.allowedTypesByUiIndex}
+                  pointIndexByUiIndex={panelStateByKey.echo.pointIndexByUiIndex}
+                  activeIndex={activeIndex}
+                  dragging={dragging}
+                  handleFilterChange={handleFilterChangeByKey.echo}
+                  handlePointDoubleClick={handlePointDoubleClickByKey.echo}
+                  handleMouseEnter={handleMouseEnter}
                 handleMouseLeave={handleMouseLeave}
                 setDragging={setDragging}
                 onReset={() => void actions.resetEq(webhmi.EqTarget.ECHO)}
@@ -1550,15 +1771,16 @@ function DeviceDemo() {
           {mainOutputDb && (
             <TabsContent value="mainoutput">
             <div className="flex flex-col gap-4">
-              <DspPanel
-                {...getPanelPower('mainoutput')}
-                filters={panelStateByKey.mainoutput.filters}
-                allowedTypesByUiIndex={panelStateByKey.mainoutput.allowedTypesByUiIndex}
-                activeIndex={activeIndex}
-                dragging={dragging}
-                handleFilterChange={handleFilterChangeByKey.mainoutput}
-                handlePointDoubleClick={handlePointDoubleClickByKey.mainoutput}
-                handleMouseEnter={handleMouseEnter}
+                <DspPanel
+                  {...getPanelPower('mainoutput')}
+                  filters={panelStateByKey.mainoutput.filters}
+                  allowedTypesByUiIndex={panelStateByKey.mainoutput.allowedTypesByUiIndex}
+                  pointIndexByUiIndex={panelStateByKey.mainoutput.pointIndexByUiIndex}
+                  activeIndex={activeIndex}
+                  dragging={dragging}
+                  handleFilterChange={handleFilterChangeByKey.mainoutput}
+                  handlePointDoubleClick={handlePointDoubleClickByKey.mainoutput}
+                  handleMouseEnter={handleMouseEnter}
                 handleMouseLeave={handleMouseLeave}
                 setDragging={setDragging}
                 onReset={() => void actions.resetEq(webhmi.EqTarget.MAIN_OUTPUT)}
@@ -1734,15 +1956,16 @@ function DeviceDemo() {
           {subOutputDb && (
             <TabsContent value="suboutput">
             <div className="flex flex-col gap-4">
-              <DspPanel
-                {...getPanelPower('suboutput')}
-                filters={panelStateByKey.suboutput.filters}
-                allowedTypesByUiIndex={panelStateByKey.suboutput.allowedTypesByUiIndex}
-                activeIndex={activeIndex}
-                dragging={dragging}
-                handleFilterChange={handleFilterChangeByKey.suboutput}
-                handlePointDoubleClick={handlePointDoubleClickByKey.suboutput}
-                handleMouseEnter={handleMouseEnter}
+                <DspPanel
+                  {...getPanelPower('suboutput')}
+                  filters={panelStateByKey.suboutput.filters}
+                  allowedTypesByUiIndex={panelStateByKey.suboutput.allowedTypesByUiIndex}
+                  pointIndexByUiIndex={panelStateByKey.suboutput.pointIndexByUiIndex}
+                  activeIndex={activeIndex}
+                  dragging={dragging}
+                  handleFilterChange={handleFilterChangeByKey.suboutput}
+                  handlePointDoubleClick={handlePointDoubleClickByKey.suboutput}
+                  handleMouseEnter={handleMouseEnter}
                 handleMouseLeave={handleMouseLeave}
                 setDragging={setDragging}
                 onReset={() => void actions.resetEq(webhmi.EqTarget.SUB_OUTPUT)}
@@ -1892,15 +2115,16 @@ function DeviceDemo() {
           {centerDb && (
             <TabsContent value="center">
             <div className="flex flex-col gap-4">
-              <DspPanel
-                {...getPanelPower('center')}
-                filters={panelStateByKey.center.filters}
-                allowedTypesByUiIndex={panelStateByKey.center.allowedTypesByUiIndex}
-                activeIndex={activeIndex}
-                dragging={dragging}
-                handleFilterChange={handleFilterChangeByKey.center}
-                handlePointDoubleClick={handlePointDoubleClickByKey.center}
-                handleMouseEnter={handleMouseEnter}
+                <DspPanel
+                  {...getPanelPower('center')}
+                  filters={panelStateByKey.center.filters}
+                  allowedTypesByUiIndex={panelStateByKey.center.allowedTypesByUiIndex}
+                  pointIndexByUiIndex={panelStateByKey.center.pointIndexByUiIndex}
+                  activeIndex={activeIndex}
+                  dragging={dragging}
+                  handleFilterChange={handleFilterChangeByKey.center}
+                  handlePointDoubleClick={handlePointDoubleClickByKey.center}
+                  handleMouseEnter={handleMouseEnter}
                 handleMouseLeave={handleMouseLeave}
                 setDragging={setDragging}
                 onReset={() => void actions.resetEq(webhmi.EqTarget.CENTER)}
@@ -2045,15 +2269,16 @@ function DeviceDemo() {
           {surroundDb && (
             <TabsContent value="surround">
             <div className="flex flex-col gap-4">
-              <DspPanel
-                {...getPanelPower('surround')}
-                filters={panelStateByKey.surround.filters}
-                allowedTypesByUiIndex={panelStateByKey.surround.allowedTypesByUiIndex}
-                activeIndex={activeIndex}
-                dragging={dragging}
-                handleFilterChange={handleFilterChangeByKey.surround}
-                handlePointDoubleClick={handlePointDoubleClickByKey.surround}
-                handleMouseEnter={handleMouseEnter}
+                <DspPanel
+                  {...getPanelPower('surround')}
+                  filters={panelStateByKey.surround.filters}
+                  allowedTypesByUiIndex={panelStateByKey.surround.allowedTypesByUiIndex}
+                  pointIndexByUiIndex={panelStateByKey.surround.pointIndexByUiIndex}
+                  activeIndex={activeIndex}
+                  dragging={dragging}
+                  handleFilterChange={handleFilterChangeByKey.surround}
+                  handlePointDoubleClick={handlePointDoubleClickByKey.surround}
+                  handleMouseEnter={handleMouseEnter}
                 handleMouseLeave={handleMouseLeave}
                 setDragging={setDragging}
                 onReset={() => void actions.resetEq(webhmi.EqTarget.SURROUND)}

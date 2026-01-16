@@ -26,7 +26,7 @@ const theme: GraphThemeOverride = {
       label: { color: tailwindColors.white },
       backgroundOpacity: { drag: 1 }
     },
-    curve: { width: { active: 1 }, opacity: { normal: 0.75, active: 1 } },
+    curve: { width: { active: 1 }, opacity: { normal: 0, active: 1 } },
     colors: filterColors
   }
 }

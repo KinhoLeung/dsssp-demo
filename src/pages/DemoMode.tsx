@@ -92,20 +92,12 @@ function DspPanel({
                 <>
                   {filters.map((filter, index) => (
                     <Fragment key={index}>
-                      <FilterGradient
-                        fill={true}
-                        index={index}
-                        filter={filter}
-                        id={`filter-${index}`}
-                      />
-
-                      <FilterCurve
-                        showPin
-                        index={index}
-                        filter={filter}
-                        active={activeIndex === index}
-                        gradientId={`filter-${index}`}
-                      />
+                      {activeIndex === index && (
+                        <>
+                          <FilterGradient fill={true} index={index} filter={filter} id={`filter-${index}`} />
+                          <FilterCurve showPin index={index} filter={filter} active gradientId={`filter-${index}`} />
+                        </>
+                      )}
                     </Fragment>
                   ))}
                   <CompositeCurve filters={filters} />
@@ -116,6 +108,15 @@ function DspPanel({
                       filter={filter}
                       // label={getLabel(index)}
                       active={activeIndex === index}
+                      showIcon={filter.type.includes('LOWPASS') || filter.type.includes('HIGHPASS')}
+                      label={
+                        filter.type.includes('LOWPASS') || filter.type.includes('HIGHPASS') ? '' : String(index + 1)
+                      }
+                      labelColor="inherit"
+                      zeroColor={
+                        activeIndex === index ? theme.filters?.colors?.[index]?.active : theme.filters?.colors?.[index]?.point
+                      }
+                      zeroBackground={theme.filters?.colors?.[index]?.background}
                       onDrag={setDragging}
                       onEnter={handleMouseEnter}
                       onLeave={handleMouseLeave}
