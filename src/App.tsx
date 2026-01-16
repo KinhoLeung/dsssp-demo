@@ -22,7 +22,7 @@ function App() {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" onContextMenuCapture={(e) => e.preventDefault()}>
       <Navbar>
         <NavBody>
           <NavbarLogo />
