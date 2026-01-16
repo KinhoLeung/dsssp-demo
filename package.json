@@ -34,7 +34,6 @@
   ],
   "scripts": {
     "proto:gen": "node ./node_modules/protobufjs-cli/bin/pbjs -t static-module -w es6 -o src/device/proto/generated/webhmi.js webhmi.proto && node ./node_modules/protobufjs-cli/bin/pbts -o src/device/proto/generated/webhmi.d.ts src/device/proto/generated/webhmi.js",
-    "firmware:getdb:gen": "node scripts/gen-firmware-getdb.mjs",
     "predev": "npm run proto:gen",
     "prebuild": "npm run proto:gen",
     "prelint": "npm run proto:gen",
