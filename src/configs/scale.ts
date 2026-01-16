@@ -11,7 +11,7 @@ const scale = {
   minQ: 0.1,
   maxQ: 25,
   displayMinGain: -20,
-  displayMaxGain: 13,
+  displayMaxGain: 14,
   dbSteps: 3, // 0 to disable
   dbLabelSteps: 6,
   dbLabels: true,

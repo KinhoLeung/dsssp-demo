@@ -139,7 +139,7 @@ crc16（2 bytes）
 | 0x0000 | Auth              | 认证设备，禁止第三方设备接入  |
 | 0x0001 | GetDb             | 获取设备可配置数据数据库      |
 | 0x0002 | SetEq             | 设置 EQ 参数（patch）         |
-| 0x0003 | SetSystem         | 设置公共参数（patch）         |
+| 0x0003 | SetSystem         | 设置系统参数（patch）         |
 | 0x0004 | SetMusic          | 设置 Music 参数（patch）      |
 | 0x0005 | SetMic            | 设置 Mic 参数（patch）        |
 | 0x0006 | SetReverb         | 设置 Reverb 参数（patch）     |
@@ -470,7 +470,9 @@ payload为空
             "reverbLevel": 100,
             "micDirectLevel": 100,
             "reverbPredelay": 20,
-            "reverbDecay": 2625
+            "reverbDecay": 2625,
+            "reverbLevelPhaseInversion":false,
+            "micDirectLevelPhaseInversion":false
         },
         "echo": {
             "eq": {
@@ -528,7 +530,9 @@ payload为空
             "echoDelayTime": 200,
             "echoRepeat": 60,
             "echoRightPredelay": 0,
-            "echoRightDelay": 0
+            "echoRightDelay": 0,
+            "echoLevelPhaseInversion": false,
+            "micDirectLevelPhaseInversion": false
         },
         "mainOutput": {
             "eq": {
@@ -586,13 +590,19 @@ payload为空
                 "leftDelay": 0.0,
                 "rightDelay": 0.0,
                 "leftMute": false,
-                "rightMute": false
+                "rightMute": false,
+                "leftChannelVolumePhaseInversion": false,
+                "rightChannelVolumePhaseInversion": false
             },
             "mixer": {
                 "micDirectLevel": 100,
                 "musicLevel": 100,
                 "reverbLevel": 100,
-                "echoLevel": 100
+                "echoLevel": 100,
+                "micDirectLevelPhaseInversion": false,
+                "musicLevelPhaseInversion": false,
+                "reverbLevelPhaseInversion": false,
+                "echoLevelPhaseInversion": false
             },
             "compressor": {
                 "threshold": -1.0,
@@ -655,13 +665,18 @@ payload为空
             "output": {
                 "volume": 0.0,
                 "delay": 0.0,
-                "mute": false
+                "mute": false,
+                "volumePhaseInversion":false
             },
             "mixer": {
                 "micDirectLevel": 100,
                 "musicLevel": 100,
                 "reverbLevel": 100,
-                "echoLevel": 100
+                "echoLevel": 100,
+                "micDirectLevelPhaseInversion": false,
+                "musicLevelPhaseInversion": false,
+                "reverbLevelPhaseInversion": false,
+                "echoLevelPhaseInversion": false
             },
             "compressor": {
                 "threshold": -1.0,
@@ -724,13 +739,18 @@ payload为空
             "output": {
                 "volume": 0.0,
                 "delay": 0.0,
-                "mute": false
+                "mute": false,
+                "volumePhaseInversion":false
             },
             "mixer": {
                 "micDirectLevel": 100,
                 "musicLevel": 100,
                 "reverbLevel": 100,
-                "echoLevel": 100
+                "echoLevel": 100,
+                "micDirectLevelPhaseInversion": false,
+                "musicLevelPhaseInversion": false,
+                "reverbLevelPhaseInversion": false,
+                "echoLevelPhaseInversion": false
             },
             "compressor": {
                 "threshold": -1.0,
@@ -796,13 +816,19 @@ payload为空
                 "leftDelay": 0.0,
                 "rightDelay": 0.0,
                 "leftMute": false,
-                "rightMute": false
+                "rightMute": false,
+                "leftChannelVolumePhaseInversion": false,
+                "rightChannelVolumePhaseInversion": false
             },
             "mixer": {
                 "micDirectLevel": 100,
                 "musicLevel": 100,
                 "reverbLevel": 100,
-                "echoLevel": 100
+                "echoLevel": 100,
+                "micDirectLevelPhaseInversion": false,
+                "musicLevelPhaseInversion": false,
+                "reverbLevelPhaseInversion": false,
+                "echoLevelPhaseInversion": false
             },
             "compressor": {
                 "threshold": -1.0,
@@ -814,6 +840,7 @@ payload为空
         }
     }
 }
+
 ```
 
 ### 5.3 设置 EQ 参数（SetEq）0x0002
@@ -826,7 +853,7 @@ payload：protobuf `webhmi.SetEqRequest`
 
 payload：protobuf `webhmi.SetEqRequest`
 
-### 5.4 设置公共参数（SetSystem）0x0003
+### 5.4 设置系统参数（SetSystem）0x0003
 
 #### 5.4.1 SetSystemRequest（上位机→设备，msg_id=SetSystem 0x0003，RESPONSE=1）
 

@@ -160,6 +160,9 @@ message ReverbDb {
   optional uint32 micDirectLevel = 3;
   optional uint32 reverbPredelay = 4;
   optional uint32 reverbDecay = 5;
+
+  optional bool reverbLevelPhaseInversion = 6;
+  optional bool micDirectLevelPhaseInversion = 7;
 }
 
 message EchoDb {
@@ -172,6 +175,9 @@ message EchoDb {
   optional uint32 echoRepeat = 6;
   optional uint32 echoRightPredelay = 7;
   optional uint32 echoRightDelay = 8;
+
+  optional bool echoLevelPhaseInversion = 9;
+  optional bool micDirectLevelPhaseInversion = 10;
 }
 
 message StereoOutput {
@@ -181,12 +187,17 @@ message StereoOutput {
   optional float rightDelay = 4;
   optional bool leftMute = 5;
   optional bool rightMute = 6;
+
+  optional bool leftChannelVolumePhaseInversion = 7;
+  optional bool rightChannelVolumePhaseInversion = 8;
 }
 
 message MonoOutput {
   optional float volume = 1;
   optional float delay = 2;
   optional bool mute = 3;
+
+  optional bool volumePhaseInversion = 4;
 }
 
 message Mixer {
@@ -194,6 +205,11 @@ message Mixer {
   optional uint32 musicLevel = 2;
   optional uint32 reverbLevel = 3;
   optional uint32 echoLevel = 4;
+
+  optional bool micDirectLevelPhaseInversion = 5;
+  optional bool musicLevelPhaseInversion = 6;
+  optional bool reverbLevelPhaseInversion = 7;
+  optional bool echoLevelPhaseInversion = 8;
 }
 
 message MainOutputDb {
@@ -286,12 +302,17 @@ message StereoOutputPatch {
   optional float rightDelay = 4;
   optional bool leftMute = 5;
   optional bool rightMute = 6;
+
+  optional bool leftChannelVolumePhaseInversion = 7;
+  optional bool rightChannelVolumePhaseInversion = 8;
 }
 
 message MonoOutputPatch {
   optional float volume = 1;
   optional float delay = 2;
   optional bool mute = 3;
+
+  optional bool volumePhaseInversion = 4;
 }
 
 message MixerPatch {
@@ -299,6 +320,11 @@ message MixerPatch {
   optional uint32 musicLevel = 2;
   optional uint32 reverbLevel = 3;
   optional uint32 echoLevel = 4;
+
+  optional bool micDirectLevelPhaseInversion = 5;
+  optional bool musicLevelPhaseInversion = 6;
+  optional bool reverbLevelPhaseInversion = 7;
+  optional bool echoLevelPhaseInversion = 8;
 }
 
 message SetSystemRequest {
@@ -357,6 +383,9 @@ message SetReverbRequest {
   optional uint32 micDirectLevel = 2;
   optional uint32 reverbPredelay = 3;
   optional uint32 reverbDecay = 4;
+
+  optional bool reverbLevelPhaseInversion = 5;
+  optional bool micDirectLevelPhaseInversion = 6;
 }
 
 message SetEchoRequest {
@@ -367,6 +396,9 @@ message SetEchoRequest {
   optional uint32 echoRepeat = 5;
   optional uint32 echoRightPredelay = 6;
   optional uint32 echoRightDelay = 7;
+
+  optional bool echoLevelPhaseInversion = 8;
+  optional bool micDirectLevelPhaseInversion = 9;
 }
 
 message SetMainOutputRequest {

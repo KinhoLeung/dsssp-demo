@@ -267,7 +267,9 @@
             "reverbLevel": 100,
             "micDirectLevel": 100,
             "reverbPredelay": 20,
-            "reverbDecay": 2625
+            "reverbDecay": 2625,
+            "reverbLevelPhaseInversion":false,
+            "micDirectLevelPhaseInversion":false
         },
         "echo": {
             "eq": {
@@ -325,7 +327,9 @@
             "echoDelayTime": 200,
             "echoRepeat": 60,
             "echoRightPredelay": 0,
-            "echoRightDelay": 0
+            "echoRightDelay": 0,
+            "echoLevelPhaseInversion": false,
+            "micDirectLevelPhaseInversion": false
         },
         "mainOutput": {
             "eq": {
@@ -383,13 +387,19 @@
                 "leftDelay": 0.0,
                 "rightDelay": 0.0,
                 "leftMute": false,
-                "rightMute": false
+                "rightMute": false,
+                "leftChannelVolumePhaseInversion": false,
+                "rightChannelVolumePhaseInversion": false
             },
             "mixer": {
                 "micDirectLevel": 100,
                 "musicLevel": 100,
                 "reverbLevel": 100,
-                "echoLevel": 100
+                "echoLevel": 100,
+                "micDirectLevelPhaseInversion": false,
+                "musicLevelPhaseInversion": false,
+                "reverbLevelPhaseInversion": false,
+                "echoLevelPhaseInversion": false
             },
             "compressor": {
                 "threshold": -1.0,
@@ -452,13 +462,18 @@
             "output": {
                 "volume": 0.0,
                 "delay": 0.0,
-                "mute": false
+                "mute": false,
+                "volumePhaseInversion":false
             },
             "mixer": {
                 "micDirectLevel": 100,
                 "musicLevel": 100,
                 "reverbLevel": 100,
-                "echoLevel": 100
+                "echoLevel": 100,
+                "micDirectLevelPhaseInversion": false,
+                "musicLevelPhaseInversion": false,
+                "reverbLevelPhaseInversion": false,
+                "echoLevelPhaseInversion": false
             },
             "compressor": {
                 "threshold": -1.0,
@@ -521,13 +536,18 @@
             "output": {
                 "volume": 0.0,
                 "delay": 0.0,
-                "mute": false
+                "mute": false,
+                "volumePhaseInversion":false
             },
             "mixer": {
                 "micDirectLevel": 100,
                 "musicLevel": 100,
                 "reverbLevel": 100,
-                "echoLevel": 100
+                "echoLevel": 100,
+                "micDirectLevelPhaseInversion": false,
+                "musicLevelPhaseInversion": false,
+                "reverbLevelPhaseInversion": false,
+                "echoLevelPhaseInversion": false
             },
             "compressor": {
                 "threshold": -1.0,
@@ -593,13 +613,19 @@
                 "leftDelay": 0.0,
                 "rightDelay": 0.0,
                 "leftMute": false,
-                "rightMute": false
+                "rightMute": false,
+                "leftChannelVolumePhaseInversion": false,
+                "rightChannelVolumePhaseInversion": false
             },
             "mixer": {
                 "micDirectLevel": 100,
                 "musicLevel": 100,
                 "reverbLevel": 100,
-                "echoLevel": 100
+                "echoLevel": 100,
+                "micDirectLevelPhaseInversion": false,
+                "musicLevelPhaseInversion": false,
+                "reverbLevelPhaseInversion": false,
+                "echoLevelPhaseInversion": false
             },
             "compressor": {
                 "threshold": -1.0,
