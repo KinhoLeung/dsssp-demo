@@ -55,12 +55,12 @@ const normalizeValue = (
   max?: number
 ) => {
   const clamped = clamp(value, min, max)
+  const stepBase = min ?? 0
+  const steps = Math.round((clamped - stepBase) / step)
+  const snapped = stepBase + steps * step
   const precision = getStepPrecision(step)
-  if (precision === 0) {
-    return clamped
-  }
   const factor = Math.pow(10, precision)
-  return Math.round(clamped * factor) / factor
+  return Math.round(snapped * factor) / factor
 }
 
 const parseNumber = (value: string) => {
