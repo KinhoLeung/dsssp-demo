@@ -1122,7 +1122,7 @@ function DeviceDemo() {
             <TabsContent value="system">
               <div className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  <ParameterCard title="System" contentClassName="sm:grid-cols-2">
+                  <ParameterCard title="Bluetooth" contentClassName="sm:grid-cols-2">
                     <div className="grid gap-1 sm:col-span-2">
                       <Label className="text-xs text-muted-foreground">BLE Name</Label>
                       <Label className="text-sm">{systemDb.bleName || '-'}</Label>
@@ -1163,6 +1163,9 @@ function DeviceDemo() {
                         </Button>
                       </div>
                     </div>
+                  </ParameterCard>
+
+                  <ParameterCard title="System" contentClassName="sm:grid-cols-2">
                     <ToggleControl
                       label="Panel Lock"
                       pressed={systemDb.panelLock ?? undefined}

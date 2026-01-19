@@ -3,6 +3,7 @@ import { MsgId } from '../proto/msgId'
 import { getWebhmiNamespace } from '../proto/webhmi'
 import { RpcSession } from '../session'
 import type { Transport } from '../transport'
+import type { DecodedFrame } from '../protocol/frame'
 
 function concatBytes(a: Uint8Array, b: Uint8Array) {
   const out = new Uint8Array(a.length + b.length)
@@ -48,6 +49,10 @@ export class WebhmiClient {
 
   constructor(transport: Transport, options: { defaultTimeoutMs?: number } = {}) {
     this.session = new RpcSession(transport, { defaultTimeoutMs: options.defaultTimeoutMs })
+  }
+
+  onEvent(handler: (frame: DecodedFrame) => void) {
+    return this.session.onEvent(handler)
   }
 
   async connect() {

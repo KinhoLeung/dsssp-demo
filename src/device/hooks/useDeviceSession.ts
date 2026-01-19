@@ -6,6 +6,8 @@ import {
   uniqueBleServices,
 } from '@/configs/deviceProfiles'
 import { BleTransport, HidTransport, WebhmiClient } from '@/device'
+import { MsgId } from '@/device/proto/msgId'
+import { getWebhmiNamespace } from '@/device/proto/webhmi'
 import type { webhmi } from '@/device/proto/generated/webhmi'
 import {
   getSelectedBleDevice,
@@ -497,9 +499,104 @@ export function useDeviceSession(
   )
 
   const setConnectedClient = useCallback((nextClient: WebhmiClient, transport: 'hid' | 'ble', cleanup: () => void) => {
+    const pb = getWebhmiNamespace()
+    const unsub = nextClient.onEvent((frame) => {
+      const { msgId, payload } = frame
+      const msgName = MsgId[msgId] ?? `Unknown(0x${msgId.toString(16)})`
+
+      updateDbDraft((db) => {
+        if (!db.db) return db
+        try {
+          switch (msgId) {
+            case MsgId.SetMusic: {
+              const patch = pb.SetMusicRequest.decode(payload)
+              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetMusicRequest.toObject(patch))
+              db.db.music = applySectionPatch(db.db.music, patch) ?? db.db.music
+              break
+            }
+            case MsgId.SetEq: {
+              const patch = pb.SetEqRequest.decode(payload)
+              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetEqRequest.toObject(patch))
+              if (patch.eq) {
+                for (const eqPatch of patch.eq) {
+                  if (typeof eqPatch.target !== 'number') continue
+                  if (typeof eqPatch.bypass === 'boolean') applyEqBypassPatch(db, eqPatch.target as webhmi.EqTarget, eqPatch.bypass)
+                  for (const pointPatch of eqPatch.point ?? []) {
+                    applyEqPointPatch(db, eqPatch.target as webhmi.EqTarget, pointPatch)
+                  }
+                }
+              }
+              break
+            }
+            case MsgId.SetSystem: {
+              const patch = pb.SetSystemRequest.decode(payload)
+              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetSystemRequest.toObject(patch))
+              db.db.system = applySectionPatch(db.db.system, patch) ?? db.db.system
+              break
+            }
+            case MsgId.SetMic: {
+              const patch = pb.SetMicRequest.decode(payload)
+              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetMicRequest.toObject(patch))
+              db.db.mic = applySectionPatch(db.db.mic, patch) ?? db.db.mic
+              break
+            }
+            case MsgId.SetReverb: {
+              const patch = pb.SetReverbRequest.decode(payload)
+              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetReverbRequest.toObject(patch))
+              db.db.reverb = applySectionPatch(db.db.reverb, patch) ?? db.db.reverb
+              break
+            }
+            case MsgId.SetEcho: {
+              const patch = pb.SetEchoRequest.decode(payload)
+              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetEchoRequest.toObject(patch))
+              db.db.echo = applySectionPatch(db.db.echo, patch) ?? db.db.echo
+              break
+            }
+            case MsgId.SetMainOutput: {
+              const patch = pb.SetMainOutputRequest.decode(payload)
+              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetMainOutputRequest.toObject(patch))
+              db.db.mainOutput = applySectionPatch(db.db.mainOutput, patch) ?? db.db.mainOutput
+              break
+            }
+            case MsgId.SetSubOutput: {
+              const patch = pb.SetSubOutputRequest.decode(payload)
+              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetSubOutputRequest.toObject(patch))
+              db.db.subOutput = applySectionPatch(db.db.subOutput, patch) ?? db.db.subOutput
+              break
+            }
+            case MsgId.SetCenter: {
+              const patch = pb.SetCenterRequest.decode(payload)
+              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetCenterRequest.toObject(patch))
+              db.db.center = applySectionPatch(db.db.center, patch) ?? db.db.center
+              break
+            }
+            case MsgId.SetSurround: {
+              const patch = pb.SetSurroundRequest.decode(payload)
+              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetSurroundRequest.toObject(patch))
+              db.db.surround = applySectionPatch(db.db.surround, patch) ?? db.db.surround
+              break
+            }
+            case MsgId.ChangeModeParam: {
+              const patch = pb.ChangeModeParamRequest.decode(payload)
+              console.warn(`[web:rx] EVENT ${msgName}:`, pb.ChangeModeParamRequest.toObject(patch))
+              if (patch.has_currentModeIndex) db.db.system!.currentModeIndex = patch.currentModeIndex
+              if (patch.db) db.db = mergePatch(db.db, patch.db)
+              break
+            }
+          }
+        } catch (e) {
+          console.error(`[web:rx] failed to decode EVENT msgId=0x${msgId.toString(16)}:`, e)
+        }
+        return db
+      })
+    })
+
     clientRef.current = nextClient
     disconnectCleanupRef.current?.()
-    disconnectCleanupRef.current = cleanup
+    disconnectCleanupRef.current = () => {
+      unsub()
+      cleanup()
+    }
     baseDbRef.current = null
     setState((s) => ({
       ...s,
@@ -532,13 +629,13 @@ export function useDeviceSession(
           existing ??
           (interactive
             ? (
-                await navigator.hid.requestDevice({
-                  filters: HID_DEVICE_PROFILES.map((p) => ({
-                    vendorId: p.vendorId,
-                    productId: p.productId,
-                  })),
-                })
-              )[0]
+              await navigator.hid.requestDevice({
+                filters: HID_DEVICE_PROFILES.map((p) => ({
+                  vendorId: p.vendorId,
+                  productId: p.productId,
+                })),
+              })
+            )[0]
             : null)
 
         if (!device) return false
@@ -599,9 +696,9 @@ export function useDeviceSession(
           existing ??
           (interactive
             ? await navigator.bluetooth.requestDevice({
-                filters: BLE_DEVICE_PROFILES.map((p) => ({ services: [p.service] })),
-                optionalServices: uniqueBleServices(),
-              })
+              filters: BLE_DEVICE_PROFILES.map((p) => ({ services: [p.service] })),
+              optionalServices: uniqueBleServices(),
+            })
             : null)
 
         if (!device) return false
