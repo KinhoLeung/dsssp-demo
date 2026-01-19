@@ -64,7 +64,7 @@ const FilterCard = ({
       onMouseEnter={() => onEnter?.({ ...filter, index })}
       onMouseLeave={onLeave}
       className={clsx(
-        'flex flex-col flex-1 gap-2 items-center shadow-sm border rounded-sm p-2 text-center transition-colors duration-200 bg-zinc-900 overflow-hidden',
+        'flex flex-col flex-1 gap-1 items-center shadow-sm border rounded-sm px-1 py-2 text-center transition-colors duration-200 bg-zinc-900 overflow-hidden',
         active && !disabled ? ' border-zinc-600' : ' border-zinc-800'
       )}
       style={{
@@ -82,18 +82,17 @@ const FilterCard = ({
       />
 
       <FilterInput
-        suffix="Hz"
         min={minFreq}
         max={maxFreq}
         step={1}
         precision={0}
-        label="Frequency"
+        label="Freq"
         value={filter.freq}
         disabled={disabled || zeroFreq}
         onChange={(freq) => onChange({ ...filter, index, freq, ended: true })}
       />
 
-      <div className="flex flex-row gap-2 w-full">
+      <div className="flex flex-row gap-1 w-full">
         <SliderInput
           max={maxGain}
           min={minGain}

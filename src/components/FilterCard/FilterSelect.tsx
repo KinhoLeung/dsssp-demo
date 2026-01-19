@@ -66,7 +66,7 @@ const FilterSelect = ({
 
   return (
     <div
-      className={clsx('transition-opacity duration-150', {
+      className={clsx('transition-opacity duration-150 w-full', {
         'opacity-50 pointer-events-none': disabled
       })}
     >
@@ -84,7 +84,7 @@ const FilterSelect = ({
             setOpened(false)
             onChange(e.target.value as FilterType)
           }}
-          className="bg-transparent text-transparent appearance-none w-[130px] h-full px-1 cursor-pointer focus:outline-none focus:ring-0"
+          className="bg-transparent text-transparent appearance-none w-full h-full px-1 cursor-pointer focus:outline-none focus:ring-0"
         >
           {options.map((type: FilterType) => (
             <option
@@ -99,7 +99,7 @@ const FilterSelect = ({
         </select>
         <div
           className={clsx(
-            'absolute top-1/2 right-7 transform -translate-y-1/2 pointer-events-none z-10',
+            'absolute top-1/2 right-[calc(50%-32px)] transform -translate-y-1/2 pointer-events-none z-10',
             { 'text-sky-500': opened }
           )}
         >

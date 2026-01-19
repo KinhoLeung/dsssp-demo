@@ -113,7 +113,7 @@ const FilterInput = ({
   return (
     <div
       ref={containerRef}
-      className={clsx('flex flex-col transition-opacity duration-150', {
+      className={clsx('flex flex-col transition-opacity duration-150 w-full', {
         'opacity-50 pointer-events-none': disabled
       })}
     >
@@ -134,14 +134,14 @@ const FilterInput = ({
           onKeyUp={handleKeyUp}
           onBlur={handleBlur}
           className={clsx(
-            'appearance-none [&::-webkit-inner-spin-button]:appearance-none block w-full text-center shadow-md bg-zinc-950 text-white border border-zinc-700 rounded-sm py-0.5 focus:outline-none focus:ring-sky-500 focus:border-sky-500',
+            'appearance-none [&::-webkit-inner-spin-button]:appearance-none block w-full text-center shadow-md bg-zinc-950 text-white border border-zinc-700 rounded-sm py-0.5 text-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500',
             { 'pl-10': prefix },
             { 'pr-8': suffix }
           )}
         />
 
         {suffix && (
-          <span className="absolute top-[1px] right-[1px] bottom-[1px] flex items-center px-2 pointer-events-none rounded-r-sm text-zinc-500 text-sm text-center bg-zinc-900 border-l border-zinc-800 bg-opacity-80">
+          <span className="absolute top-[1px] right-[1px] bottom-[1px] flex items-center px-1 pointer-events-none rounded-r-sm text-zinc-500 text-xs text-center bg-zinc-900 border-l border-zinc-800 bg-opacity-80">
             {suffix}
           </span>
         )}
