@@ -979,6 +979,14 @@ function DeviceDemo() {
 
       const { index: uiIndex, ended, ...filter } = filterEvent
 
+      // Ensure active state and dragging state are maintained during any interaction (drag or right-click adjust)
+      if (!ended) {
+        setActiveIndex(uiIndex)
+        setDragging(true)
+      } else {
+        setDragging(false)
+      }
+
       if (ended) {
         const pendingForKey = pendingUiPatchesRef.current.get(key)
         if (pendingForKey) {
@@ -1009,7 +1017,7 @@ function DeviceDemo() {
         q,
       })
     },
-    [applyUiPatches, panelByKey, scheduleUiFlush],
+    [applyUiPatches, panelByKey, scheduleUiFlush, setActiveIndex, setDragging],
   )
 
   const handlePointDoubleClickForKey = useCallback(
