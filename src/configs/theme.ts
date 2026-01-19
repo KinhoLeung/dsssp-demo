@@ -6,11 +6,11 @@ import filterColors from './colors'
 const theme: GraphThemeOverride = {
   background: {
     grid: {
-      lineColor: tailwindColors.zinc[800],
-      lineWidth: { center: 1, border: 1 }
+      lineColor: tailwindColors.zinc[700],
+      lineWidth: { center: 1.5, border: 1.5, major: 1, minor: 0.5 }
     },
-    gradient: { start: tailwindColors.zinc[900] },
-    label: { color: tailwindColors.zinc[500] },
+    gradient: { start: tailwindColors.zinc[900], stop: tailwindColors.zinc[900] },
+    label: { color: tailwindColors.zinc[500], fontSize: 14 },
     tracker: {
       labelColor: tailwindColors.white,
       lineColor: tailwindColors.zinc[400]

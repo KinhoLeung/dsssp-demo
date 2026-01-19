@@ -45,6 +45,8 @@ const sendLog = (level: ConsoleLevel, args: unknown[]) => {
         ts: Date.now()
       }),
       keepalive: true
+    }).catch(() => {
+      // Ignore log forwarding errors.
     })
   } catch {
     // Ignore log forwarding errors.
