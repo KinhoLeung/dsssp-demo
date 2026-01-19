@@ -20,7 +20,7 @@ import tailwindColors from 'tailwindcss/colors'
 import { FilterCard } from '../components'
 import parameterRanges, { type RangeConfig } from '../configs/parameterRanges'
 import scale from '../configs/scale'
-import theme from '../configs/theme'
+import theme, { getTheme } from '../configs/theme'
 
 import styles from './DemoMode.module.css'
 
@@ -308,6 +308,15 @@ function DspPanel({
     return () => observer.disconnect()
   }, [])
 
+  const responsiveTheme = useMemo(() => {
+    const isMobile = graphWidth < 640 // Tailwind's sm breakpoint
+    return getTheme({
+      background: {
+        label: { fontSize: isMobile ? 10 : 14 },
+      },
+    })
+  }, [graphWidth])
+
   return (
     <Card>
       <CardContent className="p-4">
@@ -322,7 +331,12 @@ function DspPanel({
         </div>
         <div ref={graphContainerRef} className="shadow-sm shadow-black relative w-full">
           {graphWidth > 0 && (
-            <FrequencyResponseGraph width={graphWidth} height={360} theme={theme} scale={scale}>
+            <FrequencyResponseGraph
+              width={graphWidth}
+              height={360}
+              theme={responsiveTheme}
+              scale={scale}
+            >
               {powered ? (
                 <>
                   {filters.map((filter, index) => (
