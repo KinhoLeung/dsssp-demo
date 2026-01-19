@@ -4,6 +4,7 @@ import {
   DRCGraph,
   FilterCurve,
   FilterGradient,
+  FilterIcon,
   FilterPoint,
   FrequencyResponseCurve,
   FrequencyResponseGraph,
@@ -376,7 +377,8 @@ function DspPanel({
           <div className={styles.glareOverlay}></div>
         </div>
 
-        <div className="flex gap-1 w-full pt-2">
+        {/* Desktop View: All filter cards in a row */}
+        <div className="hidden sm:flex gap-1 w-full pt-2">
           {filters.map((filter, index) => (
             <FilterCard
               key={index}
@@ -390,6 +392,57 @@ function DspPanel({
               onChange={handleFilterChange}
             />
           ))}
+        </div>
+
+        {/* Mobile View: Tabbed filter cards */}
+        <div className="sm:hidden pt-4">
+          <Tabs
+            value={String(activeIndex >= 0 ? activeIndex : 0)}
+            onValueChange={(val) => handleMouseEnter({ index: Number(val) })}
+          >
+            <TabsList className="bg-transparent h-auto p-0 flex-wrap justify-start gap-2 mb-4 shrink-0 overflow-x-auto no-scrollbar">
+              {filters.map((filter, i) => {
+                const label = pointIndexByUiIndex[i] ?? i
+                const isActive = activeIndex === i
+                const color = theme.filters?.colors?.[i]?.active ?? 'var(--primary)'
+
+                return (
+                  <TabsTrigger
+                    key={i}
+                    value={String(i)}
+                    className="w-10 h-10 rounded-xl p-0 transition-all duration-200 border-2 data-[state=active]:shadow-[0_0_12px_rgba(0,0,0,0.3)] bg-zinc-900/80"
+                    style={{
+                      borderColor: isActive ? color : 'rgba(39, 39, 42, 0.5)',
+                      backgroundColor: isActive ? color : undefined,
+                      color: isActive ? '#fff' : color,
+                    }}
+                  >
+                    {filter.type.includes('HIGHPASS') ? (
+                      <FilterIcon type="HIGHPASS1" size={20} color={isActive ? '#fff' : color} />
+                    ) : filter.type.includes('LOWPASS') ? (
+                      <FilterIcon type="LOWPASS1" size={20} color={isActive ? '#fff' : color} />
+                    ) : (
+                      <span className="font-medium text-sm">{label}</span>
+                    )}
+                  </TabsTrigger>
+                )
+              })}
+            </TabsList>
+            {filters.map((filter, index) => (
+              <TabsContent key={index} value={String(index)} className="mt-0">
+                <FilterCard
+                  index={index}
+                  filter={filter}
+                  allowedTypes={allowedTypesByUiIndex[index] ?? undefined}
+                  disabled={!powered}
+                  active={true}
+                  onLeave={handleMouseLeave}
+                  onEnter={handleMouseEnter}
+                  onChange={handleFilterChange}
+                />
+              </TabsContent>
+            ))}
+          </Tabs>
         </div>
       </CardContent>
     </Card>
@@ -449,9 +502,8 @@ function CompressorGraph({
   const resolvedThreshold = typeof threshold === 'number' ? threshold : 0
   const resolvedRatio = typeof ratio === 'number' ? ratio : 1
   const graphHeight = 160
-  const wrapperClassName = `overflow-hidden rounded-md border border-muted/40 bg-muted/20${
-    disabled ? ' opacity-50' : ''
-  }`
+  const wrapperClassName = `overflow-hidden rounded-md border border-muted/40 bg-muted/20${disabled ? ' opacity-50' : ''
+    }`
 
   return (
     <div ref={graphContainerRef} className={wrapperClassName}>
@@ -1239,8 +1291,8 @@ function DeviceDemo() {
 
           {musicDb && (
             <TabsContent value="music">
-            <div className="flex flex-col gap-4">
-              <DspPanel
+              <div className="flex flex-col gap-4">
+                <DspPanel
                   {...getPanelPower('music')}
                   filters={panelStateByKey.music.filters}
                   allowedTypesByUiIndex={panelStateByKey.music.allowedTypesByUiIndex}
@@ -1250,150 +1302,150 @@ function DeviceDemo() {
                   handleFilterChange={handleFilterChangeByKey.music}
                   handlePointDoubleClick={handlePointDoubleClickByKey.music}
                   handleMouseEnter={handleMouseEnter}
-                handleMouseLeave={handleMouseLeave}
-                setDragging={setDragging}
-                onReset={() => void actions.resetEq(webhmi.EqTarget.MUSIC)}
-                onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.MUSIC, pressed)}
-              />
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {showMusicParamsCard && (
-                  <ParameterCard className="md:col-span-2" contentClassName="sm:grid-cols-2 md:grid-cols-4">
-                    {hasNumber(musicDb?.inputGain) && (
-                      <NumberControl
-                        label="Input Gain"
-                        value={musicDb?.inputGain ?? undefined}
-                        {...musicRanges.inputGain}
-                        disabled={musicDisabled}
-                        onChange={(value) => actions.queueMusic({ inputGain: Math.round(value) })}
-                      />
-                    )}
-                    {hasNumber(musicDb?.musicPitch) && (
-                      <NumberControl
-                        label="Music Pitch"
-                        value={musicDb?.musicPitch ?? undefined}
-                        {...musicRanges.musicPitch}
-                        disabled={musicDisabled}
-                        onChange={(value) => actions.queueMusic({ musicPitch: value })}
-                      />
-                    )}
-                    {hasNumber(musicDb?.btGain) && (
-                      <NumberControl
-                        label="BT Gain"
-                        value={musicDb?.btGain ?? undefined}
-                        {...musicRanges.btGain}
-                        disabled={musicDisabled}
-                        onChange={(value) => actions.queueMusic({ btGain: Math.round(value) })}
-                      />
-                    )}
-                    {hasNumber(musicDb?.udiskGain) && (
-                      <NumberControl
-                        label="UDisk Gain"
-                        value={musicDb?.udiskGain ?? undefined}
-                        {...musicRanges.udiskGain}
-                        disabled={musicDisabled}
-                        onChange={(value) => actions.queueMusic({ udiskGain: Math.round(value) })}
-                      />
-                    )}
-                    {hasNumber(musicDb?.inputSelect) && (
-                      <div className="sm:col-span-2 md:col-span-4">
-                        <ToggleGroupControl
-                          label="Input Select"
-                          value={musicInputSelectValue}
-                          options={INPUT_SELECT_OPTIONS}
+                  handleMouseLeave={handleMouseLeave}
+                  setDragging={setDragging}
+                  onReset={() => void actions.resetEq(webhmi.EqTarget.MUSIC)}
+                  onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.MUSIC, pressed)}
+                />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {showMusicParamsCard && (
+                    <ParameterCard className="md:col-span-2" contentClassName="sm:grid-cols-2 md:grid-cols-4">
+                      {hasNumber(musicDb?.inputGain) && (
+                        <NumberControl
+                          label="Input Gain"
+                          value={musicDb?.inputGain ?? undefined}
+                          {...musicRanges.inputGain}
                           disabled={musicDisabled}
-                          onChange={(value) => {
-                            const parsed = Number(value)
-                            if (!Number.isNaN(parsed)) actions.queueMusic({ inputSelect: parsed as webhmi.InputSelect })
-                          }}
+                          onChange={(value) => actions.queueMusic({ inputGain: Math.round(value) })}
                         />
-                      </div>
-                    )}
-                    {hasNumber(musicDb?.bass) && (
-                      <NumberControl
-                        label="Bass"
-                        value={musicDb?.bass ?? undefined}
-                        {...musicRanges.bass}
-                        disabled={musicDisabled}
-                        onChange={(value) => actions.queueMusic({ bass: value })}
-                      />
-                    )}
-                    {hasNumber(musicDb?.mid) && (
-                      <NumberControl
-                        label="Mid"
-                        value={musicDb?.mid ?? undefined}
-                        {...musicRanges.mid}
-                        disabled={musicDisabled}
-                        onChange={(value) => actions.queueMusic({ mid: value })}
-                      />
-                    )}
-                    {hasNumber(musicDb?.midFreq) && (
-                      <NumberControl
-                        label="Mid Freq (Hz)"
-                        value={musicDb?.midFreq ?? undefined}
-                        {...musicRanges.midFreq}
-                        disabled={musicDisabled}
-                        onChange={(value) => actions.queueMusic({ midFreq: Math.round(value) })}
-                      />
-                    )}
-                    {hasNumber(musicDb?.treble) && (
-                      <NumberControl
-                        label="Treble"
-                        value={musicDb?.treble ?? undefined}
-                        {...musicRanges.treble}
-                        disabled={musicDisabled}
-                        onChange={(value) => actions.queueMusic({ treble: value })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
-                {showMusicNoiseCard && (
-                  <ParameterCard title="Noise Gate" contentClassName="sm:grid-cols-2">
-                    {hasNumber(musicDb?.noise?.gate) && (
-                      <NumberControl
-                        label="Gate"
-                        value={musicDb?.noise?.gate ?? undefined}
-                        {...musicRanges.noise.gate}
-                        disabled={musicDisabled}
-                        onChange={(value) => actions.queueMusic({ noise: { gate: value } })}
-                      />
-                    )}
-                    {hasNumber(musicDb?.noise?.frameTime) && (
-                      <NumberControl
-                        label="Frame Time"
-                        value={musicDb?.noise?.frameTime ?? undefined}
-                        {...musicRanges.noise.frameTime}
-                        disabled={musicDisabled}
-                        onChange={(value) => actions.queueMusic({ noise: { frameTime: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(musicDb?.noise?.atkTime) && (
-                      <NumberControl
-                        label="Attack Time"
-                        value={musicDb?.noise?.atkTime ?? undefined}
-                        {...musicRanges.noise.atkTime}
-                        disabled={musicDisabled}
-                        onChange={(value) => actions.queueMusic({ noise: { atkTime: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(musicDb?.noise?.relTime) && (
-                      <NumberControl
-                        label="Release Time"
-                        value={musicDb?.noise?.relTime ?? undefined}
-                        {...musicRanges.noise.relTime}
-                        disabled={musicDisabled}
-                        onChange={(value) => actions.queueMusic({ noise: { relTime: Math.round(value) } })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
+                      )}
+                      {hasNumber(musicDb?.musicPitch) && (
+                        <NumberControl
+                          label="Music Pitch"
+                          value={musicDb?.musicPitch ?? undefined}
+                          {...musicRanges.musicPitch}
+                          disabled={musicDisabled}
+                          onChange={(value) => actions.queueMusic({ musicPitch: value })}
+                        />
+                      )}
+                      {hasNumber(musicDb?.btGain) && (
+                        <NumberControl
+                          label="BT Gain"
+                          value={musicDb?.btGain ?? undefined}
+                          {...musicRanges.btGain}
+                          disabled={musicDisabled}
+                          onChange={(value) => actions.queueMusic({ btGain: Math.round(value) })}
+                        />
+                      )}
+                      {hasNumber(musicDb?.udiskGain) && (
+                        <NumberControl
+                          label="UDisk Gain"
+                          value={musicDb?.udiskGain ?? undefined}
+                          {...musicRanges.udiskGain}
+                          disabled={musicDisabled}
+                          onChange={(value) => actions.queueMusic({ udiskGain: Math.round(value) })}
+                        />
+                      )}
+                      {hasNumber(musicDb?.inputSelect) && (
+                        <div className="sm:col-span-2 md:col-span-4">
+                          <ToggleGroupControl
+                            label="Input Select"
+                            value={musicInputSelectValue}
+                            options={INPUT_SELECT_OPTIONS}
+                            disabled={musicDisabled}
+                            onChange={(value) => {
+                              const parsed = Number(value)
+                              if (!Number.isNaN(parsed)) actions.queueMusic({ inputSelect: parsed as webhmi.InputSelect })
+                            }}
+                          />
+                        </div>
+                      )}
+                      {hasNumber(musicDb?.bass) && (
+                        <NumberControl
+                          label="Bass"
+                          value={musicDb?.bass ?? undefined}
+                          {...musicRanges.bass}
+                          disabled={musicDisabled}
+                          onChange={(value) => actions.queueMusic({ bass: value })}
+                        />
+                      )}
+                      {hasNumber(musicDb?.mid) && (
+                        <NumberControl
+                          label="Mid"
+                          value={musicDb?.mid ?? undefined}
+                          {...musicRanges.mid}
+                          disabled={musicDisabled}
+                          onChange={(value) => actions.queueMusic({ mid: value })}
+                        />
+                      )}
+                      {hasNumber(musicDb?.midFreq) && (
+                        <NumberControl
+                          label="Mid Freq (Hz)"
+                          value={musicDb?.midFreq ?? undefined}
+                          {...musicRanges.midFreq}
+                          disabled={musicDisabled}
+                          onChange={(value) => actions.queueMusic({ midFreq: Math.round(value) })}
+                        />
+                      )}
+                      {hasNumber(musicDb?.treble) && (
+                        <NumberControl
+                          label="Treble"
+                          value={musicDb?.treble ?? undefined}
+                          {...musicRanges.treble}
+                          disabled={musicDisabled}
+                          onChange={(value) => actions.queueMusic({ treble: value })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                  {showMusicNoiseCard && (
+                    <ParameterCard title="Noise Gate" contentClassName="sm:grid-cols-2">
+                      {hasNumber(musicDb?.noise?.gate) && (
+                        <NumberControl
+                          label="Gate"
+                          value={musicDb?.noise?.gate ?? undefined}
+                          {...musicRanges.noise.gate}
+                          disabled={musicDisabled}
+                          onChange={(value) => actions.queueMusic({ noise: { gate: value } })}
+                        />
+                      )}
+                      {hasNumber(musicDb?.noise?.frameTime) && (
+                        <NumberControl
+                          label="Frame Time"
+                          value={musicDb?.noise?.frameTime ?? undefined}
+                          {...musicRanges.noise.frameTime}
+                          disabled={musicDisabled}
+                          onChange={(value) => actions.queueMusic({ noise: { frameTime: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(musicDb?.noise?.atkTime) && (
+                        <NumberControl
+                          label="Attack Time"
+                          value={musicDb?.noise?.atkTime ?? undefined}
+                          {...musicRanges.noise.atkTime}
+                          disabled={musicDisabled}
+                          onChange={(value) => actions.queueMusic({ noise: { atkTime: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(musicDb?.noise?.relTime) && (
+                        <NumberControl
+                          label="Release Time"
+                          value={musicDb?.noise?.relTime ?? undefined}
+                          {...musicRanges.noise.relTime}
+                          disabled={musicDisabled}
+                          onChange={(value) => actions.queueMusic({ noise: { relTime: Math.round(value) } })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                </div>
               </div>
-            </div>
             </TabsContent>
           )}
 
           {micDb && (
             <TabsContent value="mic">
-            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4">
                 <DspPanel
                   {...getPanelPower(micKey)}
                   filters={panelStateByKey[micKey].filters}
@@ -1404,218 +1456,218 @@ function DeviceDemo() {
                   headerExtra={
                     showMicSelector ? (
                       <ToggleGroup
-                      type="single"
-                      variant="outline"
-                      value={micKey}
-                      onValueChange={(v) => v && setMicKey(v as MicPanelKey)}
-                      className="gap-0"
-                    >
-                      <ToggleGroupItem value="mica" className="rounded-r-none">
-                        Mic A
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="micb" className="rounded-l-none border-l-0">
-                        Mic B
-                      </ToggleGroupItem>
-                    </ToggleGroup>
-                  ) : null
-                }
-                handleFilterChange={handleFilterChangeByKey[micKey]}
-                handlePointDoubleClick={handlePointDoubleClickByKey[micKey]}
-                handleMouseEnter={handleMouseEnter}
-                handleMouseLeave={handleMouseLeave}
-                setDragging={setDragging}
-                onReset={() => void actions.resetEq(panelByKey[micKey].target)}
-                onBypassChange={(pressed) => actions.queueEqBypass(panelByKey[micKey].target, pressed)}
-              />
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {showMicParamsCard && (
-                  <ParameterCard className="md:col-span-2" contentClassName="sm:grid-cols-2 md:grid-cols-4">
-                    {hasNumber(micDb?.micAVolume) && (
-                      <NumberControl
-                        label="Mic A Volume"
-                        value={micDb?.micAVolume ?? undefined}
-                        {...micRanges.micAVolume}
-                        disabled={micDisabled}
-                        onChange={(value) => actions.queueMic({ micAVolume: Math.round(value) })}
-                      />
-                    )}
-                    {hasNumber(micDb?.micBVolume) && (
-                      <NumberControl
-                        label="Mic B Volume"
-                        value={micDb?.micBVolume ?? undefined}
-                        {...micRanges.micBVolume}
-                        disabled={micDisabled}
-                        onChange={(value) => actions.queueMic({ micBVolume: Math.round(value) })}
-                      />
-                    )}
-                    {hasBoolean(micDb?.micEqJointDebugging) && (
-                      <ToggleControl
-                        label="EQ Joint Debug"
-                        pressed={micDb?.micEqJointDebugging}
-                        disabled={micDisabled}
-                        onChange={(pressed) => actions.queueMic({ micEqJointDebugging: pressed })}
-                      />
-                    )}
-                    {hasNumber(micDb?.micFBX) && (
-                      <div className="sm:col-span-2 md:col-span-4">
-                        <ToggleGroupControl
-                          label="Mic FBX"
-                          value={micFbxValue}
-                          options={FBX_OPTIONS}
+                        type="single"
+                        variant="outline"
+                        value={micKey}
+                        onValueChange={(v) => v && setMicKey(v as MicPanelKey)}
+                        className="gap-0"
+                      >
+                        <ToggleGroupItem value="mica" className="rounded-r-none">
+                          Mic A
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="micb" className="rounded-l-none border-l-0">
+                          Mic B
+                        </ToggleGroupItem>
+                      </ToggleGroup>
+                    ) : null
+                  }
+                  handleFilterChange={handleFilterChangeByKey[micKey]}
+                  handlePointDoubleClick={handlePointDoubleClickByKey[micKey]}
+                  handleMouseEnter={handleMouseEnter}
+                  handleMouseLeave={handleMouseLeave}
+                  setDragging={setDragging}
+                  onReset={() => void actions.resetEq(panelByKey[micKey].target)}
+                  onBypassChange={(pressed) => actions.queueEqBypass(panelByKey[micKey].target, pressed)}
+                />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {showMicParamsCard && (
+                    <ParameterCard className="md:col-span-2" contentClassName="sm:grid-cols-2 md:grid-cols-4">
+                      {hasNumber(micDb?.micAVolume) && (
+                        <NumberControl
+                          label="Mic A Volume"
+                          value={micDb?.micAVolume ?? undefined}
+                          {...micRanges.micAVolume}
                           disabled={micDisabled}
-                          onChange={(value) => {
-                            const parsed = Number(value)
-                            if (!Number.isNaN(parsed)) actions.queueMic({ micFBX: parsed as webhmi.FbxMode })
-                          }}
+                          onChange={(value) => actions.queueMic({ micAVolume: Math.round(value) })}
                         />
-                      </div>
-                    )}
-                    {hasNumber(micDb?.bass) && (
-                      <NumberControl
-                        label="Bass"
-                        value={micDb?.bass ?? undefined}
-                        {...micRanges.bass}
-                        disabled={micDisabled}
-                        onChange={(value) => actions.queueMic({ bass: value })}
-                      />
-                    )}
-                    {hasNumber(micDb?.mid) && (
-                      <NumberControl
-                        label="Mid"
-                        value={micDb?.mid ?? undefined}
-                        {...micRanges.mid}
-                        disabled={micDisabled}
-                        onChange={(value) => actions.queueMic({ mid: value })}
-                      />
-                    )}
-                    {hasNumber(micDb?.midFreq) && (
-                      <NumberControl
-                        label="Mid Freq (Hz)"
-                        value={micDb?.midFreq ?? undefined}
-                        {...micRanges.midFreq}
-                        disabled={micDisabled}
-                        onChange={(value) => actions.queueMic({ midFreq: value })}
-                      />
-                    )}
-                    {hasNumber(micDb?.treble) && (
-                      <NumberControl
-                        label="Treble"
-                        value={micDb?.treble ?? undefined}
-                        {...micRanges.treble}
-                        disabled={micDisabled}
-                        onChange={(value) => actions.queueMic({ treble: value })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
-                {showMicNoiseCard && (
-                  <ParameterCard title="Noise Gate" contentClassName="sm:grid-cols-2">
-                    {hasNumber(micDb?.noise?.gate) && (
-                      <NumberControl
-                        label="Gate"
-                        value={micDb?.noise?.gate ?? undefined}
-                        {...micRanges.noise.gate}
-                        disabled={micDisabled}
-                        onChange={(value) => actions.queueMic({ noise: { gate: value } })}
-                      />
-                    )}
-                    {hasNumber(micDb?.noise?.frameTime) && (
-                      <NumberControl
-                        label="Frame Time"
-                        value={micDb?.noise?.frameTime ?? undefined}
-                        {...micRanges.noise.frameTime}
-                        disabled={micDisabled}
-                        onChange={(value) => actions.queueMic({ noise: { frameTime: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(micDb?.noise?.atkTime) && (
-                      <NumberControl
-                        label="Attack Time"
-                        value={micDb?.noise?.atkTime ?? undefined}
-                        {...micRanges.noise.atkTime}
-                        disabled={micDisabled}
-                        onChange={(value) => actions.queueMic({ noise: { atkTime: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(micDb?.noise?.relTime) && (
-                      <NumberControl
-                        label="Release Time"
-                        value={micDb?.noise?.relTime ?? undefined}
-                        {...micRanges.noise.relTime}
-                        disabled={micDisabled}
-                        onChange={(value) => actions.queueMic({ noise: { relTime: Math.round(value) } })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
-                {showMicCompressorCard && (
-                  <ParameterCard title="Compressor" contentClassName="sm:grid-cols-2">
-                    {hasAny(micDb?.compressor?.threshold, micDb?.compressor?.ratio, micDb?.compressor?.attack, micDb?.compressor?.release) && (
-                      <div className="sm:col-span-2">
-                        <CompressorGraph
-                          threshold={micDb?.compressor?.threshold}
-                          ratio={micDb?.compressor?.ratio}
-                          attack={micDb?.compressor?.attack}
-                          release={micDb?.compressor?.release}
-                          thresholdRange={micRanges.compressor.threshold}
+                      )}
+                      {hasNumber(micDb?.micBVolume) && (
+                        <NumberControl
+                          label="Mic B Volume"
+                          value={micDb?.micBVolume ?? undefined}
+                          {...micRanges.micBVolume}
                           disabled={micDisabled}
+                          onChange={(value) => actions.queueMic({ micBVolume: Math.round(value) })}
                         />
-                      </div>
-                    )}
-                    {hasNumber(micDb?.compressor?.threshold) && (
-                      <NumberControl
-                        label="Threshold"
-                        value={micDb?.compressor?.threshold ?? undefined}
-                        {...micRanges.compressor.threshold}
-                        disabled={micDisabled}
-                        onChange={(value) => actions.queueMic({ compressor: { threshold: value } })}
-                      />
-                    )}
-                    {hasNumber(micDb?.compressor?.ratio) && (
-                      <NumberControl
-                        label="Ratio"
-                        value={micDb?.compressor?.ratio ?? undefined}
-                        {...micRanges.compressor.ratio}
-                        disabled={micDisabled}
-                        onChange={(value) => actions.queueMic({ compressor: { ratio: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(micDb?.compressor?.attack) && (
-                      <NumberControl
-                        label="Attack"
-                        value={micDb?.compressor?.attack ?? undefined}
-                        {...micRanges.compressor.attack}
-                        disabled={micDisabled}
-                        onChange={(value) => actions.queueMic({ compressor: { attack: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(micDb?.compressor?.release) && (
-                      <NumberControl
-                        label="Release"
-                        value={micDb?.compressor?.release ?? undefined}
-                        {...micRanges.compressor.release}
-                        disabled={micDisabled}
-                        onChange={(value) => actions.queueMic({ compressor: { release: Math.round(value) } })}
-                      />
-                    )}
-                    {hasBoolean(micDb?.compressor?.bypass) && (
-                      <ToggleControl
-                        label="Bypass"
-                        pressed={micDb?.compressor?.bypass}
-                        disabled={micDisabled}
-                        onChange={(pressed) => actions.queueMic({ compressor: { bypass: pressed } })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
+                      )}
+                      {hasBoolean(micDb?.micEqJointDebugging) && (
+                        <ToggleControl
+                          label="EQ Joint Debug"
+                          pressed={micDb?.micEqJointDebugging}
+                          disabled={micDisabled}
+                          onChange={(pressed) => actions.queueMic({ micEqJointDebugging: pressed })}
+                        />
+                      )}
+                      {hasNumber(micDb?.micFBX) && (
+                        <div className="sm:col-span-2 md:col-span-4">
+                          <ToggleGroupControl
+                            label="Mic FBX"
+                            value={micFbxValue}
+                            options={FBX_OPTIONS}
+                            disabled={micDisabled}
+                            onChange={(value) => {
+                              const parsed = Number(value)
+                              if (!Number.isNaN(parsed)) actions.queueMic({ micFBX: parsed as webhmi.FbxMode })
+                            }}
+                          />
+                        </div>
+                      )}
+                      {hasNumber(micDb?.bass) && (
+                        <NumberControl
+                          label="Bass"
+                          value={micDb?.bass ?? undefined}
+                          {...micRanges.bass}
+                          disabled={micDisabled}
+                          onChange={(value) => actions.queueMic({ bass: value })}
+                        />
+                      )}
+                      {hasNumber(micDb?.mid) && (
+                        <NumberControl
+                          label="Mid"
+                          value={micDb?.mid ?? undefined}
+                          {...micRanges.mid}
+                          disabled={micDisabled}
+                          onChange={(value) => actions.queueMic({ mid: value })}
+                        />
+                      )}
+                      {hasNumber(micDb?.midFreq) && (
+                        <NumberControl
+                          label="Mid Freq (Hz)"
+                          value={micDb?.midFreq ?? undefined}
+                          {...micRanges.midFreq}
+                          disabled={micDisabled}
+                          onChange={(value) => actions.queueMic({ midFreq: value })}
+                        />
+                      )}
+                      {hasNumber(micDb?.treble) && (
+                        <NumberControl
+                          label="Treble"
+                          value={micDb?.treble ?? undefined}
+                          {...micRanges.treble}
+                          disabled={micDisabled}
+                          onChange={(value) => actions.queueMic({ treble: value })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                  {showMicNoiseCard && (
+                    <ParameterCard title="Noise Gate" contentClassName="sm:grid-cols-2">
+                      {hasNumber(micDb?.noise?.gate) && (
+                        <NumberControl
+                          label="Gate"
+                          value={micDb?.noise?.gate ?? undefined}
+                          {...micRanges.noise.gate}
+                          disabled={micDisabled}
+                          onChange={(value) => actions.queueMic({ noise: { gate: value } })}
+                        />
+                      )}
+                      {hasNumber(micDb?.noise?.frameTime) && (
+                        <NumberControl
+                          label="Frame Time"
+                          value={micDb?.noise?.frameTime ?? undefined}
+                          {...micRanges.noise.frameTime}
+                          disabled={micDisabled}
+                          onChange={(value) => actions.queueMic({ noise: { frameTime: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(micDb?.noise?.atkTime) && (
+                        <NumberControl
+                          label="Attack Time"
+                          value={micDb?.noise?.atkTime ?? undefined}
+                          {...micRanges.noise.atkTime}
+                          disabled={micDisabled}
+                          onChange={(value) => actions.queueMic({ noise: { atkTime: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(micDb?.noise?.relTime) && (
+                        <NumberControl
+                          label="Release Time"
+                          value={micDb?.noise?.relTime ?? undefined}
+                          {...micRanges.noise.relTime}
+                          disabled={micDisabled}
+                          onChange={(value) => actions.queueMic({ noise: { relTime: Math.round(value) } })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                  {showMicCompressorCard && (
+                    <ParameterCard title="Compressor" contentClassName="sm:grid-cols-2">
+                      {hasAny(micDb?.compressor?.threshold, micDb?.compressor?.ratio, micDb?.compressor?.attack, micDb?.compressor?.release) && (
+                        <div className="sm:col-span-2">
+                          <CompressorGraph
+                            threshold={micDb?.compressor?.threshold}
+                            ratio={micDb?.compressor?.ratio}
+                            attack={micDb?.compressor?.attack}
+                            release={micDb?.compressor?.release}
+                            thresholdRange={micRanges.compressor.threshold}
+                            disabled={micDisabled}
+                          />
+                        </div>
+                      )}
+                      {hasNumber(micDb?.compressor?.threshold) && (
+                        <NumberControl
+                          label="Threshold"
+                          value={micDb?.compressor?.threshold ?? undefined}
+                          {...micRanges.compressor.threshold}
+                          disabled={micDisabled}
+                          onChange={(value) => actions.queueMic({ compressor: { threshold: value } })}
+                        />
+                      )}
+                      {hasNumber(micDb?.compressor?.ratio) && (
+                        <NumberControl
+                          label="Ratio"
+                          value={micDb?.compressor?.ratio ?? undefined}
+                          {...micRanges.compressor.ratio}
+                          disabled={micDisabled}
+                          onChange={(value) => actions.queueMic({ compressor: { ratio: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(micDb?.compressor?.attack) && (
+                        <NumberControl
+                          label="Attack"
+                          value={micDb?.compressor?.attack ?? undefined}
+                          {...micRanges.compressor.attack}
+                          disabled={micDisabled}
+                          onChange={(value) => actions.queueMic({ compressor: { attack: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(micDb?.compressor?.release) && (
+                        <NumberControl
+                          label="Release"
+                          value={micDb?.compressor?.release ?? undefined}
+                          {...micRanges.compressor.release}
+                          disabled={micDisabled}
+                          onChange={(value) => actions.queueMic({ compressor: { release: Math.round(value) } })}
+                        />
+                      )}
+                      {hasBoolean(micDb?.compressor?.bypass) && (
+                        <ToggleControl
+                          label="Bypass"
+                          pressed={micDb?.compressor?.bypass}
+                          disabled={micDisabled}
+                          onChange={(pressed) => actions.queueMic({ compressor: { bypass: pressed } })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                </div>
               </div>
-            </div>
             </TabsContent>
           )}
 
           {reverbDb && (
             <TabsContent value="reverb">
-            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4">
                 <DspPanel
                   {...getPanelPower('reverb')}
                   filters={panelStateByKey.reverb.filters}
@@ -1626,60 +1678,60 @@ function DeviceDemo() {
                   handleFilterChange={handleFilterChangeByKey.reverb}
                   handlePointDoubleClick={handlePointDoubleClickByKey.reverb}
                   handleMouseEnter={handleMouseEnter}
-                handleMouseLeave={handleMouseLeave}
-                setDragging={setDragging}
-                onReset={() => void actions.resetEq(webhmi.EqTarget.REVERB)}
-                onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.REVERB, pressed)}
-              />
-              <div className="grid gap-4 md:grid-cols-2">
-                {showReverbCard && (
-                  <ParameterCard title="Reverb" className="md:col-span-2" contentClassName="sm:grid-cols-2">
-                    {hasNumber(reverbDb?.reverbLevel) && (
-                      <NumberControl
-                        label="Reverb Level"
-                        value={reverbDb?.reverbLevel ?? undefined}
-                        {...reverbRanges.reverbLevel}
-                        disabled={reverbDisabled}
-                        onChange={(value) => actions.queueReverb({ reverbLevel: Math.round(value) })}
-                      />
-                    )}
-                    {hasNumber(reverbDb?.micDirectLevel) && (
-                      <NumberControl
-                        label="Mic Direct Level"
-                        value={reverbDb?.micDirectLevel ?? undefined}
-                        {...reverbRanges.micDirectLevel}
-                        disabled={reverbDisabled}
-                        onChange={(value) => actions.queueReverb({ micDirectLevel: Math.round(value) })}
-                      />
-                    )}
-                    {hasNumber(reverbDb?.reverbPredelay) && (
-                      <NumberControl
-                        label="Pre-delay"
-                        value={reverbDb?.reverbPredelay ?? undefined}
-                        {...reverbRanges.reverbPredelay}
-                        disabled={reverbDisabled}
-                        onChange={(value) => actions.queueReverb({ reverbPredelay: Math.round(value) })}
-                      />
-                    )}
-                    {hasNumber(reverbDb?.reverbDecay) && (
-                      <NumberControl
-                        label="Decay"
-                        value={reverbDb?.reverbDecay ?? undefined}
-                        {...reverbRanges.reverbDecay}
-                        disabled={reverbDisabled}
-                        onChange={(value) => actions.queueReverb({ reverbDecay: Math.round(value) })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
+                  handleMouseLeave={handleMouseLeave}
+                  setDragging={setDragging}
+                  onReset={() => void actions.resetEq(webhmi.EqTarget.REVERB)}
+                  onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.REVERB, pressed)}
+                />
+                <div className="grid gap-4 md:grid-cols-2">
+                  {showReverbCard && (
+                    <ParameterCard title="Reverb" className="md:col-span-2" contentClassName="sm:grid-cols-2">
+                      {hasNumber(reverbDb?.reverbLevel) && (
+                        <NumberControl
+                          label="Reverb Level"
+                          value={reverbDb?.reverbLevel ?? undefined}
+                          {...reverbRanges.reverbLevel}
+                          disabled={reverbDisabled}
+                          onChange={(value) => actions.queueReverb({ reverbLevel: Math.round(value) })}
+                        />
+                      )}
+                      {hasNumber(reverbDb?.micDirectLevel) && (
+                        <NumberControl
+                          label="Mic Direct Level"
+                          value={reverbDb?.micDirectLevel ?? undefined}
+                          {...reverbRanges.micDirectLevel}
+                          disabled={reverbDisabled}
+                          onChange={(value) => actions.queueReverb({ micDirectLevel: Math.round(value) })}
+                        />
+                      )}
+                      {hasNumber(reverbDb?.reverbPredelay) && (
+                        <NumberControl
+                          label="Pre-delay"
+                          value={reverbDb?.reverbPredelay ?? undefined}
+                          {...reverbRanges.reverbPredelay}
+                          disabled={reverbDisabled}
+                          onChange={(value) => actions.queueReverb({ reverbPredelay: Math.round(value) })}
+                        />
+                      )}
+                      {hasNumber(reverbDb?.reverbDecay) && (
+                        <NumberControl
+                          label="Decay"
+                          value={reverbDb?.reverbDecay ?? undefined}
+                          {...reverbRanges.reverbDecay}
+                          disabled={reverbDisabled}
+                          onChange={(value) => actions.queueReverb({ reverbDecay: Math.round(value) })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                </div>
               </div>
-            </div>
             </TabsContent>
           )}
 
           {echoDb && (
             <TabsContent value="echo">
-            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4">
                 <DspPanel
                   {...getPanelPower('echo')}
                   filters={panelStateByKey.echo.filters}
@@ -1690,87 +1742,87 @@ function DeviceDemo() {
                   handleFilterChange={handleFilterChangeByKey.echo}
                   handlePointDoubleClick={handlePointDoubleClickByKey.echo}
                   handleMouseEnter={handleMouseEnter}
-                handleMouseLeave={handleMouseLeave}
-                setDragging={setDragging}
-                onReset={() => void actions.resetEq(webhmi.EqTarget.ECHO)}
-                onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.ECHO, pressed)}
-              />
-              <div className="grid gap-4 md:grid-cols-2">
-                {showEchoCard && (
-                  <ParameterCard title="Echo" className="md:col-span-2" contentClassName="sm:grid-cols-2 lg:grid-cols-3">
-                    {hasNumber(echoDb?.echoLevel) && (
-                      <NumberControl
-                        label="Echo Level"
-                        value={echoDb?.echoLevel ?? undefined}
-                        {...echoRanges.echoLevel}
-                        disabled={echoDisabled}
-                        onChange={(value) => actions.queueEcho({ echoLevel: Math.round(value) })}
-                      />
-                    )}
-                    {hasNumber(echoDb?.micDirectLevel) && (
-                      <NumberControl
-                        label="Mic Direct Level"
-                        value={echoDb?.micDirectLevel ?? undefined}
-                        {...echoRanges.micDirectLevel}
-                        disabled={echoDisabled}
-                        onChange={(value) => actions.queueEcho({ micDirectLevel: Math.round(value) })}
-                      />
-                    )}
-                    {hasNumber(echoDb?.echoPredelay) && (
-                      <NumberControl
-                        label="Pre-delay"
-                        value={echoDb?.echoPredelay ?? undefined}
-                        {...echoRanges.echoPredelay}
-                        disabled={echoDisabled}
-                        onChange={(value) => actions.queueEcho({ echoPredelay: Math.round(value) })}
-                      />
-                    )}
-                    {hasNumber(echoDb?.echoDelayTime) && (
-                      <NumberControl
-                        label="Delay Time"
-                        value={echoDb?.echoDelayTime ?? undefined}
-                        {...echoRanges.echoDelayTime}
-                        disabled={echoDisabled}
-                        onChange={(value) => actions.queueEcho({ echoDelayTime: Math.round(value) })}
-                      />
-                    )}
-                    {hasNumber(echoDb?.echoRepeat) && (
-                      <NumberControl
-                        label="Repeat"
-                        value={echoDb?.echoRepeat ?? undefined}
-                        {...echoRanges.echoRepeat}
-                        disabled={echoDisabled}
-                        onChange={(value) => actions.queueEcho({ echoRepeat: Math.round(value) })}
-                      />
-                    )}
-                    {hasNumber(echoDb?.echoRightPredelay) && (
-                      <NumberControl
-                        label="Right Pre-delay"
-                        value={echoDb?.echoRightPredelay ?? undefined}
-                        {...echoRanges.echoRightPredelay}
-                        disabled={echoDisabled}
-                        onChange={(value) => actions.queueEcho({ echoRightPredelay: Math.round(value) })}
-                      />
-                    )}
-                    {hasNumber(echoDb?.echoRightDelay) && (
-                      <NumberControl
-                        label="Right Delay"
-                        value={echoDb?.echoRightDelay ?? undefined}
-                        {...echoRanges.echoRightDelay}
-                        disabled={echoDisabled}
-                        onChange={(value) => actions.queueEcho({ echoRightDelay: Math.round(value) })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
+                  handleMouseLeave={handleMouseLeave}
+                  setDragging={setDragging}
+                  onReset={() => void actions.resetEq(webhmi.EqTarget.ECHO)}
+                  onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.ECHO, pressed)}
+                />
+                <div className="grid gap-4 md:grid-cols-2">
+                  {showEchoCard && (
+                    <ParameterCard title="Echo" className="md:col-span-2" contentClassName="sm:grid-cols-2 lg:grid-cols-3">
+                      {hasNumber(echoDb?.echoLevel) && (
+                        <NumberControl
+                          label="Echo Level"
+                          value={echoDb?.echoLevel ?? undefined}
+                          {...echoRanges.echoLevel}
+                          disabled={echoDisabled}
+                          onChange={(value) => actions.queueEcho({ echoLevel: Math.round(value) })}
+                        />
+                      )}
+                      {hasNumber(echoDb?.micDirectLevel) && (
+                        <NumberControl
+                          label="Mic Direct Level"
+                          value={echoDb?.micDirectLevel ?? undefined}
+                          {...echoRanges.micDirectLevel}
+                          disabled={echoDisabled}
+                          onChange={(value) => actions.queueEcho({ micDirectLevel: Math.round(value) })}
+                        />
+                      )}
+                      {hasNumber(echoDb?.echoPredelay) && (
+                        <NumberControl
+                          label="Pre-delay"
+                          value={echoDb?.echoPredelay ?? undefined}
+                          {...echoRanges.echoPredelay}
+                          disabled={echoDisabled}
+                          onChange={(value) => actions.queueEcho({ echoPredelay: Math.round(value) })}
+                        />
+                      )}
+                      {hasNumber(echoDb?.echoDelayTime) && (
+                        <NumberControl
+                          label="Delay Time"
+                          value={echoDb?.echoDelayTime ?? undefined}
+                          {...echoRanges.echoDelayTime}
+                          disabled={echoDisabled}
+                          onChange={(value) => actions.queueEcho({ echoDelayTime: Math.round(value) })}
+                        />
+                      )}
+                      {hasNumber(echoDb?.echoRepeat) && (
+                        <NumberControl
+                          label="Repeat"
+                          value={echoDb?.echoRepeat ?? undefined}
+                          {...echoRanges.echoRepeat}
+                          disabled={echoDisabled}
+                          onChange={(value) => actions.queueEcho({ echoRepeat: Math.round(value) })}
+                        />
+                      )}
+                      {hasNumber(echoDb?.echoRightPredelay) && (
+                        <NumberControl
+                          label="Right Pre-delay"
+                          value={echoDb?.echoRightPredelay ?? undefined}
+                          {...echoRanges.echoRightPredelay}
+                          disabled={echoDisabled}
+                          onChange={(value) => actions.queueEcho({ echoRightPredelay: Math.round(value) })}
+                        />
+                      )}
+                      {hasNumber(echoDb?.echoRightDelay) && (
+                        <NumberControl
+                          label="Right Delay"
+                          value={echoDb?.echoRightDelay ?? undefined}
+                          {...echoRanges.echoRightDelay}
+                          disabled={echoDisabled}
+                          onChange={(value) => actions.queueEcho({ echoRightDelay: Math.round(value) })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                </div>
               </div>
-            </div>
             </TabsContent>
           )}
 
           {mainOutputDb && (
             <TabsContent value="mainoutput">
-            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4">
                 <DspPanel
                   {...getPanelPower('mainoutput')}
                   filters={panelStateByKey.mainoutput.filters}
@@ -1781,181 +1833,181 @@ function DeviceDemo() {
                   handleFilterChange={handleFilterChangeByKey.mainoutput}
                   handlePointDoubleClick={handlePointDoubleClickByKey.mainoutput}
                   handleMouseEnter={handleMouseEnter}
-                handleMouseLeave={handleMouseLeave}
-                setDragging={setDragging}
-                onReset={() => void actions.resetEq(webhmi.EqTarget.MAIN_OUTPUT)}
-                onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.MAIN_OUTPUT, pressed)}
-              />
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {showMainOutputOutputCard && (
-                  <ParameterCard title="Output" contentClassName="sm:grid-cols-2">
-                    {hasNumber(mainOutputDb?.output?.leftChannelVolume) && (
-                      <NumberControl
-                        label="Left Volume"
-                        value={mainOutputDb?.output?.leftChannelVolume ?? undefined}
-                        {...mainOutputRanges.output.leftChannelVolume}
-                        disabled={mainOutputDisabled}
-                        onChange={(value) => actions.queueMainOutput({ output: { leftChannelVolume: value } })}
-                      />
-                    )}
-                    {hasNumber(mainOutputDb?.output?.rightChannelVolume) && (
-                      <NumberControl
-                        label="Right Volume"
-                        value={mainOutputDb?.output?.rightChannelVolume ?? undefined}
-                        {...mainOutputRanges.output.rightChannelVolume}
-                        disabled={mainOutputDisabled}
-                        onChange={(value) => actions.queueMainOutput({ output: { rightChannelVolume: value } })}
-                      />
-                    )}
-                    {hasNumber(mainOutputDb?.output?.leftDelay) && (
-                      <NumberControl
-                        label="Left Delay"
-                        value={mainOutputDb?.output?.leftDelay ?? undefined}
-                        {...mainOutputRanges.output.leftDelay}
-                        disabled={mainOutputDisabled}
-                        onChange={(value) => actions.queueMainOutput({ output: { leftDelay: value } })}
-                      />
-                    )}
-                    {hasNumber(mainOutputDb?.output?.rightDelay) && (
-                      <NumberControl
-                        label="Right Delay"
-                        value={mainOutputDb?.output?.rightDelay ?? undefined}
-                        {...mainOutputRanges.output.rightDelay}
-                        disabled={mainOutputDisabled}
-                        onChange={(value) => actions.queueMainOutput({ output: { rightDelay: value } })}
-                      />
-                    )}
-                    {hasBoolean(mainOutputDb?.output?.leftMute) && (
-                      <ToggleControl
-                        label="Left Mute"
-                        pressed={mainOutputDb?.output?.leftMute}
-                        disabled={mainOutputDisabled}
-                        onChange={(pressed) => actions.queueMainOutput({ output: { leftMute: pressed } })}
-                      />
-                    )}
-                    {hasBoolean(mainOutputDb?.output?.rightMute) && (
-                      <ToggleControl
-                        label="Right Mute"
-                        pressed={mainOutputDb?.output?.rightMute}
-                        disabled={mainOutputDisabled}
-                        onChange={(pressed) => actions.queueMainOutput({ output: { rightMute: pressed } })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
-                {showMainOutputMixerCard && (
-                  <ParameterCard title="Mixer" contentClassName="sm:grid-cols-2">
-                    {hasNumber(mainOutputDb?.mixer?.micDirectLevel) && (
-                      <NumberControl
-                        label="Mic Direct Level"
-                        value={mainOutputDb?.mixer?.micDirectLevel ?? undefined}
-                        {...mainOutputRanges.mixer.micDirectLevel}
-                        disabled={mainOutputDisabled}
-                        onChange={(value) => actions.queueMainOutput({ mixer: { micDirectLevel: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(mainOutputDb?.mixer?.musicLevel) && (
-                      <NumberControl
-                        label="Music Level"
-                        value={mainOutputDb?.mixer?.musicLevel ?? undefined}
-                        {...mainOutputRanges.mixer.musicLevel}
-                        disabled={mainOutputDisabled}
-                        onChange={(value) => actions.queueMainOutput({ mixer: { musicLevel: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(mainOutputDb?.mixer?.reverbLevel) && (
-                      <NumberControl
-                        label="Reverb Level"
-                        value={mainOutputDb?.mixer?.reverbLevel ?? undefined}
-                        {...mainOutputRanges.mixer.reverbLevel}
-                        disabled={mainOutputDisabled}
-                        onChange={(value) => actions.queueMainOutput({ mixer: { reverbLevel: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(mainOutputDb?.mixer?.echoLevel) && (
-                      <NumberControl
-                        label="Echo Level"
-                        value={mainOutputDb?.mixer?.echoLevel ?? undefined}
-                        {...mainOutputRanges.mixer.echoLevel}
-                        disabled={mainOutputDisabled}
-                        onChange={(value) => actions.queueMainOutput({ mixer: { echoLevel: Math.round(value) } })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
-                {showMainOutputCompressorCard && (
-                  <ParameterCard title="Compressor" contentClassName="sm:grid-cols-2">
-                    {hasAny(
-                      mainOutputDb?.compressor?.threshold,
-                      mainOutputDb?.compressor?.ratio,
-                      mainOutputDb?.compressor?.attack,
-                      mainOutputDb?.compressor?.release,
-                    ) && (
-                      <div className="sm:col-span-2">
-                        <CompressorGraph
-                          threshold={mainOutputDb?.compressor?.threshold}
-                          ratio={mainOutputDb?.compressor?.ratio}
-                          attack={mainOutputDb?.compressor?.attack}
-                          release={mainOutputDb?.compressor?.release}
-                          thresholdRange={mainOutputRanges.compressor.threshold}
+                  handleMouseLeave={handleMouseLeave}
+                  setDragging={setDragging}
+                  onReset={() => void actions.resetEq(webhmi.EqTarget.MAIN_OUTPUT)}
+                  onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.MAIN_OUTPUT, pressed)}
+                />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {showMainOutputOutputCard && (
+                    <ParameterCard title="Output" contentClassName="sm:grid-cols-2">
+                      {hasNumber(mainOutputDb?.output?.leftChannelVolume) && (
+                        <NumberControl
+                          label="Left Volume"
+                          value={mainOutputDb?.output?.leftChannelVolume ?? undefined}
+                          {...mainOutputRanges.output.leftChannelVolume}
                           disabled={mainOutputDisabled}
+                          onChange={(value) => actions.queueMainOutput({ output: { leftChannelVolume: value } })}
                         />
-                      </div>
-                    )}
-                    {hasNumber(mainOutputDb?.compressor?.threshold) && (
-                      <NumberControl
-                        label="Threshold"
-                        value={mainOutputDb?.compressor?.threshold ?? undefined}
-                        {...mainOutputRanges.compressor.threshold}
-                        disabled={mainOutputDisabled}
-                        onChange={(value) => actions.queueMainOutput({ compressor: { threshold: value } })}
-                      />
-                    )}
-                    {hasNumber(mainOutputDb?.compressor?.ratio) && (
-                      <NumberControl
-                        label="Ratio"
-                        value={mainOutputDb?.compressor?.ratio ?? undefined}
-                        {...mainOutputRanges.compressor.ratio}
-                        disabled={mainOutputDisabled}
-                        onChange={(value) => actions.queueMainOutput({ compressor: { ratio: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(mainOutputDb?.compressor?.attack) && (
-                      <NumberControl
-                        label="Attack"
-                        value={mainOutputDb?.compressor?.attack ?? undefined}
-                        {...mainOutputRanges.compressor.attack}
-                        disabled={mainOutputDisabled}
-                        onChange={(value) => actions.queueMainOutput({ compressor: { attack: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(mainOutputDb?.compressor?.release) && (
-                      <NumberControl
-                        label="Release"
-                        value={mainOutputDb?.compressor?.release ?? undefined}
-                        {...mainOutputRanges.compressor.release}
-                        disabled={mainOutputDisabled}
-                        onChange={(value) => actions.queueMainOutput({ compressor: { release: Math.round(value) } })}
-                      />
-                    )}
-                    {hasBoolean(mainOutputDb?.compressor?.bypass) && (
-                      <ToggleControl
-                        label="Bypass"
-                        pressed={mainOutputDb?.compressor?.bypass}
-                        disabled={mainOutputDisabled}
-                        onChange={(pressed) => actions.queueMainOutput({ compressor: { bypass: pressed } })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
+                      )}
+                      {hasNumber(mainOutputDb?.output?.rightChannelVolume) && (
+                        <NumberControl
+                          label="Right Volume"
+                          value={mainOutputDb?.output?.rightChannelVolume ?? undefined}
+                          {...mainOutputRanges.output.rightChannelVolume}
+                          disabled={mainOutputDisabled}
+                          onChange={(value) => actions.queueMainOutput({ output: { rightChannelVolume: value } })}
+                        />
+                      )}
+                      {hasNumber(mainOutputDb?.output?.leftDelay) && (
+                        <NumberControl
+                          label="Left Delay"
+                          value={mainOutputDb?.output?.leftDelay ?? undefined}
+                          {...mainOutputRanges.output.leftDelay}
+                          disabled={mainOutputDisabled}
+                          onChange={(value) => actions.queueMainOutput({ output: { leftDelay: value } })}
+                        />
+                      )}
+                      {hasNumber(mainOutputDb?.output?.rightDelay) && (
+                        <NumberControl
+                          label="Right Delay"
+                          value={mainOutputDb?.output?.rightDelay ?? undefined}
+                          {...mainOutputRanges.output.rightDelay}
+                          disabled={mainOutputDisabled}
+                          onChange={(value) => actions.queueMainOutput({ output: { rightDelay: value } })}
+                        />
+                      )}
+                      {hasBoolean(mainOutputDb?.output?.leftMute) && (
+                        <ToggleControl
+                          label="Left Mute"
+                          pressed={mainOutputDb?.output?.leftMute}
+                          disabled={mainOutputDisabled}
+                          onChange={(pressed) => actions.queueMainOutput({ output: { leftMute: pressed } })}
+                        />
+                      )}
+                      {hasBoolean(mainOutputDb?.output?.rightMute) && (
+                        <ToggleControl
+                          label="Right Mute"
+                          pressed={mainOutputDb?.output?.rightMute}
+                          disabled={mainOutputDisabled}
+                          onChange={(pressed) => actions.queueMainOutput({ output: { rightMute: pressed } })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                  {showMainOutputMixerCard && (
+                    <ParameterCard title="Mixer" contentClassName="sm:grid-cols-2">
+                      {hasNumber(mainOutputDb?.mixer?.micDirectLevel) && (
+                        <NumberControl
+                          label="Mic Direct Level"
+                          value={mainOutputDb?.mixer?.micDirectLevel ?? undefined}
+                          {...mainOutputRanges.mixer.micDirectLevel}
+                          disabled={mainOutputDisabled}
+                          onChange={(value) => actions.queueMainOutput({ mixer: { micDirectLevel: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(mainOutputDb?.mixer?.musicLevel) && (
+                        <NumberControl
+                          label="Music Level"
+                          value={mainOutputDb?.mixer?.musicLevel ?? undefined}
+                          {...mainOutputRanges.mixer.musicLevel}
+                          disabled={mainOutputDisabled}
+                          onChange={(value) => actions.queueMainOutput({ mixer: { musicLevel: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(mainOutputDb?.mixer?.reverbLevel) && (
+                        <NumberControl
+                          label="Reverb Level"
+                          value={mainOutputDb?.mixer?.reverbLevel ?? undefined}
+                          {...mainOutputRanges.mixer.reverbLevel}
+                          disabled={mainOutputDisabled}
+                          onChange={(value) => actions.queueMainOutput({ mixer: { reverbLevel: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(mainOutputDb?.mixer?.echoLevel) && (
+                        <NumberControl
+                          label="Echo Level"
+                          value={mainOutputDb?.mixer?.echoLevel ?? undefined}
+                          {...mainOutputRanges.mixer.echoLevel}
+                          disabled={mainOutputDisabled}
+                          onChange={(value) => actions.queueMainOutput({ mixer: { echoLevel: Math.round(value) } })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                  {showMainOutputCompressorCard && (
+                    <ParameterCard title="Compressor" contentClassName="sm:grid-cols-2">
+                      {hasAny(
+                        mainOutputDb?.compressor?.threshold,
+                        mainOutputDb?.compressor?.ratio,
+                        mainOutputDb?.compressor?.attack,
+                        mainOutputDb?.compressor?.release,
+                      ) && (
+                          <div className="sm:col-span-2">
+                            <CompressorGraph
+                              threshold={mainOutputDb?.compressor?.threshold}
+                              ratio={mainOutputDb?.compressor?.ratio}
+                              attack={mainOutputDb?.compressor?.attack}
+                              release={mainOutputDb?.compressor?.release}
+                              thresholdRange={mainOutputRanges.compressor.threshold}
+                              disabled={mainOutputDisabled}
+                            />
+                          </div>
+                        )}
+                      {hasNumber(mainOutputDb?.compressor?.threshold) && (
+                        <NumberControl
+                          label="Threshold"
+                          value={mainOutputDb?.compressor?.threshold ?? undefined}
+                          {...mainOutputRanges.compressor.threshold}
+                          disabled={mainOutputDisabled}
+                          onChange={(value) => actions.queueMainOutput({ compressor: { threshold: value } })}
+                        />
+                      )}
+                      {hasNumber(mainOutputDb?.compressor?.ratio) && (
+                        <NumberControl
+                          label="Ratio"
+                          value={mainOutputDb?.compressor?.ratio ?? undefined}
+                          {...mainOutputRanges.compressor.ratio}
+                          disabled={mainOutputDisabled}
+                          onChange={(value) => actions.queueMainOutput({ compressor: { ratio: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(mainOutputDb?.compressor?.attack) && (
+                        <NumberControl
+                          label="Attack"
+                          value={mainOutputDb?.compressor?.attack ?? undefined}
+                          {...mainOutputRanges.compressor.attack}
+                          disabled={mainOutputDisabled}
+                          onChange={(value) => actions.queueMainOutput({ compressor: { attack: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(mainOutputDb?.compressor?.release) && (
+                        <NumberControl
+                          label="Release"
+                          value={mainOutputDb?.compressor?.release ?? undefined}
+                          {...mainOutputRanges.compressor.release}
+                          disabled={mainOutputDisabled}
+                          onChange={(value) => actions.queueMainOutput({ compressor: { release: Math.round(value) } })}
+                        />
+                      )}
+                      {hasBoolean(mainOutputDb?.compressor?.bypass) && (
+                        <ToggleControl
+                          label="Bypass"
+                          pressed={mainOutputDb?.compressor?.bypass}
+                          disabled={mainOutputDisabled}
+                          onChange={(pressed) => actions.queueMainOutput({ compressor: { bypass: pressed } })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                </div>
               </div>
-            </div>
             </TabsContent>
           )}
 
           {subOutputDb && (
             <TabsContent value="suboutput">
-            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4">
                 <DspPanel
                   {...getPanelPower('suboutput')}
                   filters={panelStateByKey.suboutput.filters}
@@ -1966,155 +2018,155 @@ function DeviceDemo() {
                   handleFilterChange={handleFilterChangeByKey.suboutput}
                   handlePointDoubleClick={handlePointDoubleClickByKey.suboutput}
                   handleMouseEnter={handleMouseEnter}
-                handleMouseLeave={handleMouseLeave}
-                setDragging={setDragging}
-                onReset={() => void actions.resetEq(webhmi.EqTarget.SUB_OUTPUT)}
-                onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.SUB_OUTPUT, pressed)}
-              />
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {showSubOutputOutputCard && (
-                  <ParameterCard title="Output" contentClassName="sm:grid-cols-2">
-                    {hasNumber(subOutputDb?.output?.volume) && (
-                      <NumberControl
-                        label="Volume"
-                        value={subOutputDb?.output?.volume ?? undefined}
-                        {...subOutputRanges.output.volume}
-                        disabled={subOutputDisabled}
-                        onChange={(value) => actions.queueSubOutput({ output: { volume: value } })}
-                      />
-                    )}
-                    {hasNumber(subOutputDb?.output?.delay) && (
-                      <NumberControl
-                        label="Delay"
-                        value={subOutputDb?.output?.delay ?? undefined}
-                        {...subOutputRanges.output.delay}
-                        disabled={subOutputDisabled}
-                        onChange={(value) => actions.queueSubOutput({ output: { delay: value } })}
-                      />
-                    )}
-                    {hasBoolean(subOutputDb?.output?.mute) && (
-                      <ToggleControl
-                        label="Mute"
-                        pressed={subOutputDb?.output?.mute}
-                        disabled={subOutputDisabled}
-                        onChange={(pressed) => actions.queueSubOutput({ output: { mute: pressed } })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
-                {showSubOutputMixerCard && (
-                  <ParameterCard title="Mixer" contentClassName="sm:grid-cols-2">
-                    {hasNumber(subOutputDb?.mixer?.micDirectLevel) && (
-                      <NumberControl
-                        label="Mic Direct Level"
-                        value={subOutputDb?.mixer?.micDirectLevel ?? undefined}
-                        {...subOutputRanges.mixer.micDirectLevel}
-                        disabled={subOutputDisabled}
-                        onChange={(value) => actions.queueSubOutput({ mixer: { micDirectLevel: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(subOutputDb?.mixer?.musicLevel) && (
-                      <NumberControl
-                        label="Music Level"
-                        value={subOutputDb?.mixer?.musicLevel ?? undefined}
-                        {...subOutputRanges.mixer.musicLevel}
-                        disabled={subOutputDisabled}
-                        onChange={(value) => actions.queueSubOutput({ mixer: { musicLevel: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(subOutputDb?.mixer?.reverbLevel) && (
-                      <NumberControl
-                        label="Reverb Level"
-                        value={subOutputDb?.mixer?.reverbLevel ?? undefined}
-                        {...subOutputRanges.mixer.reverbLevel}
-                        disabled={subOutputDisabled}
-                        onChange={(value) => actions.queueSubOutput({ mixer: { reverbLevel: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(subOutputDb?.mixer?.echoLevel) && (
-                      <NumberControl
-                        label="Echo Level"
-                        value={subOutputDb?.mixer?.echoLevel ?? undefined}
-                        {...subOutputRanges.mixer.echoLevel}
-                        disabled={subOutputDisabled}
-                        onChange={(value) => actions.queueSubOutput({ mixer: { echoLevel: Math.round(value) } })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
-                {showSubOutputCompressorCard && (
-                  <ParameterCard title="Compressor" contentClassName="sm:grid-cols-2">
-                    {hasAny(
-                      subOutputDb?.compressor?.threshold,
-                      subOutputDb?.compressor?.ratio,
-                      subOutputDb?.compressor?.attack,
-                      subOutputDb?.compressor?.release,
-                    ) && (
-                      <div className="sm:col-span-2">
-                        <CompressorGraph
-                          threshold={subOutputDb?.compressor?.threshold}
-                          ratio={subOutputDb?.compressor?.ratio}
-                          attack={subOutputDb?.compressor?.attack}
-                          release={subOutputDb?.compressor?.release}
-                          thresholdRange={subOutputRanges.compressor.threshold}
+                  handleMouseLeave={handleMouseLeave}
+                  setDragging={setDragging}
+                  onReset={() => void actions.resetEq(webhmi.EqTarget.SUB_OUTPUT)}
+                  onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.SUB_OUTPUT, pressed)}
+                />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {showSubOutputOutputCard && (
+                    <ParameterCard title="Output" contentClassName="sm:grid-cols-2">
+                      {hasNumber(subOutputDb?.output?.volume) && (
+                        <NumberControl
+                          label="Volume"
+                          value={subOutputDb?.output?.volume ?? undefined}
+                          {...subOutputRanges.output.volume}
                           disabled={subOutputDisabled}
+                          onChange={(value) => actions.queueSubOutput({ output: { volume: value } })}
                         />
-                      </div>
-                    )}
-                    {hasNumber(subOutputDb?.compressor?.threshold) && (
-                      <NumberControl
-                        label="Threshold"
-                        value={subOutputDb?.compressor?.threshold ?? undefined}
-                        {...subOutputRanges.compressor.threshold}
-                        disabled={subOutputDisabled}
-                        onChange={(value) => actions.queueSubOutput({ compressor: { threshold: value } })}
-                      />
-                    )}
-                    {hasNumber(subOutputDb?.compressor?.ratio) && (
-                      <NumberControl
-                        label="Ratio"
-                        value={subOutputDb?.compressor?.ratio ?? undefined}
-                        {...subOutputRanges.compressor.ratio}
-                        disabled={subOutputDisabled}
-                        onChange={(value) => actions.queueSubOutput({ compressor: { ratio: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(subOutputDb?.compressor?.attack) && (
-                      <NumberControl
-                        label="Attack"
-                        value={subOutputDb?.compressor?.attack ?? undefined}
-                        {...subOutputRanges.compressor.attack}
-                        disabled={subOutputDisabled}
-                        onChange={(value) => actions.queueSubOutput({ compressor: { attack: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(subOutputDb?.compressor?.release) && (
-                      <NumberControl
-                        label="Release"
-                        value={subOutputDb?.compressor?.release ?? undefined}
-                        {...subOutputRanges.compressor.release}
-                        disabled={subOutputDisabled}
-                        onChange={(value) => actions.queueSubOutput({ compressor: { release: Math.round(value) } })}
-                      />
-                    )}
-                    {hasBoolean(subOutputDb?.compressor?.bypass) && (
-                      <ToggleControl
-                        label="Bypass"
-                        pressed={subOutputDb?.compressor?.bypass}
-                        disabled={subOutputDisabled}
-                        onChange={(pressed) => actions.queueSubOutput({ compressor: { bypass: pressed } })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
+                      )}
+                      {hasNumber(subOutputDb?.output?.delay) && (
+                        <NumberControl
+                          label="Delay"
+                          value={subOutputDb?.output?.delay ?? undefined}
+                          {...subOutputRanges.output.delay}
+                          disabled={subOutputDisabled}
+                          onChange={(value) => actions.queueSubOutput({ output: { delay: value } })}
+                        />
+                      )}
+                      {hasBoolean(subOutputDb?.output?.mute) && (
+                        <ToggleControl
+                          label="Mute"
+                          pressed={subOutputDb?.output?.mute}
+                          disabled={subOutputDisabled}
+                          onChange={(pressed) => actions.queueSubOutput({ output: { mute: pressed } })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                  {showSubOutputMixerCard && (
+                    <ParameterCard title="Mixer" contentClassName="sm:grid-cols-2">
+                      {hasNumber(subOutputDb?.mixer?.micDirectLevel) && (
+                        <NumberControl
+                          label="Mic Direct Level"
+                          value={subOutputDb?.mixer?.micDirectLevel ?? undefined}
+                          {...subOutputRanges.mixer.micDirectLevel}
+                          disabled={subOutputDisabled}
+                          onChange={(value) => actions.queueSubOutput({ mixer: { micDirectLevel: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(subOutputDb?.mixer?.musicLevel) && (
+                        <NumberControl
+                          label="Music Level"
+                          value={subOutputDb?.mixer?.musicLevel ?? undefined}
+                          {...subOutputRanges.mixer.musicLevel}
+                          disabled={subOutputDisabled}
+                          onChange={(value) => actions.queueSubOutput({ mixer: { musicLevel: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(subOutputDb?.mixer?.reverbLevel) && (
+                        <NumberControl
+                          label="Reverb Level"
+                          value={subOutputDb?.mixer?.reverbLevel ?? undefined}
+                          {...subOutputRanges.mixer.reverbLevel}
+                          disabled={subOutputDisabled}
+                          onChange={(value) => actions.queueSubOutput({ mixer: { reverbLevel: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(subOutputDb?.mixer?.echoLevel) && (
+                        <NumberControl
+                          label="Echo Level"
+                          value={subOutputDb?.mixer?.echoLevel ?? undefined}
+                          {...subOutputRanges.mixer.echoLevel}
+                          disabled={subOutputDisabled}
+                          onChange={(value) => actions.queueSubOutput({ mixer: { echoLevel: Math.round(value) } })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                  {showSubOutputCompressorCard && (
+                    <ParameterCard title="Compressor" contentClassName="sm:grid-cols-2">
+                      {hasAny(
+                        subOutputDb?.compressor?.threshold,
+                        subOutputDb?.compressor?.ratio,
+                        subOutputDb?.compressor?.attack,
+                        subOutputDb?.compressor?.release,
+                      ) && (
+                          <div className="sm:col-span-2">
+                            <CompressorGraph
+                              threshold={subOutputDb?.compressor?.threshold}
+                              ratio={subOutputDb?.compressor?.ratio}
+                              attack={subOutputDb?.compressor?.attack}
+                              release={subOutputDb?.compressor?.release}
+                              thresholdRange={subOutputRanges.compressor.threshold}
+                              disabled={subOutputDisabled}
+                            />
+                          </div>
+                        )}
+                      {hasNumber(subOutputDb?.compressor?.threshold) && (
+                        <NumberControl
+                          label="Threshold"
+                          value={subOutputDb?.compressor?.threshold ?? undefined}
+                          {...subOutputRanges.compressor.threshold}
+                          disabled={subOutputDisabled}
+                          onChange={(value) => actions.queueSubOutput({ compressor: { threshold: value } })}
+                        />
+                      )}
+                      {hasNumber(subOutputDb?.compressor?.ratio) && (
+                        <NumberControl
+                          label="Ratio"
+                          value={subOutputDb?.compressor?.ratio ?? undefined}
+                          {...subOutputRanges.compressor.ratio}
+                          disabled={subOutputDisabled}
+                          onChange={(value) => actions.queueSubOutput({ compressor: { ratio: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(subOutputDb?.compressor?.attack) && (
+                        <NumberControl
+                          label="Attack"
+                          value={subOutputDb?.compressor?.attack ?? undefined}
+                          {...subOutputRanges.compressor.attack}
+                          disabled={subOutputDisabled}
+                          onChange={(value) => actions.queueSubOutput({ compressor: { attack: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(subOutputDb?.compressor?.release) && (
+                        <NumberControl
+                          label="Release"
+                          value={subOutputDb?.compressor?.release ?? undefined}
+                          {...subOutputRanges.compressor.release}
+                          disabled={subOutputDisabled}
+                          onChange={(value) => actions.queueSubOutput({ compressor: { release: Math.round(value) } })}
+                        />
+                      )}
+                      {hasBoolean(subOutputDb?.compressor?.bypass) && (
+                        <ToggleControl
+                          label="Bypass"
+                          pressed={subOutputDb?.compressor?.bypass}
+                          disabled={subOutputDisabled}
+                          onChange={(pressed) => actions.queueSubOutput({ compressor: { bypass: pressed } })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                </div>
               </div>
-            </div>
             </TabsContent>
           )}
 
           {centerDb && (
             <TabsContent value="center">
-            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4">
                 <DspPanel
                   {...getPanelPower('center')}
                   filters={panelStateByKey.center.filters}
@@ -2125,150 +2177,150 @@ function DeviceDemo() {
                   handleFilterChange={handleFilterChangeByKey.center}
                   handlePointDoubleClick={handlePointDoubleClickByKey.center}
                   handleMouseEnter={handleMouseEnter}
-                handleMouseLeave={handleMouseLeave}
-                setDragging={setDragging}
-                onReset={() => void actions.resetEq(webhmi.EqTarget.CENTER)}
-                onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.CENTER, pressed)}
-              />
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {showCenterOutputCard && (
-                  <ParameterCard title="Output" contentClassName="sm:grid-cols-2">
-                    {hasNumber(centerDb?.output?.volume) && (
-                      <NumberControl
-                        label="Volume"
-                        value={centerDb?.output?.volume ?? undefined}
-                        {...centerRanges.output.volume}
-                        disabled={centerDisabled}
-                        onChange={(value) => actions.queueCenter({ output: { volume: value } })}
-                      />
-                    )}
-                    {hasNumber(centerDb?.output?.delay) && (
-                      <NumberControl
-                        label="Delay"
-                        value={centerDb?.output?.delay ?? undefined}
-                        {...centerRanges.output.delay}
-                        disabled={centerDisabled}
-                        onChange={(value) => actions.queueCenter({ output: { delay: value } })}
-                      />
-                    )}
-                    {hasBoolean(centerDb?.output?.mute) && (
-                      <ToggleControl
-                        label="Mute"
-                        pressed={centerDb?.output?.mute}
-                        disabled={centerDisabled}
-                        onChange={(pressed) => actions.queueCenter({ output: { mute: pressed } })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
-                {showCenterMixerCard && (
-                  <ParameterCard title="Mixer" contentClassName="sm:grid-cols-2">
-                    {hasNumber(centerDb?.mixer?.micDirectLevel) && (
-                      <NumberControl
-                        label="Mic Direct Level"
-                        value={centerDb?.mixer?.micDirectLevel ?? undefined}
-                        {...centerRanges.mixer.micDirectLevel}
-                        disabled={centerDisabled}
-                        onChange={(value) => actions.queueCenter({ mixer: { micDirectLevel: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(centerDb?.mixer?.musicLevel) && (
-                      <NumberControl
-                        label="Music Level"
-                        value={centerDb?.mixer?.musicLevel ?? undefined}
-                        {...centerRanges.mixer.musicLevel}
-                        disabled={centerDisabled}
-                        onChange={(value) => actions.queueCenter({ mixer: { musicLevel: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(centerDb?.mixer?.reverbLevel) && (
-                      <NumberControl
-                        label="Reverb Level"
-                        value={centerDb?.mixer?.reverbLevel ?? undefined}
-                        {...centerRanges.mixer.reverbLevel}
-                        disabled={centerDisabled}
-                        onChange={(value) => actions.queueCenter({ mixer: { reverbLevel: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(centerDb?.mixer?.echoLevel) && (
-                      <NumberControl
-                        label="Echo Level"
-                        value={centerDb?.mixer?.echoLevel ?? undefined}
-                        {...centerRanges.mixer.echoLevel}
-                        disabled={centerDisabled}
-                        onChange={(value) => actions.queueCenter({ mixer: { echoLevel: Math.round(value) } })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
-                {showCenterCompressorCard && (
-                  <ParameterCard title="Compressor" contentClassName="sm:grid-cols-2">
-                    {hasAny(centerDb?.compressor?.threshold, centerDb?.compressor?.ratio, centerDb?.compressor?.attack, centerDb?.compressor?.release) && (
-                      <div className="sm:col-span-2">
-                        <CompressorGraph
-                          threshold={centerDb?.compressor?.threshold}
-                          ratio={centerDb?.compressor?.ratio}
-                          attack={centerDb?.compressor?.attack}
-                          release={centerDb?.compressor?.release}
-                          thresholdRange={centerRanges.compressor.threshold}
+                  handleMouseLeave={handleMouseLeave}
+                  setDragging={setDragging}
+                  onReset={() => void actions.resetEq(webhmi.EqTarget.CENTER)}
+                  onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.CENTER, pressed)}
+                />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {showCenterOutputCard && (
+                    <ParameterCard title="Output" contentClassName="sm:grid-cols-2">
+                      {hasNumber(centerDb?.output?.volume) && (
+                        <NumberControl
+                          label="Volume"
+                          value={centerDb?.output?.volume ?? undefined}
+                          {...centerRanges.output.volume}
                           disabled={centerDisabled}
+                          onChange={(value) => actions.queueCenter({ output: { volume: value } })}
                         />
-                      </div>
-                    )}
-                    {hasNumber(centerDb?.compressor?.threshold) && (
-                      <NumberControl
-                        label="Threshold"
-                        value={centerDb?.compressor?.threshold ?? undefined}
-                        {...centerRanges.compressor.threshold}
-                        disabled={centerDisabled}
-                        onChange={(value) => actions.queueCenter({ compressor: { threshold: value } })}
-                      />
-                    )}
-                    {hasNumber(centerDb?.compressor?.ratio) && (
-                      <NumberControl
-                        label="Ratio"
-                        value={centerDb?.compressor?.ratio ?? undefined}
-                        {...centerRanges.compressor.ratio}
-                        disabled={centerDisabled}
-                        onChange={(value) => actions.queueCenter({ compressor: { ratio: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(centerDb?.compressor?.attack) && (
-                      <NumberControl
-                        label="Attack"
-                        value={centerDb?.compressor?.attack ?? undefined}
-                        {...centerRanges.compressor.attack}
-                        disabled={centerDisabled}
-                        onChange={(value) => actions.queueCenter({ compressor: { attack: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(centerDb?.compressor?.release) && (
-                      <NumberControl
-                        label="Release"
-                        value={centerDb?.compressor?.release ?? undefined}
-                        {...centerRanges.compressor.release}
-                        disabled={centerDisabled}
-                        onChange={(value) => actions.queueCenter({ compressor: { release: Math.round(value) } })}
-                      />
-                    )}
-                    {hasBoolean(centerDb?.compressor?.bypass) && (
-                      <ToggleControl
-                        label="Bypass"
-                        pressed={centerDb?.compressor?.bypass}
-                        disabled={centerDisabled}
-                        onChange={(pressed) => actions.queueCenter({ compressor: { bypass: pressed } })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
+                      )}
+                      {hasNumber(centerDb?.output?.delay) && (
+                        <NumberControl
+                          label="Delay"
+                          value={centerDb?.output?.delay ?? undefined}
+                          {...centerRanges.output.delay}
+                          disabled={centerDisabled}
+                          onChange={(value) => actions.queueCenter({ output: { delay: value } })}
+                        />
+                      )}
+                      {hasBoolean(centerDb?.output?.mute) && (
+                        <ToggleControl
+                          label="Mute"
+                          pressed={centerDb?.output?.mute}
+                          disabled={centerDisabled}
+                          onChange={(pressed) => actions.queueCenter({ output: { mute: pressed } })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                  {showCenterMixerCard && (
+                    <ParameterCard title="Mixer" contentClassName="sm:grid-cols-2">
+                      {hasNumber(centerDb?.mixer?.micDirectLevel) && (
+                        <NumberControl
+                          label="Mic Direct Level"
+                          value={centerDb?.mixer?.micDirectLevel ?? undefined}
+                          {...centerRanges.mixer.micDirectLevel}
+                          disabled={centerDisabled}
+                          onChange={(value) => actions.queueCenter({ mixer: { micDirectLevel: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(centerDb?.mixer?.musicLevel) && (
+                        <NumberControl
+                          label="Music Level"
+                          value={centerDb?.mixer?.musicLevel ?? undefined}
+                          {...centerRanges.mixer.musicLevel}
+                          disabled={centerDisabled}
+                          onChange={(value) => actions.queueCenter({ mixer: { musicLevel: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(centerDb?.mixer?.reverbLevel) && (
+                        <NumberControl
+                          label="Reverb Level"
+                          value={centerDb?.mixer?.reverbLevel ?? undefined}
+                          {...centerRanges.mixer.reverbLevel}
+                          disabled={centerDisabled}
+                          onChange={(value) => actions.queueCenter({ mixer: { reverbLevel: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(centerDb?.mixer?.echoLevel) && (
+                        <NumberControl
+                          label="Echo Level"
+                          value={centerDb?.mixer?.echoLevel ?? undefined}
+                          {...centerRanges.mixer.echoLevel}
+                          disabled={centerDisabled}
+                          onChange={(value) => actions.queueCenter({ mixer: { echoLevel: Math.round(value) } })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                  {showCenterCompressorCard && (
+                    <ParameterCard title="Compressor" contentClassName="sm:grid-cols-2">
+                      {hasAny(centerDb?.compressor?.threshold, centerDb?.compressor?.ratio, centerDb?.compressor?.attack, centerDb?.compressor?.release) && (
+                        <div className="sm:col-span-2">
+                          <CompressorGraph
+                            threshold={centerDb?.compressor?.threshold}
+                            ratio={centerDb?.compressor?.ratio}
+                            attack={centerDb?.compressor?.attack}
+                            release={centerDb?.compressor?.release}
+                            thresholdRange={centerRanges.compressor.threshold}
+                            disabled={centerDisabled}
+                          />
+                        </div>
+                      )}
+                      {hasNumber(centerDb?.compressor?.threshold) && (
+                        <NumberControl
+                          label="Threshold"
+                          value={centerDb?.compressor?.threshold ?? undefined}
+                          {...centerRanges.compressor.threshold}
+                          disabled={centerDisabled}
+                          onChange={(value) => actions.queueCenter({ compressor: { threshold: value } })}
+                        />
+                      )}
+                      {hasNumber(centerDb?.compressor?.ratio) && (
+                        <NumberControl
+                          label="Ratio"
+                          value={centerDb?.compressor?.ratio ?? undefined}
+                          {...centerRanges.compressor.ratio}
+                          disabled={centerDisabled}
+                          onChange={(value) => actions.queueCenter({ compressor: { ratio: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(centerDb?.compressor?.attack) && (
+                        <NumberControl
+                          label="Attack"
+                          value={centerDb?.compressor?.attack ?? undefined}
+                          {...centerRanges.compressor.attack}
+                          disabled={centerDisabled}
+                          onChange={(value) => actions.queueCenter({ compressor: { attack: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(centerDb?.compressor?.release) && (
+                        <NumberControl
+                          label="Release"
+                          value={centerDb?.compressor?.release ?? undefined}
+                          {...centerRanges.compressor.release}
+                          disabled={centerDisabled}
+                          onChange={(value) => actions.queueCenter({ compressor: { release: Math.round(value) } })}
+                        />
+                      )}
+                      {hasBoolean(centerDb?.compressor?.bypass) && (
+                        <ToggleControl
+                          label="Bypass"
+                          pressed={centerDb?.compressor?.bypass}
+                          disabled={centerDisabled}
+                          onChange={(pressed) => actions.queueCenter({ compressor: { bypass: pressed } })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                </div>
               </div>
-            </div>
             </TabsContent>
           )}
 
           {surroundDb && (
             <TabsContent value="surround">
-            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4">
                 <DspPanel
                   {...getPanelPower('surround')}
                   filters={panelStateByKey.surround.filters}
@@ -2279,175 +2331,175 @@ function DeviceDemo() {
                   handleFilterChange={handleFilterChangeByKey.surround}
                   handlePointDoubleClick={handlePointDoubleClickByKey.surround}
                   handleMouseEnter={handleMouseEnter}
-                handleMouseLeave={handleMouseLeave}
-                setDragging={setDragging}
-                onReset={() => void actions.resetEq(webhmi.EqTarget.SURROUND)}
-                onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.SURROUND, pressed)}
-              />
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {showSurroundOutputCard && (
-                  <ParameterCard title="Output" contentClassName="sm:grid-cols-2">
-                    {hasNumber(surroundDb?.output?.leftChannelVolume) && (
-                      <NumberControl
-                        label="Left Volume"
-                        value={surroundDb?.output?.leftChannelVolume ?? undefined}
-                        {...surroundRanges.output.leftChannelVolume}
-                        disabled={surroundDisabled}
-                        onChange={(value) => actions.queueSurround({ output: { leftChannelVolume: value } })}
-                      />
-                    )}
-                    {hasNumber(surroundDb?.output?.rightChannelVolume) && (
-                      <NumberControl
-                        label="Right Volume"
-                        value={surroundDb?.output?.rightChannelVolume ?? undefined}
-                        {...surroundRanges.output.rightChannelVolume}
-                        disabled={surroundDisabled}
-                        onChange={(value) => actions.queueSurround({ output: { rightChannelVolume: value } })}
-                      />
-                    )}
-                    {hasNumber(surroundDb?.output?.leftDelay) && (
-                      <NumberControl
-                        label="Left Delay"
-                        value={surroundDb?.output?.leftDelay ?? undefined}
-                        {...surroundRanges.output.leftDelay}
-                        disabled={surroundDisabled}
-                        onChange={(value) => actions.queueSurround({ output: { leftDelay: value } })}
-                      />
-                    )}
-                    {hasNumber(surroundDb?.output?.rightDelay) && (
-                      <NumberControl
-                        label="Right Delay"
-                        value={surroundDb?.output?.rightDelay ?? undefined}
-                        {...surroundRanges.output.rightDelay}
-                        disabled={surroundDisabled}
-                        onChange={(value) => actions.queueSurround({ output: { rightDelay: value } })}
-                      />
-                    )}
-                    {hasBoolean(surroundDb?.output?.leftMute) && (
-                      <ToggleControl
-                        label="Left Mute"
-                        pressed={surroundDb?.output?.leftMute}
-                        disabled={surroundDisabled}
-                        onChange={(pressed) => actions.queueSurround({ output: { leftMute: pressed } })}
-                      />
-                    )}
-                    {hasBoolean(surroundDb?.output?.rightMute) && (
-                      <ToggleControl
-                        label="Right Mute"
-                        pressed={surroundDb?.output?.rightMute}
-                        disabled={surroundDisabled}
-                        onChange={(pressed) => actions.queueSurround({ output: { rightMute: pressed } })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
-                {showSurroundMixerCard && (
-                  <ParameterCard title="Mixer" contentClassName="sm:grid-cols-2">
-                    {hasNumber(surroundDb?.mixer?.micDirectLevel) && (
-                      <NumberControl
-                        label="Mic Direct Level"
-                        value={surroundDb?.mixer?.micDirectLevel ?? undefined}
-                        {...surroundRanges.mixer.micDirectLevel}
-                        disabled={surroundDisabled}
-                        onChange={(value) => actions.queueSurround({ mixer: { micDirectLevel: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(surroundDb?.mixer?.musicLevel) && (
-                      <NumberControl
-                        label="Music Level"
-                        value={surroundDb?.mixer?.musicLevel ?? undefined}
-                        {...surroundRanges.mixer.musicLevel}
-                        disabled={surroundDisabled}
-                        onChange={(value) => actions.queueSurround({ mixer: { musicLevel: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(surroundDb?.mixer?.reverbLevel) && (
-                      <NumberControl
-                        label="Reverb Level"
-                        value={surroundDb?.mixer?.reverbLevel ?? undefined}
-                        {...surroundRanges.mixer.reverbLevel}
-                        disabled={surroundDisabled}
-                        onChange={(value) => actions.queueSurround({ mixer: { reverbLevel: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(surroundDb?.mixer?.echoLevel) && (
-                      <NumberControl
-                        label="Echo Level"
-                        value={surroundDb?.mixer?.echoLevel ?? undefined}
-                        {...surroundRanges.mixer.echoLevel}
-                        disabled={surroundDisabled}
-                        onChange={(value) => actions.queueSurround({ mixer: { echoLevel: Math.round(value) } })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
-                {showSurroundCompressorCard && (
-                  <ParameterCard title="Compressor" contentClassName="sm:grid-cols-2">
-                    {hasAny(
-                      surroundDb?.compressor?.threshold,
-                      surroundDb?.compressor?.ratio,
-                      surroundDb?.compressor?.attack,
-                      surroundDb?.compressor?.release,
-                    ) && (
-                      <div className="sm:col-span-2">
-                        <CompressorGraph
-                          threshold={surroundDb?.compressor?.threshold}
-                          ratio={surroundDb?.compressor?.ratio}
-                          attack={surroundDb?.compressor?.attack}
-                          release={surroundDb?.compressor?.release}
-                          thresholdRange={surroundRanges.compressor.threshold}
+                  handleMouseLeave={handleMouseLeave}
+                  setDragging={setDragging}
+                  onReset={() => void actions.resetEq(webhmi.EqTarget.SURROUND)}
+                  onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.SURROUND, pressed)}
+                />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {showSurroundOutputCard && (
+                    <ParameterCard title="Output" contentClassName="sm:grid-cols-2">
+                      {hasNumber(surroundDb?.output?.leftChannelVolume) && (
+                        <NumberControl
+                          label="Left Volume"
+                          value={surroundDb?.output?.leftChannelVolume ?? undefined}
+                          {...surroundRanges.output.leftChannelVolume}
                           disabled={surroundDisabled}
+                          onChange={(value) => actions.queueSurround({ output: { leftChannelVolume: value } })}
                         />
-                      </div>
-                    )}
-                    {hasNumber(surroundDb?.compressor?.threshold) && (
-                      <NumberControl
-                        label="Threshold"
-                        value={surroundDb?.compressor?.threshold ?? undefined}
-                        {...surroundRanges.compressor.threshold}
-                        disabled={surroundDisabled}
-                        onChange={(value) => actions.queueSurround({ compressor: { threshold: value } })}
-                      />
-                    )}
-                    {hasNumber(surroundDb?.compressor?.ratio) && (
-                      <NumberControl
-                        label="Ratio"
-                        value={surroundDb?.compressor?.ratio ?? undefined}
-                        {...surroundRanges.compressor.ratio}
-                        disabled={surroundDisabled}
-                        onChange={(value) => actions.queueSurround({ compressor: { ratio: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(surroundDb?.compressor?.attack) && (
-                      <NumberControl
-                        label="Attack"
-                        value={surroundDb?.compressor?.attack ?? undefined}
-                        {...surroundRanges.compressor.attack}
-                        disabled={surroundDisabled}
-                        onChange={(value) => actions.queueSurround({ compressor: { attack: Math.round(value) } })}
-                      />
-                    )}
-                    {hasNumber(surroundDb?.compressor?.release) && (
-                      <NumberControl
-                        label="Release"
-                        value={surroundDb?.compressor?.release ?? undefined}
-                        {...surroundRanges.compressor.release}
-                        disabled={surroundDisabled}
-                        onChange={(value) => actions.queueSurround({ compressor: { release: Math.round(value) } })}
-                      />
-                    )}
-                    {hasBoolean(surroundDb?.compressor?.bypass) && (
-                      <ToggleControl
-                        label="Bypass"
-                        pressed={surroundDb?.compressor?.bypass}
-                        disabled={surroundDisabled}
-                        onChange={(pressed) => actions.queueSurround({ compressor: { bypass: pressed } })}
-                      />
-                    )}
-                  </ParameterCard>
-                )}
+                      )}
+                      {hasNumber(surroundDb?.output?.rightChannelVolume) && (
+                        <NumberControl
+                          label="Right Volume"
+                          value={surroundDb?.output?.rightChannelVolume ?? undefined}
+                          {...surroundRanges.output.rightChannelVolume}
+                          disabled={surroundDisabled}
+                          onChange={(value) => actions.queueSurround({ output: { rightChannelVolume: value } })}
+                        />
+                      )}
+                      {hasNumber(surroundDb?.output?.leftDelay) && (
+                        <NumberControl
+                          label="Left Delay"
+                          value={surroundDb?.output?.leftDelay ?? undefined}
+                          {...surroundRanges.output.leftDelay}
+                          disabled={surroundDisabled}
+                          onChange={(value) => actions.queueSurround({ output: { leftDelay: value } })}
+                        />
+                      )}
+                      {hasNumber(surroundDb?.output?.rightDelay) && (
+                        <NumberControl
+                          label="Right Delay"
+                          value={surroundDb?.output?.rightDelay ?? undefined}
+                          {...surroundRanges.output.rightDelay}
+                          disabled={surroundDisabled}
+                          onChange={(value) => actions.queueSurround({ output: { rightDelay: value } })}
+                        />
+                      )}
+                      {hasBoolean(surroundDb?.output?.leftMute) && (
+                        <ToggleControl
+                          label="Left Mute"
+                          pressed={surroundDb?.output?.leftMute}
+                          disabled={surroundDisabled}
+                          onChange={(pressed) => actions.queueSurround({ output: { leftMute: pressed } })}
+                        />
+                      )}
+                      {hasBoolean(surroundDb?.output?.rightMute) && (
+                        <ToggleControl
+                          label="Right Mute"
+                          pressed={surroundDb?.output?.rightMute}
+                          disabled={surroundDisabled}
+                          onChange={(pressed) => actions.queueSurround({ output: { rightMute: pressed } })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                  {showSurroundMixerCard && (
+                    <ParameterCard title="Mixer" contentClassName="sm:grid-cols-2">
+                      {hasNumber(surroundDb?.mixer?.micDirectLevel) && (
+                        <NumberControl
+                          label="Mic Direct Level"
+                          value={surroundDb?.mixer?.micDirectLevel ?? undefined}
+                          {...surroundRanges.mixer.micDirectLevel}
+                          disabled={surroundDisabled}
+                          onChange={(value) => actions.queueSurround({ mixer: { micDirectLevel: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(surroundDb?.mixer?.musicLevel) && (
+                        <NumberControl
+                          label="Music Level"
+                          value={surroundDb?.mixer?.musicLevel ?? undefined}
+                          {...surroundRanges.mixer.musicLevel}
+                          disabled={surroundDisabled}
+                          onChange={(value) => actions.queueSurround({ mixer: { musicLevel: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(surroundDb?.mixer?.reverbLevel) && (
+                        <NumberControl
+                          label="Reverb Level"
+                          value={surroundDb?.mixer?.reverbLevel ?? undefined}
+                          {...surroundRanges.mixer.reverbLevel}
+                          disabled={surroundDisabled}
+                          onChange={(value) => actions.queueSurround({ mixer: { reverbLevel: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(surroundDb?.mixer?.echoLevel) && (
+                        <NumberControl
+                          label="Echo Level"
+                          value={surroundDb?.mixer?.echoLevel ?? undefined}
+                          {...surroundRanges.mixer.echoLevel}
+                          disabled={surroundDisabled}
+                          onChange={(value) => actions.queueSurround({ mixer: { echoLevel: Math.round(value) } })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                  {showSurroundCompressorCard && (
+                    <ParameterCard title="Compressor" contentClassName="sm:grid-cols-2">
+                      {hasAny(
+                        surroundDb?.compressor?.threshold,
+                        surroundDb?.compressor?.ratio,
+                        surroundDb?.compressor?.attack,
+                        surroundDb?.compressor?.release,
+                      ) && (
+                          <div className="sm:col-span-2">
+                            <CompressorGraph
+                              threshold={surroundDb?.compressor?.threshold}
+                              ratio={surroundDb?.compressor?.ratio}
+                              attack={surroundDb?.compressor?.attack}
+                              release={surroundDb?.compressor?.release}
+                              thresholdRange={surroundRanges.compressor.threshold}
+                              disabled={surroundDisabled}
+                            />
+                          </div>
+                        )}
+                      {hasNumber(surroundDb?.compressor?.threshold) && (
+                        <NumberControl
+                          label="Threshold"
+                          value={surroundDb?.compressor?.threshold ?? undefined}
+                          {...surroundRanges.compressor.threshold}
+                          disabled={surroundDisabled}
+                          onChange={(value) => actions.queueSurround({ compressor: { threshold: value } })}
+                        />
+                      )}
+                      {hasNumber(surroundDb?.compressor?.ratio) && (
+                        <NumberControl
+                          label="Ratio"
+                          value={surroundDb?.compressor?.ratio ?? undefined}
+                          {...surroundRanges.compressor.ratio}
+                          disabled={surroundDisabled}
+                          onChange={(value) => actions.queueSurround({ compressor: { ratio: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(surroundDb?.compressor?.attack) && (
+                        <NumberControl
+                          label="Attack"
+                          value={surroundDb?.compressor?.attack ?? undefined}
+                          {...surroundRanges.compressor.attack}
+                          disabled={surroundDisabled}
+                          onChange={(value) => actions.queueSurround({ compressor: { attack: Math.round(value) } })}
+                        />
+                      )}
+                      {hasNumber(surroundDb?.compressor?.release) && (
+                        <NumberControl
+                          label="Release"
+                          value={surroundDb?.compressor?.release ?? undefined}
+                          {...surroundRanges.compressor.release}
+                          disabled={surroundDisabled}
+                          onChange={(value) => actions.queueSurround({ compressor: { release: Math.round(value) } })}
+                        />
+                      )}
+                      {hasBoolean(surroundDb?.compressor?.bypass) && (
+                        <ToggleControl
+                          label="Bypass"
+                          pressed={surroundDb?.compressor?.bypass}
+                          disabled={surroundDisabled}
+                          onChange={(pressed) => actions.queueSurround({ compressor: { bypass: pressed } })}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
+                </div>
               </div>
-            </div>
             </TabsContent>
           )}
         </Tabs>
