@@ -69,8 +69,14 @@ const parseNumber = (value: string) => {
   return Number.isFinite(parsed) ? parsed : undefined
 }
 
-const formatNumber = (value?: number) => {
+const formatNumber = (value?: number, step?: number) => {
   if (value === undefined || Number.isNaN(value)) return ""
+  if (step !== undefined) {
+    const precision = getStepPrecision(step)
+    const factor = Math.pow(10, precision)
+    const rounded = Math.round(value * factor) / factor
+    return String(rounded)
+  }
   return String(value)
 }
 
@@ -121,12 +127,12 @@ const NumberField = React.forwardRef<HTMLDivElement, NumberFieldProps>(
     const currentValue = isControlled ? value : internalValue
 
     const [inputValue, setInputValue] = React.useState(
-      formatNumber(currentValue)
+      formatNumber(currentValue, step)
     )
 
     React.useEffect(() => {
-      setInputValue(formatNumber(currentValue))
-    }, [currentValue])
+      setInputValue(formatNumber(currentValue, step))
+    }, [currentValue, step])
 
     const updateValue = React.useCallback(
       (nextValue: number | undefined) => {
@@ -142,7 +148,7 @@ const NumberField = React.forwardRef<HTMLDivElement, NumberFieldProps>(
         if (!isControlled) {
           setInternalValue(normalized)
         }
-        setInputValue(formatNumber(normalized))
+        setInputValue(formatNumber(normalized, step))
         onValueChange?.(normalized)
       },
       [isControlled, max, min, onValueChange, step]
@@ -283,15 +289,15 @@ export interface NumberFieldInputProps
   extends Omit<
     React.ComponentPropsWithoutRef<"input">,
     "type" | "value" | "defaultValue"
-  > {}
+  > { }
 
 const NumberFieldInput = React.forwardRef<HTMLInputElement, NumberFieldInputProps>(
   ({ className, onChange, onBlur, onKeyDown, inputMode, ...props }, ref) => {
     const context = useNumberFieldContext("NumberFieldInput")
     const ariaInvalid =
       context.invalid ||
-      props["aria-invalid"] === true ||
-      props["aria-invalid"] === "true"
+        props["aria-invalid"] === true ||
+        props["aria-invalid"] === "true"
         ? "true"
         : undefined
 
