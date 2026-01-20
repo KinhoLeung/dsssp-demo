@@ -42,6 +42,7 @@ import { Toggle } from '@/components/ui/toggle'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { webhmi } from '@/device/proto/generated/webhmi'
 import { useDeviceSessionContext } from '@/device/session/deviceSessionContext'
+import { cn } from '@/lib/utils'
 
 type PanelKey =
   | 'music'
@@ -572,10 +573,11 @@ type NumberControlProps = {
   min?: number
   max?: number
   disabled?: boolean
+  className?: string
   onChange: (value: number) => void
 }
 
-function NumberControl({ label, value, step = 1, min, max, disabled, onChange }: NumberControlProps) {
+function NumberControl({ label, value, step = 1, min, max, disabled, className, onChange }: NumberControlProps) {
   return (
     <NumberField
       value={value ?? undefined}
@@ -587,7 +589,7 @@ function NumberControl({ label, value, step = 1, min, max, disabled, onChange }:
       min={min}
       max={max}
       disabled={disabled}
-      className="gap-1"
+      className={cn("gap-1", className)}
     >
       <NumberFieldLabel className="text-xs text-muted-foreground">{label}</NumberFieldLabel>
       <NumberFieldGroup>
@@ -1121,6 +1123,48 @@ function DeviceDemo() {
   return (
     <div className="text-white text-sans min-h-screen flex flex-col items-center">
       <div className="w-full max-w-[1200px] pt-1 flex flex-col gap-1">
+        {systemDb && (
+          <Card className="mb-2 bg-zinc-900/50 border-zinc-800">
+            <CardContent className="p-4 flex flex-wrap items-end gap-6 justify-center">
+              <NumberControl
+                label="Music Volume"
+                value={systemDb.musicVolume ?? undefined}
+                min={0}
+                max={typeof systemDb.musicMaxVolume === 'number' ? systemDb.musicMaxVolume : undefined}
+                disabled={systemDisabled}
+                className="w-32"
+                onChange={(value) => actions.queueSystem({ musicVolume: Math.round(value) })}
+              />
+              <NumberControl
+                label="Mic Volume"
+                value={systemDb.micVolume ?? undefined}
+                min={0}
+                max={typeof systemDb.micMaxVolume === 'number' ? systemDb.micMaxVolume : undefined}
+                disabled={systemDisabled}
+                className="w-32"
+                onChange={(value) => actions.queueSystem({ micVolume: Math.round(value) })}
+              />
+              <NumberControl
+                label="Effect Volume"
+                value={systemDb.effectVolume ?? undefined}
+                min={0}
+                max={typeof systemDb.effectMaxVolume === 'number' ? systemDb.effectMaxVolume : undefined}
+                disabled={systemDisabled}
+                className="w-32"
+                onChange={(value) => actions.queueSystem({ effectVolume: Math.round(value) })}
+              />
+              <div className="flex items-center h-[56px] pb-1">
+                <ToggleControl
+                  label="Mute"
+                  pressed={systemDb.mute ?? undefined}
+                  disabled={systemDisabled}
+                  onChange={(pressed) => actions.queueSystem({ mute: pressed })}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Tabs
           value={activeTab}
           onValueChange={(value) => {
@@ -1194,12 +1238,7 @@ function DeviceDemo() {
                       disabled={systemDisabled}
                       onChange={(pressed) => actions.queueSystem({ panelLock: pressed })}
                     />
-                    <ToggleControl
-                      label="Mute"
-                      pressed={systemDb.mute ?? undefined}
-                      disabled={systemDisabled}
-                      onChange={(pressed) => actions.queueSystem({ mute: pressed })}
-                    />
+
                     {systemModeOptions.length > 0 && (
                       <div className="grid gap-1">
                         <Label className="text-xs text-muted-foreground">Mode</Label>
@@ -1221,33 +1260,6 @@ function DeviceDemo() {
                         </Select>
                       </div>
                     )}
-                  </ParameterCard>
-
-                  <ParameterCard title="Volumes" contentClassName="sm:grid-cols-2">
-                    <NumberControl
-                      label="Music Volume"
-                      value={systemDb.musicVolume ?? undefined}
-                      min={0}
-                      max={typeof systemDb.musicMaxVolume === 'number' ? systemDb.musicMaxVolume : undefined}
-                      disabled={systemDisabled}
-                      onChange={(value) => actions.queueSystem({ musicVolume: Math.round(value) })}
-                    />
-                    <NumberControl
-                      label="Mic Volume"
-                      value={systemDb.micVolume ?? undefined}
-                      min={0}
-                      max={typeof systemDb.micMaxVolume === 'number' ? systemDb.micMaxVolume : undefined}
-                      disabled={systemDisabled}
-                      onChange={(value) => actions.queueSystem({ micVolume: Math.round(value) })}
-                    />
-                    <NumberControl
-                      label="Effect Volume"
-                      value={systemDb.effectVolume ?? undefined}
-                      min={0}
-                      max={typeof systemDb.effectMaxVolume === 'number' ? systemDb.effectMaxVolume : undefined}
-                      disabled={systemDisabled}
-                      onChange={(value) => actions.queueSystem({ effectVolume: Math.round(value) })}
-                    />
                   </ParameterCard>
 
                   <ParameterCard title="Defaults" contentClassName="sm:grid-cols-2">
