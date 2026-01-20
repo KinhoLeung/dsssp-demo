@@ -1250,7 +1250,7 @@ function DeviceDemo() {
                             void actions.flushNow()
                           }}
                         >
-                          Send
+                          Modify
                         </Button>
                       </div>
                     </div>
@@ -1516,21 +1516,35 @@ function DeviceDemo() {
                   activeIndex={activeIndex}
                   dragging={dragging}
                   headerExtra={
-                    showMicSelector ? (
-                      <ToggleGroup
-                        type="single"
-                        variant="outline"
-                        value={micKey}
-                        onValueChange={(v) => v && setMicKey(v as MicPanelKey)}
-                        className="gap-0"
-                      >
-                        <ToggleGroupItem value="mica" className="rounded-r-none">
-                          Mic A
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="micb" className="rounded-l-none border-l-0">
-                          Mic B
-                        </ToggleGroupItem>
-                      </ToggleGroup>
+                    showMicSelector || hasBoolean(micDb?.micEqJointDebugging) ? (
+                      <div className="flex items-center gap-4">
+                        {showMicSelector && (
+                          <ToggleGroup
+                            type="single"
+                            variant="outline"
+                            value={micKey}
+                            onValueChange={(v) => v && setMicKey(v as MicPanelKey)}
+                            className="gap-0"
+                          >
+                            <ToggleGroupItem value="mica" className="rounded-r-none">
+                              Mic A
+                            </ToggleGroupItem>
+                            <ToggleGroupItem value="micb" className="rounded-l-none border-l-0">
+                              Mic B
+                            </ToggleGroupItem>
+                          </ToggleGroup>
+                        )}
+                        {hasBoolean(micDb?.micEqJointDebugging) && (
+                          <Toggle
+                            variant="outline"
+                            pressed={!!micDb?.micEqJointDebugging}
+                            onPressedChange={(pressed) => actions.queueMic({ micEqJointDebugging: pressed })}
+                            disabled={micDisabled}
+                          >
+                            Mic EQ Link
+                          </Toggle>
+                        )}
+                      </div>
                     ) : null
                   }
                   handleFilterChange={handleFilterChangeByKey[micKey]}
@@ -1562,14 +1576,7 @@ function DeviceDemo() {
                           onChange={(value) => actions.queueMic({ micBVolume: Math.round(value) })}
                         />
                       )}
-                      {hasBoolean(micDb?.micEqJointDebugging) && (
-                        <ToggleControl
-                          label="EQ Joint Debug"
-                          pressed={micDb?.micEqJointDebugging}
-                          disabled={micDisabled}
-                          onChange={(pressed) => actions.queueMic({ micEqJointDebugging: pressed })}
-                        />
-                      )}
+
                       {hasNumber(micDb?.micFBX) && (
                         <div className="sm:col-span-2 md:col-span-4">
                           <ToggleGroupControl
