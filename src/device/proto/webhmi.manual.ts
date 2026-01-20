@@ -14,7 +14,7 @@ export enum MsgId {
   SetCenter = 0x000a,
   SetSurround = 0x000b,
   SwitchCurrentMode = 0x000c,
-  ChangeModeParam = 0x000d,
+  SaveMode = 0x000d,
   ResetEq = 0x000e,
 }
 
@@ -378,13 +378,11 @@ export type SwitchCurrentModeRequest = {
 }
 
 export type SwitchCurrentModeResponse = {
-  currentModeIndex?: number
   db?: DeviceDb
 }
 
-export type ChangeModeParamRequest = {
+export type SaveModeRequest = {
   currentModeIndex?: number
-  db?: DeviceDb
 }
 
 export type ResetEqRequest = {
@@ -548,9 +546,6 @@ export const decodeSwitchCurrentModeResponse = (bytes: Uint8Array): SwitchCurren
 
     switch (fieldNo) {
       case 1:
-        message.currentModeIndex = reader.uint32()
-        break
-      case 2:
         message.db = decodeDeviceDb(reader.bytes())
         break
       default:
@@ -561,10 +556,9 @@ export const decodeSwitchCurrentModeResponse = (bytes: Uint8Array): SwitchCurren
   return message
 }
 
-export const encodeChangeModeParamRequest = (message: ChangeModeParamRequest) => {
+export const encodeSaveModeRequest = (message: SaveModeRequest) => {
   const writer = new PbWriter()
   writer.uint32(1, message.currentModeIndex)
-  writer.message(2, message.db ? encodeDeviceDb(message.db) : undefined)
   return writer.finish()
 }
 

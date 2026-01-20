@@ -431,13 +431,11 @@ message SwitchCurrentModeRequest {
 }
 
 message SwitchCurrentModeResponse {
-  optional uint32 currentModeIndex = 1;
-  optional DeviceDb db = 2;
+  optional DeviceDb db = 1;
 }
 
-message ChangeModeParamRequest {
+message SaveModeRequest {
   optional uint32 currentModeIndex = 1;
-  optional DeviceDb db = 2;
 }
 
 message ResetEqRequest {

@@ -187,9 +187,9 @@ export class WebhmiClient {
     return this.pb.SwitchCurrentModeResponse.decode(frame.payload)
   }
 
-  async changeModeParam(request: webhmi.IChangeModeParamRequest) {
-    const payload = this.pb.ChangeModeParamRequest.encode(request).finish()
-    await this.session.request(MsgId.ChangeModeParam, payload, { expectResponse: false })
+  async saveMode(request: webhmi.ISaveModeRequest) {
+    const payload = this.pb.SaveModeRequest.encode(request).finish()
+    await this.session.request(MsgId.SaveMode, payload, { expectResponse: false })
   }
 
   async resetEq(request: webhmi.IResetEqRequest) {

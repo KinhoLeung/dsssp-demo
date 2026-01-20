@@ -147,9 +147,9 @@ crc16（2 bytes）
 | 0x0008 | SetMainOutput     | 设置 MainOutput 参数（patch） |
 | 0x0009 | SetSubOutput      | 设置 SubOutput 参数（patch）  |
 | 0x000a | SetCenter         | 设置 Center 参数（patch）     |
-| 0x000b | SetSurround       | 设置 Surround 参数（patch）  |
+| 0x000b | SetSurround       | 设置 Surround 参数（patch）   |
 | 0x000c | SwitchCurrentMode | 切换当前模式                  |
-| 0x000d | ChangeModeParam   | 改变模式参数                  |
+| 0x000d | SaveMode          | 保存当前模式参数              |
 | 0x000e | ResetEq           | 重置EQ参数                    |
 
 ## 5 payload 格式
@@ -939,11 +939,11 @@ payload：protobuf `webhmi.SetCenterRequest`
 
 ### 5.12 设置 Surround 参数（SetSurround）0x000b
 
-#### 5.12.1 SetSurroundRequest（上位机→设备，msg_id=SetSurrounb 0x000a，RESPONSE=0）
+#### 5.12.1 SetSurroundRequest（上位机→设备，msg_id=SetSurround 0x000b，RESPONSE=0）
 
 payload：protobuf `webhmi.SetSurroundRequest`
 
-#### 5.12.2 SetSurroundReport（设备→上位机，msg_id=SetSurrounb 0x000a，RESPONSE=0，EVENT=1）
+#### 5.12.2 SetSurroundReport（设备→上位机，msg_id=SetSurround 0x000b，RESPONSE=0，EVENT=1）
 
 payload：protobuf `webhmi.SetSurroundRequest`
 
@@ -957,11 +957,11 @@ payload：protobuf `webhmi.SwitchCurrentModeRequest`
 
 payload：protobuf `webhmi.SwitchCurrentModeResponse`
 
-### 5.14 保存参数（ChangeModeParam）0x000d
+### 5.14 保存参数（SaveMode）0x000d
 
-#### 5.14.1 ChangeModeParamRequest（上位机→设备，msg_id=ChangeModeParam 0x000d，RESPONSE=0）
+#### 5.14.1 SaveModeRequest（上位机→设备，msg_id=SaveMode 0x000d，RESPONSE=0）
 
-payload：protobuf `webhmi.ChangeModeParamRequest`
+payload：protobuf `webhmi.SaveModeRequest`
 
 ### 5.15 重置EQ参数（ResetEq）0x000e
 

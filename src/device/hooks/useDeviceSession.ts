@@ -576,11 +576,13 @@ export function useDeviceSession(
               db.db.surround = applySectionPatch(db.db.surround, patch) ?? db.db.surround
               break
             }
-            case MsgId.ChangeModeParam: {
-              const patch = pb.ChangeModeParamRequest.decode(payload)
-              console.warn(`[web:rx] EVENT ${msgName}:`, pb.ChangeModeParamRequest.toObject(patch))
-              if (patch.has_currentModeIndex) db.db.system!.currentModeIndex = patch.currentModeIndex
-              if (patch.db) db.db = mergePatch(db.db, patch.db)
+            case MsgId.SaveMode: {
+              const patch = pb.SaveModeRequest.decode(payload)
+              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SaveModeRequest.toObject(patch))
+              if (patch.currentModeIndex !== undefined) {
+                if (!db.db.system) db.db.system = {}
+                db.db.system.currentModeIndex = patch.currentModeIndex
+              }
               break
             }
           }
