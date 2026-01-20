@@ -600,29 +600,33 @@ type NumberControlProps = {
   disabled?: boolean
   className?: string
   onChange: (value: number) => void
+  extra?: ReactNode
 }
 
-function NumberControl({ label, value, step = 1, min, max, disabled, className, onChange }: NumberControlProps) {
+function NumberControl({ label, value, step = 1, min, max, disabled, className, onChange, extra }: NumberControlProps) {
   return (
-    <NumberField
-      value={value ?? undefined}
-      onValueChange={(next) => {
-        if (typeof next !== 'number' || Number.isNaN(next)) return
-        onChange(next)
-      }}
-      step={step}
-      min={min}
-      max={max}
-      disabled={disabled}
-      className={cn("gap-1", className)}
-    >
-      <NumberFieldLabel className="text-xs text-muted-foreground">{label}</NumberFieldLabel>
-      <NumberFieldGroup>
-        <NumberFieldDecrementTrigger />
-        <NumberFieldInput className="text-sm tabular-nums" />
-        <NumberFieldIncrementTrigger />
-      </NumberFieldGroup>
-    </NumberField>
+    <div className={cn("flex items-end gap-1", className)}>
+      <NumberField
+        value={value ?? undefined}
+        onValueChange={(next) => {
+          if (typeof next !== 'number' || Number.isNaN(next)) return
+          onChange(next)
+        }}
+        step={step}
+        min={min}
+        max={max}
+        disabled={disabled}
+        className="flex-1 gap-1"
+      >
+        <NumberFieldLabel className="text-xs text-muted-foreground">{label}</NumberFieldLabel>
+        <NumberFieldGroup>
+          <NumberFieldDecrementTrigger />
+          <NumberFieldInput className="text-sm tabular-nums" />
+          <NumberFieldIncrementTrigger />
+        </NumberFieldGroup>
+      </NumberField>
+      {extra && <div className="mb-[1px]">{extra}</div>}
+    </div>
   )
 }
 
@@ -676,10 +680,33 @@ function ToggleControl({ label, pressed, disabled, onChange }: ToggleControlProp
         pressed={isPressed}
         onPressedChange={onChange}
         disabled={disabled}
+        className="px-2"
       >
         {isPressed ? 'On' : 'Off'}
       </Toggle>
     </div>
+  )
+}
+
+type PhaseInversionToggleProps = {
+  pressed?: boolean | null
+  disabled?: boolean
+  onChange: (pressed: boolean) => void
+}
+
+function PhaseInversionToggle({ pressed, disabled, onChange }: PhaseInversionToggleProps) {
+  const isPressed = !!pressed
+  return (
+    <Toggle
+      aria-label="Phase Inversion"
+      variant="outline"
+      pressed={isPressed}
+      onPressedChange={onChange}
+      disabled={disabled}
+      className="h-9 w-9 p-0"
+    >
+      {isPressed ? '-' : '+'}
+    </Toggle>
   )
 }
 
@@ -1762,6 +1789,15 @@ function DeviceDemo() {
                           {...reverbRanges.reverbLevel}
                           disabled={reverbDisabled}
                           onChange={(value) => actions.queueReverb({ reverbLevel: Math.round(value) })}
+                          extra={
+                            hasBoolean(reverbDb?.reverbLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={reverbDb?.reverbLevelPhaseInversion}
+                                disabled={reverbDisabled}
+                                onChange={(pressed) => actions.queueReverb({ reverbLevelPhaseInversion: pressed })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(reverbDb?.micDirectLevel) && (
@@ -1771,6 +1807,15 @@ function DeviceDemo() {
                           {...reverbRanges.micDirectLevel}
                           disabled={reverbDisabled}
                           onChange={(value) => actions.queueReverb({ micDirectLevel: Math.round(value) })}
+                          extra={
+                            hasBoolean(reverbDb?.micDirectLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={reverbDb?.micDirectLevelPhaseInversion}
+                                disabled={reverbDisabled}
+                                onChange={(pressed) => actions.queueReverb({ micDirectLevelPhaseInversion: pressed })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(reverbDb?.reverbPredelay) && (
@@ -1826,6 +1871,15 @@ function DeviceDemo() {
                           {...echoRanges.echoLevel}
                           disabled={echoDisabled}
                           onChange={(value) => actions.queueEcho({ echoLevel: Math.round(value) })}
+                          extra={
+                            hasBoolean(echoDb?.echoLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={echoDb?.echoLevelPhaseInversion}
+                                disabled={echoDisabled}
+                                onChange={(pressed) => actions.queueEcho({ echoLevelPhaseInversion: pressed })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(echoDb?.micDirectLevel) && (
@@ -1835,6 +1889,15 @@ function DeviceDemo() {
                           {...echoRanges.micDirectLevel}
                           disabled={echoDisabled}
                           onChange={(value) => actions.queueEcho({ micDirectLevel: Math.round(value) })}
+                          extra={
+                            hasBoolean(echoDb?.micDirectLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={echoDb?.micDirectLevelPhaseInversion}
+                                disabled={echoDisabled}
+                                onChange={(pressed) => actions.queueEcho({ micDirectLevelPhaseInversion: pressed })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(echoDb?.echoPredelay) && (
@@ -1917,6 +1980,15 @@ function DeviceDemo() {
                           {...mainOutputRanges.output.leftChannelVolume}
                           disabled={mainOutputDisabled}
                           onChange={(value) => actions.queueMainOutput({ output: { leftChannelVolume: value } })}
+                          extra={
+                            hasBoolean(mainOutputDb?.output?.leftChannelVolumePhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={mainOutputDb?.output?.leftChannelVolumePhaseInversion}
+                                disabled={mainOutputDisabled}
+                                onChange={(pressed) => actions.queueMainOutput({ output: { leftChannelVolumePhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(mainOutputDb?.output?.rightChannelVolume) && (
@@ -1926,6 +1998,15 @@ function DeviceDemo() {
                           {...mainOutputRanges.output.rightChannelVolume}
                           disabled={mainOutputDisabled}
                           onChange={(value) => actions.queueMainOutput({ output: { rightChannelVolume: value } })}
+                          extra={
+                            hasBoolean(mainOutputDb?.output?.rightChannelVolumePhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={mainOutputDb?.output?.rightChannelVolumePhaseInversion}
+                                disabled={mainOutputDisabled}
+                                onChange={(pressed) => actions.queueMainOutput({ output: { rightChannelVolumePhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(mainOutputDb?.output?.leftDelay) && (
@@ -1973,6 +2054,15 @@ function DeviceDemo() {
                           {...mainOutputRanges.mixer.micDirectLevel}
                           disabled={mainOutputDisabled}
                           onChange={(value) => actions.queueMainOutput({ mixer: { micDirectLevel: Math.round(value) } })}
+                          extra={
+                            hasBoolean(mainOutputDb?.mixer?.micDirectLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={mainOutputDb?.mixer?.micDirectLevelPhaseInversion}
+                                disabled={mainOutputDisabled}
+                                onChange={(pressed) => actions.queueMainOutput({ mixer: { micDirectLevelPhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(mainOutputDb?.mixer?.musicLevel) && (
@@ -1982,6 +2072,15 @@ function DeviceDemo() {
                           {...mainOutputRanges.mixer.musicLevel}
                           disabled={mainOutputDisabled}
                           onChange={(value) => actions.queueMainOutput({ mixer: { musicLevel: Math.round(value) } })}
+                          extra={
+                            hasBoolean(mainOutputDb?.mixer?.musicLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={mainOutputDb?.mixer?.musicLevelPhaseInversion}
+                                disabled={mainOutputDisabled}
+                                onChange={(pressed) => actions.queueMainOutput({ mixer: { musicLevelPhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(mainOutputDb?.mixer?.reverbLevel) && (
@@ -1991,6 +2090,15 @@ function DeviceDemo() {
                           {...mainOutputRanges.mixer.reverbLevel}
                           disabled={mainOutputDisabled}
                           onChange={(value) => actions.queueMainOutput({ mixer: { reverbLevel: Math.round(value) } })}
+                          extra={
+                            hasBoolean(mainOutputDb?.mixer?.reverbLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={mainOutputDb?.mixer?.reverbLevelPhaseInversion}
+                                disabled={mainOutputDisabled}
+                                onChange={(pressed) => actions.queueMainOutput({ mixer: { reverbLevelPhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(mainOutputDb?.mixer?.echoLevel) && (
@@ -2000,6 +2108,15 @@ function DeviceDemo() {
                           {...mainOutputRanges.mixer.echoLevel}
                           disabled={mainOutputDisabled}
                           onChange={(value) => actions.queueMainOutput({ mixer: { echoLevel: Math.round(value) } })}
+                          extra={
+                            hasBoolean(mainOutputDb?.mixer?.echoLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={mainOutputDb?.mixer?.echoLevelPhaseInversion}
+                                disabled={mainOutputDisabled}
+                                onChange={(pressed) => actions.queueMainOutput({ mixer: { echoLevelPhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                     </ParameterCard>
@@ -2102,6 +2219,15 @@ function DeviceDemo() {
                           {...subOutputRanges.output.volume}
                           disabled={subOutputDisabled}
                           onChange={(value) => actions.queueSubOutput({ output: { volume: value } })}
+                          extra={
+                            hasBoolean(subOutputDb?.output?.volumePhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={subOutputDb?.output?.volumePhaseInversion}
+                                disabled={subOutputDisabled}
+                                onChange={(pressed) => actions.queueSubOutput({ output: { volumePhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(subOutputDb?.output?.delay) && (
@@ -2132,6 +2258,15 @@ function DeviceDemo() {
                           {...subOutputRanges.mixer.micDirectLevel}
                           disabled={subOutputDisabled}
                           onChange={(value) => actions.queueSubOutput({ mixer: { micDirectLevel: Math.round(value) } })}
+                          extra={
+                            hasBoolean(subOutputDb?.mixer?.micDirectLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={subOutputDb?.mixer?.micDirectLevelPhaseInversion}
+                                disabled={subOutputDisabled}
+                                onChange={(pressed) => actions.queueSubOutput({ mixer: { micDirectLevelPhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(subOutputDb?.mixer?.musicLevel) && (
@@ -2141,6 +2276,15 @@ function DeviceDemo() {
                           {...subOutputRanges.mixer.musicLevel}
                           disabled={subOutputDisabled}
                           onChange={(value) => actions.queueSubOutput({ mixer: { musicLevel: Math.round(value) } })}
+                          extra={
+                            hasBoolean(subOutputDb?.mixer?.musicLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={subOutputDb?.mixer?.musicLevelPhaseInversion}
+                                disabled={subOutputDisabled}
+                                onChange={(pressed) => actions.queueSubOutput({ mixer: { musicLevelPhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(subOutputDb?.mixer?.reverbLevel) && (
@@ -2150,6 +2294,15 @@ function DeviceDemo() {
                           {...subOutputRanges.mixer.reverbLevel}
                           disabled={subOutputDisabled}
                           onChange={(value) => actions.queueSubOutput({ mixer: { reverbLevel: Math.round(value) } })}
+                          extra={
+                            hasBoolean(subOutputDb?.mixer?.reverbLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={subOutputDb?.mixer?.reverbLevelPhaseInversion}
+                                disabled={subOutputDisabled}
+                                onChange={(pressed) => actions.queueSubOutput({ mixer: { reverbLevelPhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(subOutputDb?.mixer?.echoLevel) && (
@@ -2159,6 +2312,15 @@ function DeviceDemo() {
                           {...subOutputRanges.mixer.echoLevel}
                           disabled={subOutputDisabled}
                           onChange={(value) => actions.queueSubOutput({ mixer: { echoLevel: Math.round(value) } })}
+                          extra={
+                            hasBoolean(subOutputDb?.mixer?.echoLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={subOutputDb?.mixer?.echoLevelPhaseInversion}
+                                disabled={subOutputDisabled}
+                                onChange={(pressed) => actions.queueSubOutput({ mixer: { echoLevelPhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                     </ParameterCard>
@@ -2261,6 +2423,15 @@ function DeviceDemo() {
                           {...centerRanges.output.volume}
                           disabled={centerDisabled}
                           onChange={(value) => actions.queueCenter({ output: { volume: value } })}
+                          extra={
+                            hasBoolean(centerDb?.output?.volumePhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={centerDb?.output?.volumePhaseInversion}
+                                disabled={centerDisabled}
+                                onChange={(pressed) => actions.queueCenter({ output: { volumePhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(centerDb?.output?.delay) && (
@@ -2291,6 +2462,15 @@ function DeviceDemo() {
                           {...centerRanges.mixer.micDirectLevel}
                           disabled={centerDisabled}
                           onChange={(value) => actions.queueCenter({ mixer: { micDirectLevel: Math.round(value) } })}
+                          extra={
+                            hasBoolean(centerDb?.mixer?.micDirectLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={centerDb?.mixer?.micDirectLevelPhaseInversion}
+                                disabled={centerDisabled}
+                                onChange={(pressed) => actions.queueCenter({ mixer: { micDirectLevelPhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(centerDb?.mixer?.musicLevel) && (
@@ -2300,6 +2480,15 @@ function DeviceDemo() {
                           {...centerRanges.mixer.musicLevel}
                           disabled={centerDisabled}
                           onChange={(value) => actions.queueCenter({ mixer: { musicLevel: Math.round(value) } })}
+                          extra={
+                            hasBoolean(centerDb?.mixer?.musicLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={centerDb?.mixer?.musicLevelPhaseInversion}
+                                disabled={centerDisabled}
+                                onChange={(pressed) => actions.queueCenter({ mixer: { musicLevelPhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(centerDb?.mixer?.reverbLevel) && (
@@ -2309,6 +2498,15 @@ function DeviceDemo() {
                           {...centerRanges.mixer.reverbLevel}
                           disabled={centerDisabled}
                           onChange={(value) => actions.queueCenter({ mixer: { reverbLevel: Math.round(value) } })}
+                          extra={
+                            hasBoolean(centerDb?.mixer?.reverbLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={centerDb?.mixer?.reverbLevelPhaseInversion}
+                                disabled={centerDisabled}
+                                onChange={(pressed) => actions.queueCenter({ mixer: { reverbLevelPhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(centerDb?.mixer?.echoLevel) && (
@@ -2318,6 +2516,15 @@ function DeviceDemo() {
                           {...centerRanges.mixer.echoLevel}
                           disabled={centerDisabled}
                           onChange={(value) => actions.queueCenter({ mixer: { echoLevel: Math.round(value) } })}
+                          extra={
+                            hasBoolean(centerDb?.mixer?.echoLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={centerDb?.mixer?.echoLevelPhaseInversion}
+                                disabled={centerDisabled}
+                                onChange={(pressed) => actions.queueCenter({ mixer: { echoLevelPhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                     </ParameterCard>
@@ -2415,6 +2622,15 @@ function DeviceDemo() {
                           {...surroundRanges.output.leftChannelVolume}
                           disabled={surroundDisabled}
                           onChange={(value) => actions.queueSurround({ output: { leftChannelVolume: value } })}
+                          extra={
+                            hasBoolean(surroundDb?.output?.leftChannelVolumePhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={surroundDb?.output?.leftChannelVolumePhaseInversion}
+                                disabled={surroundDisabled}
+                                onChange={(pressed) => actions.queueSurround({ output: { leftChannelVolumePhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(surroundDb?.output?.rightChannelVolume) && (
@@ -2424,6 +2640,15 @@ function DeviceDemo() {
                           {...surroundRanges.output.rightChannelVolume}
                           disabled={surroundDisabled}
                           onChange={(value) => actions.queueSurround({ output: { rightChannelVolume: value } })}
+                          extra={
+                            hasBoolean(surroundDb?.output?.rightChannelVolumePhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={surroundDb?.output?.rightChannelVolumePhaseInversion}
+                                disabled={surroundDisabled}
+                                onChange={(pressed) => actions.queueSurround({ output: { rightChannelVolumePhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(surroundDb?.output?.leftDelay) && (
@@ -2471,6 +2696,15 @@ function DeviceDemo() {
                           {...surroundRanges.mixer.micDirectLevel}
                           disabled={surroundDisabled}
                           onChange={(value) => actions.queueSurround({ mixer: { micDirectLevel: Math.round(value) } })}
+                          extra={
+                            hasBoolean(surroundDb?.mixer?.micDirectLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={surroundDb?.mixer?.micDirectLevelPhaseInversion}
+                                disabled={surroundDisabled}
+                                onChange={(pressed) => actions.queueSurround({ mixer: { micDirectLevelPhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(surroundDb?.mixer?.musicLevel) && (
@@ -2480,6 +2714,15 @@ function DeviceDemo() {
                           {...surroundRanges.mixer.musicLevel}
                           disabled={surroundDisabled}
                           onChange={(value) => actions.queueSurround({ mixer: { musicLevel: Math.round(value) } })}
+                          extra={
+                            hasBoolean(surroundDb?.mixer?.musicLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={surroundDb?.mixer?.musicLevelPhaseInversion}
+                                disabled={surroundDisabled}
+                                onChange={(pressed) => actions.queueSurround({ mixer: { musicLevelPhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(surroundDb?.mixer?.reverbLevel) && (
@@ -2489,6 +2732,15 @@ function DeviceDemo() {
                           {...surroundRanges.mixer.reverbLevel}
                           disabled={surroundDisabled}
                           onChange={(value) => actions.queueSurround({ mixer: { reverbLevel: Math.round(value) } })}
+                          extra={
+                            hasBoolean(surroundDb?.mixer?.reverbLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={surroundDb?.mixer?.reverbLevelPhaseInversion}
+                                disabled={surroundDisabled}
+                                onChange={(pressed) => actions.queueSurround({ mixer: { reverbLevelPhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                       {hasNumber(surroundDb?.mixer?.echoLevel) && (
@@ -2498,6 +2750,15 @@ function DeviceDemo() {
                           {...surroundRanges.mixer.echoLevel}
                           disabled={surroundDisabled}
                           onChange={(value) => actions.queueSurround({ mixer: { echoLevel: Math.round(value) } })}
+                          extra={
+                            hasBoolean(surroundDb?.mixer?.echoLevelPhaseInversion) && (
+                              <PhaseInversionToggle
+                                pressed={surroundDb?.mixer?.echoLevelPhaseInversion}
+                                disabled={surroundDisabled}
+                                onChange={(pressed) => actions.queueSurround({ mixer: { echoLevelPhaseInversion: pressed } })}
+                              />
+                            )
+                          }
                         />
                       )}
                     </ParameterCard>
