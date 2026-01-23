@@ -797,6 +797,14 @@ function DeviceDemo() {
     setBleNameDraft((prev) => (prev === next ? prev : next))
   }, [systemDb?.bleName])
 
+  const [modeNameDraft, setModeNameDraft] = useState('')
+  useEffect(() => {
+    const modes = systemDb?.modeList ?? []
+    const index = systemDb?.currentModeIndex
+    const next = typeof index === 'number' && index >= 0 && index < modes.length ? (modes[index] ?? '') : ''
+    setModeNameDraft((prev) => (prev === next ? prev : next))
+  }, [systemDb?.modeList, systemDb?.currentModeIndex])
+
   const showMusicParamsCard = hasAny(
     musicDb?.inputGain,
     musicDb?.musicPitch,
@@ -1292,25 +1300,73 @@ function DeviceDemo() {
                     />
 
                     {systemModeOptions.length > 0 && (
-                      <div className="grid gap-1">
-                        <Label className="text-xs text-muted-foreground">Mode</Label>
-                        <Select
-                          value={systemModeValue}
-                          onValueChange={(value) => actions.queueSystem({ currentModeIndex: Number(value) })}
-                          disabled={systemDisabled}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select mode" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {systemModeOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      <>
+                        <div className="grid gap-1">
+                          <Label className="text-xs text-muted-foreground">Mode</Label>
+                          <Select
+                            value={systemModeValue}
+                            onValueChange={(value) => actions.queueSystem({ currentModeIndex: Number(value) })}
+                            disabled={systemDisabled}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select mode" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {systemModeOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid gap-1 sm:col-span-2">
+                          <Label className="text-xs text-muted-foreground">New Mode Name</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              value={modeNameDraft}
+                              disabled={systemDisabled || typeof systemDb?.currentModeIndex !== 'number'}
+                              onChange={(e) => setModeNameDraft(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key !== 'Enter') return
+                                e.preventDefault()
+                                const next = modeNameDraft.trim()
+                                const index = systemDb?.currentModeIndex
+                                if (systemDisabled || typeof index !== 'number' || !next) return
+                                const currentModes = systemDb?.modeList ?? []
+                                if (next === (currentModes[index] ?? '')) return
+                                const nextModes = [...currentModes]
+                                nextModes[index] = next
+                                actions.queueSystem({ modeList: nextModes })
+                                void actions.flushNow()
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              disabled={
+                                systemDisabled ||
+                                typeof systemDb?.currentModeIndex !== 'number' ||
+                                !modeNameDraft.trim() ||
+                                modeNameDraft.trim() === ((systemDb?.modeList ?? [])[systemDb?.currentModeIndex ?? 0] ?? '')
+                              }
+                              onClick={() => {
+                                const next = modeNameDraft.trim()
+                                const index = systemDb?.currentModeIndex
+                                if (typeof index !== 'number' || !next) return
+                                const currentModes = systemDb?.modeList ?? []
+                                if (next === (currentModes[index] ?? '')) return
+                                const nextModes = [...currentModes]
+                                nextModes[index] = next
+                                actions.queueSystem({ modeList: nextModes })
+                                void actions.flushNow()
+                              }}
+                            >
+                              Modify
+                            </Button>
+                          </div>
+                        </div>
+                      </>
                     )}
                   </ParameterCard>
 
@@ -1561,7 +1617,7 @@ function DeviceDemo() {
                             </ToggleGroupItem>
                           </ToggleGroup>
                         )}
-                        {hasBoolean(micDb?.micEqJointDebugging) && (
+                        {showMicSelector && hasBoolean(micDb?.micEqJointDebugging) && (
                           <Toggle
                             variant="outline"
                             pressed={!!micDb?.micEqJointDebugging}

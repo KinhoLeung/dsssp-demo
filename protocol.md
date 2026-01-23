@@ -147,7 +147,7 @@ crc16（2 bytes）
 | 0x0008 | SetMainOutput     | 设置 MainOutput 参数（patch） |
 | 0x0009 | SetSubOutput      | 设置 SubOutput 参数（patch）  |
 | 0x000a | SetCenter         | 设置 Center 参数（patch）     |
-| 0x000b | SetSurround       | 设置 Surround 参数（patch）   |
+| 0x000b | SetSurround       | 设置 Surround 参数（patch）  |
 | 0x000c | SwitchCurrentMode | 切换当前模式                  |
 | 0x000d | SaveMode          | 保存当前模式参数              |
 | 0x000e | ResetEq           | 重置EQ参数                    |
@@ -957,7 +957,7 @@ payload：protobuf `webhmi.SwitchCurrentModeRequest`
 
 payload：protobuf `webhmi.SwitchCurrentModeResponse`
 
-### 5.14 保存参数（SaveMode）0x000d
+### 5.14 保存模式（SaveMode）0x000d
 
 #### 5.14.1 SaveModeRequest（上位机→设备，msg_id=SaveMode 0x000d，RESPONSE=0）
 

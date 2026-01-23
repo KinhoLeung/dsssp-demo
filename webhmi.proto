@@ -346,6 +346,8 @@ message SetSystemRequest {
   optional uint32 musicVolume = 12;
   optional uint32 micVolume = 13;
   optional uint32 effectVolume = 14;
+
+  repeated string modeList = 15;
 }
 
 message SetMusicRequest {

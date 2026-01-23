@@ -24,6 +24,14 @@ export const HID_DEVICE_PROFILES: HidDeviceProfile[] = [
     reportId: 0x00,
     reportSize: 64,
   },
+  {
+    id: 'hc6288-hid-2b53-17f6',
+    label: 'HC6288 HID (SDK default)',
+    vendorId: 0x2b53,
+    productId: 0x17f6,
+    reportId: 0x00,
+    reportSize: 64,
+  },
 ]
 
 export const BLE_DEVICE_PROFILES: BleDeviceProfile[] = [
