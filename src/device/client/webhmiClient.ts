@@ -116,10 +116,11 @@ export class WebhmiClient {
     })
   }
 
-  async setEq(request: webhmi.ISetEqRequest) {
+  private logRequest(name: string, request: any, pbType: any) {
+    if (!pbType) return
     try {
-      const message = this.pb.SetEqRequest.fromObject(request)
-      const prettyObject = this.pb.SetEqRequest.toObject(message, {
+      const message = pbType.fromObject(request)
+      const prettyObject = pbType.toObject(message, {
         enums: String,
         longs: String,
         defaults: false,
@@ -127,60 +128,74 @@ export class WebhmiClient {
         objects: true,
         oneofs: true,
       })
-      console.warn('[SetEqRequest]', JSON.stringify(prettyObject, null, 2))
+      console.warn(`[${name}]`, JSON.stringify(prettyObject, null, 2))
     } catch (e) {
-      console.warn('[SetEqRequest] failed to pretty-print:', e instanceof Error ? e.message : String(e))
+      console.warn(`[${name}] failed to pretty-print:`, e instanceof Error ? e.message : String(e))
     }
+  }
+
+  async setEq(request: webhmi.ISetEqRequest) {
+    this.logRequest('SetEqRequest', request, this.pb.SetEqRequest)
     const payload = this.pb.SetEqRequest.encode(request).finish()
     await this.session.request(MsgId.SetEq, payload, { expectResponse: false })
   }
 
   async setSystem(request: webhmi.ISetSystemRequest) {
+    this.logRequest('SetSystemRequest', request, this.pb.SetSystemRequest)
     const payload = this.pb.SetSystemRequest.encode(request).finish()
     await this.session.request(MsgId.SetSystem, payload)
   }
 
   async setMusic(request: webhmi.ISetMusicRequest) {
+    this.logRequest('SetMusicRequest', request, this.pb.SetMusicRequest)
     const payload = this.pb.SetMusicRequest.encode(request).finish()
     await this.session.request(MsgId.SetMusic, payload, { expectResponse: false })
   }
 
   async setMic(request: webhmi.ISetMicRequest) {
+    this.logRequest('SetMicRequest', request, this.pb.SetMicRequest)
     const payload = this.pb.SetMicRequest.encode(request).finish()
     await this.session.request(MsgId.SetMic, payload, { expectResponse: false })
   }
 
   async setReverb(request: webhmi.ISetReverbRequest) {
+    this.logRequest('SetReverbRequest', request, this.pb.SetReverbRequest)
     const payload = this.pb.SetReverbRequest.encode(request).finish()
     await this.session.request(MsgId.SetReverb, payload, { expectResponse: false })
   }
 
   async setEcho(request: webhmi.ISetEchoRequest) {
+    this.logRequest('SetEchoRequest', request, this.pb.SetEchoRequest)
     const payload = this.pb.SetEchoRequest.encode(request).finish()
     await this.session.request(MsgId.SetEcho, payload, { expectResponse: false })
   }
 
   async setMainOutput(request: webhmi.ISetMainOutputRequest) {
+    this.logRequest('SetMainOutputRequest', request, this.pb.SetMainOutputRequest)
     const payload = this.pb.SetMainOutputRequest.encode(request).finish()
     await this.session.request(MsgId.SetMainOutput, payload, { expectResponse: false })
   }
 
   async setSubOutput(request: webhmi.ISetSubOutputRequest) {
+    this.logRequest('SetSubOutputRequest', request, this.pb.SetSubOutputRequest)
     const payload = this.pb.SetSubOutputRequest.encode(request).finish()
     await this.session.request(MsgId.SetSubOutput, payload, { expectResponse: false })
   }
 
   async setCenter(request: webhmi.ISetCenterRequest) {
+    this.logRequest('SetCenterRequest', request, this.pb.SetCenterRequest)
     const payload = this.pb.SetCenterRequest.encode(request).finish()
     await this.session.request(MsgId.SetCenter, payload, { expectResponse: false })
   }
 
   async setSurround(request: webhmi.ISetSurroundRequest) {
+    this.logRequest('SetSurroundRequest', request, this.pb.SetSurroundRequest)
     const payload = this.pb.SetSurroundRequest.encode(request).finish()
     await this.session.request(MsgId.SetSurround, payload, { expectResponse: false })
   }
 
   async switchCurrentMode(request: webhmi.ISwitchCurrentModeRequest): Promise<webhmi.ISwitchCurrentModeResponse> {
+    this.logRequest('SwitchCurrentModeRequest', request, this.pb.SwitchCurrentModeRequest)
     const payload = this.pb.SwitchCurrentModeRequest.encode(request).finish()
     const frame = await this.session.request(MsgId.SwitchCurrentMode, payload)
     if (frame.payload.length === 0) return {}
@@ -188,12 +203,15 @@ export class WebhmiClient {
   }
 
   async saveMode(request: webhmi.ISaveModeRequest) {
+    this.logRequest('SaveModeRequest', request, this.pb.SaveModeRequest)
     const payload = this.pb.SaveModeRequest.encode(request).finish()
     await this.session.request(MsgId.SaveMode, payload, { expectResponse: false })
   }
 
   async resetEq(request: webhmi.IResetEqRequest) {
+    this.logRequest('ResetEqRequest', request, this.pb.ResetEqRequest)
     const payload = this.pb.ResetEqRequest.encode(request).finish()
     await this.session.request(MsgId.ResetEq, payload, { expectResponse: false })
   }
+
 }
