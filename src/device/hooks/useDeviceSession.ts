@@ -509,14 +509,16 @@ export function useDeviceSession(
         try {
           switch (msgId) {
             case MsgId.SetMusic: {
-              const patch = pb.SetMusicRequest.decode(payload)
-              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetMusicRequest.toObject(patch))
+              const msg = pb.SetMusicRequest.decode(payload)
+              const patch = pb.SetMusicRequest.toObject(msg, { defaults: false })
+              console.warn(`[web:rx] EVENT ${msgName}:`, patch)
               db.db.music = applySectionPatch(db.db.music, patch) ?? db.db.music
               break
             }
             case MsgId.SetEq: {
-              const patch = pb.SetEqRequest.decode(payload)
-              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetEqRequest.toObject(patch))
+              const msg = pb.SetEqRequest.decode(payload)
+              const patch = pb.SetEqRequest.toObject(msg, { defaults: false })
+              console.warn(`[web:rx] EVENT ${msgName}:`, patch)
               if (patch.eq) {
                 for (const eqPatch of patch.eq) {
                   if (typeof eqPatch.target !== 'number') continue
@@ -529,56 +531,65 @@ export function useDeviceSession(
               break
             }
             case MsgId.SetSystem: {
-              const patch = pb.SetSystemRequest.decode(payload)
-              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetSystemRequest.toObject(patch))
+              const msg = pb.SetSystemRequest.decode(payload)
+              const patch = pb.SetSystemRequest.toObject(msg, { defaults: false })
+              console.warn(`[web:rx] EVENT ${msgName}:`, patch)
               db.db.system = applySectionPatch(db.db.system, patch) ?? db.db.system
               break
             }
             case MsgId.SetMic: {
-              const patch = pb.SetMicRequest.decode(payload)
-              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetMicRequest.toObject(patch))
+              const msg = pb.SetMicRequest.decode(payload)
+              const patch = pb.SetMicRequest.toObject(msg, { defaults: false })
+              console.warn(`[web:rx] EVENT ${msgName}:`, patch)
               db.db.mic = applySectionPatch(db.db.mic, patch) ?? db.db.mic
               break
             }
             case MsgId.SetReverb: {
-              const patch = pb.SetReverbRequest.decode(payload)
-              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetReverbRequest.toObject(patch))
+              const msg = pb.SetReverbRequest.decode(payload)
+              const patch = pb.SetReverbRequest.toObject(msg, { defaults: false })
+              console.warn(`[web:rx] EVENT ${msgName}:`, patch)
               db.db.reverb = applySectionPatch(db.db.reverb, patch) ?? db.db.reverb
               break
             }
             case MsgId.SetEcho: {
-              const patch = pb.SetEchoRequest.decode(payload)
-              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetEchoRequest.toObject(patch))
+              const msg = pb.SetEchoRequest.decode(payload)
+              const patch = pb.SetEchoRequest.toObject(msg, { defaults: false })
+              console.warn(`[web:rx] EVENT ${msgName}:`, patch)
               db.db.echo = applySectionPatch(db.db.echo, patch) ?? db.db.echo
               break
             }
             case MsgId.SetMainOutput: {
-              const patch = pb.SetMainOutputRequest.decode(payload)
-              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetMainOutputRequest.toObject(patch))
+              const msg = pb.SetMainOutputRequest.decode(payload)
+              const patch = pb.SetMainOutputRequest.toObject(msg, { defaults: false })
+              console.warn(`[web:rx] EVENT ${msgName}:`, patch)
               db.db.mainOutput = applySectionPatch(db.db.mainOutput, patch) ?? db.db.mainOutput
               break
             }
             case MsgId.SetSubOutput: {
-              const patch = pb.SetSubOutputRequest.decode(payload)
-              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetSubOutputRequest.toObject(patch))
+              const msg = pb.SetSubOutputRequest.decode(payload)
+              const patch = pb.SetSubOutputRequest.toObject(msg, { defaults: false })
+              console.warn(`[web:rx] EVENT ${msgName}:`, patch)
               db.db.subOutput = applySectionPatch(db.db.subOutput, patch) ?? db.db.subOutput
               break
             }
             case MsgId.SetCenter: {
-              const patch = pb.SetCenterRequest.decode(payload)
-              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetCenterRequest.toObject(patch))
+              const msg = pb.SetCenterRequest.decode(payload)
+              const patch = pb.SetCenterRequest.toObject(msg, { defaults: false })
+              console.warn(`[web:rx] EVENT ${msgName}:`, patch)
               db.db.center = applySectionPatch(db.db.center, patch) ?? db.db.center
               break
             }
             case MsgId.SetSurround: {
-              const patch = pb.SetSurroundRequest.decode(payload)
-              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SetSurroundRequest.toObject(patch))
+              const msg = pb.SetSurroundRequest.decode(payload)
+              const patch = pb.SetSurroundRequest.toObject(msg, { defaults: false })
+              console.warn(`[web:rx] EVENT ${msgName}:`, patch)
               db.db.surround = applySectionPatch(db.db.surround, patch) ?? db.db.surround
               break
             }
             case MsgId.SaveMode: {
-              const patch = pb.SaveModeRequest.decode(payload)
-              console.warn(`[web:rx] EVENT ${msgName}:`, pb.SaveModeRequest.toObject(patch))
+              const msg = pb.SaveModeRequest.decode(payload)
+              const patch = pb.SaveModeRequest.toObject(msg, { defaults: false })
+              console.warn(`[web:rx] EVENT ${msgName}:`, patch)
               if (patch.currentModeIndex !== undefined) {
                 if (!db.db.system) db.db.system = {}
                 db.db.system.currentModeIndex = patch.currentModeIndex
