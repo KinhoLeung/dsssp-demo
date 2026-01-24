@@ -49,6 +49,7 @@ export class WebhmiClient {
 
   constructor(transport: Transport, options: { defaultTimeoutMs?: number } = {}) {
     this.session = new RpcSession(transport, { defaultTimeoutMs: options.defaultTimeoutMs })
+    this.setupAutoLogging()
   }
 
   onEvent(handler: (frame: DecodedFrame) => void) {
@@ -102,6 +103,8 @@ export class WebhmiClient {
   async getDb(options: { timeoutMs?: number } = {}): Promise<webhmi.GetDbResponse> {
     const payload = this.pb.GetDbRequest?.encode?.({})?.finish?.() ?? new Uint8Array()
     const frame = await this.session.request(MsgId.GetDb, payload, { timeoutMs: options.timeoutMs ?? 15_000 })
+    if (!frame) throw new Error('No response received for GetDb')
+    this.logResponse('GetDbResponse', frame.payload, this.pb.GetDbResponse)
     return this.pb.GetDbResponse.decode(frame.payload)
   }
 
@@ -116,11 +119,24 @@ export class WebhmiClient {
     })
   }
 
+  private cleanupLogObject(obj: any): any {
+    if (Array.isArray(obj)) return obj.map((v) => this.cleanupLogObject(v))
+    if (obj !== null && typeof obj === 'object') {
+      const out: any = {}
+      for (const [k, v] of Object.entries(obj)) {
+        if (k.startsWith('_')) continue
+        out[k] = this.cleanupLogObject(v)
+      }
+      return out
+    }
+    return obj
+  }
+
   private logRequest(name: string, request: any, pbType: any) {
-    if (!pbType) return
+    if (!pbType || !request) return
     try {
       const message = pbType.fromObject(request)
-      const prettyObject = pbType.toObject(message, {
+      const rawPretty = pbType.toObject(message, {
         enums: String,
         longs: String,
         defaults: false,
@@ -128,10 +144,43 @@ export class WebhmiClient {
         objects: true,
         oneofs: true,
       })
-      console.warn(`[${name}]`, JSON.stringify(prettyObject, null, 2))
+      const prettyObject = this.cleanupLogObject(rawPretty)
+      console.info(`[web:tx] ${name}:`, prettyObject)
     } catch (e) {
-      console.warn(`[${name}] failed to pretty-print:`, e instanceof Error ? e.message : String(e))
+      console.info(`[web:tx] ${name} failed to pretty-print:`, e instanceof Error ? e.message : String(e))
     }
+  }
+
+  private logResponse(name: string, payload: Uint8Array, pbType: any, isEvent = false) {
+    if (!pbType) return
+    try {
+      const message = pbType.decode(payload)
+      const rawPretty = pbType.toObject(message, {
+        enums: String,
+        longs: String,
+        defaults: false,
+        arrays: true,
+        objects: true,
+        oneofs: true,
+      })
+      const prettyObject = this.cleanupLogObject(rawPretty)
+      console.info(`[web:rx] ${isEvent ? 'EVENT ' : ''}${name}:`, prettyObject)
+    } catch (e) {
+      console.info(`[web:rx] ${name} failed to decode:`, e instanceof Error ? e.message : String(e))
+    }
+  }
+
+  private setupAutoLogging() {
+    this.session.onEvent((frame) => {
+      const { msgId, payload } = frame
+      const msgName = MsgId[msgId]
+      if (!msgName) return
+
+      const requestPbType = (this.pb as any)[`${msgName}Request`]
+      if (requestPbType) {
+        this.logResponse(msgName, payload, requestPbType, true)
+      }
+    })
   }
 
   async setEq(request: webhmi.ISetEqRequest) {
@@ -199,6 +248,7 @@ export class WebhmiClient {
     const payload = this.pb.SwitchCurrentModeRequest.encode(request).finish()
     const frame = await this.session.request(MsgId.SwitchCurrentMode, payload)
     if (frame.payload.length === 0) return {}
+    this.logResponse('SwitchCurrentModeResponse', frame.payload, this.pb.SwitchCurrentModeResponse)
     return this.pb.SwitchCurrentModeResponse.decode(frame.payload)
   }
 

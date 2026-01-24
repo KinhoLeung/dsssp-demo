@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react-swc'
 import path from 'path'
 import { defineConfig } from 'vite'
 import svgr from 'vite-plugin-svgr'
+import util from 'node:util'
 
 const logProxyPlugin = () => ({
   name: 'log-proxy',
@@ -32,7 +33,12 @@ const logProxyPlugin = () => ({
           const ts = payload.ts ? new Date(payload.ts).toISOString() : new Date().toISOString()
           const prefix = `[web:${level}] ${ts}`
           const logger = (console as any)[level] || console.log
-          logger(prefix, ...args)
+          const formattedArgs = args.map((arg: any) =>
+            typeof arg === 'object' && arg !== null
+              ? util.inspect(arg, { depth: null, colors: true, breakLength: 100 })
+              : arg
+          )
+          logger(prefix, ...formattedArgs)
         } catch {
           console.log('[web:log] invalid payload')
         }
