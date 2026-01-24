@@ -763,7 +763,7 @@ export function useDeviceSession(
       if (!s.db) return s
       const nextDb = updater(cloneObject(s.db))
       const nextJson = s.dbJson ? JSON.stringify(nextDb, null, 2) : s.dbJson
-      return { ...s, db: nextDb, dbJson: nextJson }
+      return { ...s, db: nextDb, dbJson: nextJson, dbFetchId: s.dbFetchId + 1 }
     })
   }
 
