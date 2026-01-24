@@ -38,8 +38,8 @@ const getLabelName = (type: FilterType) => {
   return capitalize(type.toLowerCase())
     .replace(/([wh])shelf/, '$1 Shelf')
     .replace(/([wh])pass/, '$1 Pass')
-    .replace(/1/g, ' ¹')
-    .replace(/2/g, ' ²')
+    .replace(/[12]/g, '')
+    .trim()
 }
 
 const FilterSelect = ({
