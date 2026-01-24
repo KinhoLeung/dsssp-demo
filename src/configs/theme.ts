@@ -32,15 +32,19 @@ export const getTheme = (override?: GraphThemeOverride): GraphThemeOverride => {
     }
   }
 
-  // Deep merge for labels if needed, or just handle top level
-  if (override?.background?.label) {
-    base.background = {
-      ...base.background,
-      label: {
-        ...base.background!.label,
-        ...override.background.label
+  if (override) {
+    const deepMerge = (target: any, source: any) => {
+      for (const key in source) {
+        if (source[key] === undefined) continue
+        if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+          if (!target[key] || typeof target[key] !== 'object') target[key] = {}
+          deepMerge(target[key], source[key])
+        } else {
+          target[key] = source[key]
+        }
       }
     }
+    deepMerge(base, override)
   }
 
   return base

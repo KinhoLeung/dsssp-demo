@@ -330,6 +330,17 @@ function DspPanel({
     })
   }, [graphWidth])
 
+  const responsiveScale = useMemo(() => {
+    const isMobile = graphWidth < 640
+    if (!isMobile) return scale
+
+    return {
+      ...scale,
+      // On mobile, only show ticks that are in the majorTicks list
+      frequencyTicks: scale.frequencyTicks.filter((tick) => scale.majorTicks.includes(tick)),
+    }
+  }, [graphWidth])
+
   return (
     <Card>
       <CardContent className="p-4">
@@ -362,7 +373,7 @@ function DspPanel({
               width={graphWidth}
               height={360}
               theme={responsiveTheme}
-              scale={scale}
+              scale={responsiveScale}
             >
               {powered ? (
                 <>
