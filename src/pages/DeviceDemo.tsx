@@ -940,7 +940,7 @@ function DeviceDemo() {
     )
 
   const [dragging, setDragging] = useState(false)
-  const [activeIndex, setActiveIndex] = useState<number>(-1)
+  const [activeIndex, setActiveIndex] = useState<number>(0)
   const [panelStateByKey, setPanelStateByKey] = useState<Record<PanelKey, PanelState>>(() => {
     const out = {} as Record<PanelKey, PanelState>
     for (const panel of panels) out[panel.key] = { filters: [], pointIndexByUiIndex: [], allowedTypesByUiIndex: [] }
