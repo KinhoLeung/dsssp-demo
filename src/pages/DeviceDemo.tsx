@@ -39,6 +39,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   NumberField,
@@ -1185,41 +1186,62 @@ function DeviceDemo() {
       <div className="w-full max-w-[1200px] pt-1 flex flex-col gap-1">
         {systemDb && (
           <Card className="mb-2 bg-zinc-900/50 border-zinc-800">
-            <CardContent className="p-4 flex flex-wrap items-end gap-6 justify-center">
-              <NumberControl
-                label="Music Volume"
-                value={systemDb.musicVolume ?? undefined}
-                min={0}
-                max={typeof systemDb.musicMaxVolume === 'number' ? systemDb.musicMaxVolume : undefined}
-                disabled={systemDisabled}
-                className="w-32"
-                onChange={(value) => actions.queueSystem({ musicVolume: Math.round(value) })}
-              />
-              <NumberControl
-                label="Mic Volume"
-                value={systemDb.micVolume ?? undefined}
-                min={0}
-                max={typeof systemDb.micMaxVolume === 'number' ? systemDb.micMaxVolume : undefined}
-                disabled={systemDisabled}
-                className="w-32"
-                onChange={(value) => actions.queueSystem({ micVolume: Math.round(value) })}
-              />
-              <NumberControl
-                label="Effect Volume"
-                value={systemDb.effectVolume ?? undefined}
-                min={0}
-                max={typeof systemDb.effectMaxVolume === 'number' ? systemDb.effectMaxVolume : undefined}
-                disabled={systemDisabled}
-                className="w-32"
-                onChange={(value) => actions.queueSystem({ effectVolume: Math.round(value) })}
-              />
-              <div className="flex items-center h-[56px] pb-1">
-                <ToggleControl
-                  label="Mute"
-                  pressed={systemDb.mute ?? undefined}
+            <CardContent className="p-4 flex flex-wrap items-end gap-x-6 gap-y-4 justify-center">
+              <div className="flex items-end gap-12">
+                <div className="flex flex-col gap-1">
+                  <Label className="text-xs text-muted-foreground font-medium">Device</Label>
+                  <div className="h-9 flex items-center">
+                    <span className="text-sm font-semibold text-white tracking-wide">{state.db?.deviceId || '-'}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <Label className="text-xs text-muted-foreground font-medium">Version</Label>
+                  <div className="h-9 flex items-center">
+                    <span className="text-sm font-semibold text-white tracking-wide">{state.db?.firmwareVersion || '-'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <Separator orientation="vertical" className="hidden sm:block h-14 self-center mx-6 bg-zinc-700" />
+              <Separator orientation="horizontal" className="sm:hidden w-full bg-zinc-800 my-2" />
+
+              <div className="flex flex-wrap items-end gap-6 justify-center">
+
+                <NumberControl
+                  label="Music Volume"
+                  value={systemDb.musicVolume ?? undefined}
+                  min={0}
+                  max={typeof systemDb.musicMaxVolume === 'number' ? systemDb.musicMaxVolume : undefined}
                   disabled={systemDisabled}
-                  onChange={(pressed) => actions.queueSystem({ mute: pressed })}
+                  className="w-32"
+                  onChange={(value) => actions.queueSystem({ musicVolume: Math.round(value) })}
                 />
+                <NumberControl
+                  label="Mic Volume"
+                  value={systemDb.micVolume ?? undefined}
+                  min={0}
+                  max={typeof systemDb.micMaxVolume === 'number' ? systemDb.micMaxVolume : undefined}
+                  disabled={systemDisabled}
+                  className="w-32"
+                  onChange={(value) => actions.queueSystem({ micVolume: Math.round(value) })}
+                />
+                <NumberControl
+                  label="Effect Volume"
+                  value={systemDb.effectVolume ?? undefined}
+                  min={0}
+                  max={typeof systemDb.effectMaxVolume === 'number' ? systemDb.effectMaxVolume : undefined}
+                  disabled={systemDisabled}
+                  className="w-32"
+                  onChange={(value) => actions.queueSystem({ effectVolume: Math.round(value) })}
+                />
+                <div className="flex items-center h-[56px] pb-1">
+                  <ToggleControl
+                    label="Mute"
+                    pressed={systemDb.mute ?? undefined}
+                    disabled={systemDisabled}
+                    onChange={(pressed) => actions.queueSystem({ mute: pressed })}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
