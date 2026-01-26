@@ -54,6 +54,14 @@ import { Toggle } from '@/components/ui/toggle'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { webhmi } from '@/device/proto/generated/webhmi'
 import { useDeviceSessionContext } from '@/device/session/deviceSessionContext'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 
 type PanelKey =
@@ -726,6 +734,153 @@ function DeviceDemo() {
   const { state, actions } = useDeviceSessionContext()
   const disconnect = actions.disconnect
   const didMountOnceRef = useRef(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const cleanInternalFields = useCallback((obj: any): any => {
+    if (Array.isArray(obj)) return obj.map(cleanInternalFields)
+    if (obj !== null && typeof obj === 'object') {
+      const out: any = {}
+      for (const [k, v] of Object.entries(obj)) {
+        if (!k.startsWith('_')) {
+          out[k] = cleanInternalFields(v)
+        }
+      }
+      return out
+    }
+    return obj
+  }, [])
+
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
+  const [exportFilename, setExportFilename] = useState('')
+
+  const performExport = useCallback(() => {
+    if (!state.db) return
+    const cleanDb = cleanInternalFields(state.db)
+
+    // Exclude 'system' parameters from export as requested
+    if (cleanDb.db) {
+      delete (cleanDb.db as any).system
+    }
+
+    const json = JSON.stringify(cleanDb, null, 2)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    const finalName = exportFilename.trim() || `device_config_${new Date().toISOString().replace(/[:.]/g, '-')}`
+    a.download = `${finalName}.webhmi`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    setIsExportDialogOpen(false)
+  }, [state.db, cleanInternalFields, exportFilename])
+
+  const handleExport = useCallback(() => {
+    const deviceId = state.db?.deviceId || 'device'
+    const firmwareVersion = state.db?.firmwareVersion || 'v0'
+    setExportFilename(`${deviceId}-${firmwareVersion}-`)
+    setIsExportDialogOpen(true)
+  }, [state.db])
+
+  const [isImportConfirmOpen, setIsImportConfirmOpen] = useState(false)
+  const [pendingImportData, setPendingImportData] = useState<webhmi.IGetDbResponse | null>(null)
+  const [importValidation, setImportValidation] = useState<{
+    type: 'error' | 'warning'
+    message: string
+    title: string
+  } | null>(null)
+
+  const applyImportData = useCallback((data: webhmi.IGetDbResponse) => {
+    if (!data.db) return
+
+    // Update basic sections
+    if (data.db.system) actions.queueSystem(data.db.system)
+    if (data.db.music) actions.queueMusic(data.db.music)
+    if (data.db.mic) actions.queueMic(data.db.mic)
+    if (data.db.reverb) actions.queueReverb(data.db.reverb)
+    if (data.db.echo) actions.queueEcho(data.db.echo)
+    if (data.db.mainOutput) actions.queueMainOutput(data.db.mainOutput)
+    if (data.db.subOutput) actions.queueSubOutput(data.db.subOutput)
+    if (data.db.center) actions.queueCenter(data.db.center)
+    if (data.db.surround) actions.queueSurround(data.db.surround)
+
+    // Update EQs
+    const eqMap: Array<{ target: webhmi.EqTarget; eq: webhmi.IEq | null | undefined }> = [
+      { target: webhmi.EqTarget.MUSIC, eq: data.db.music?.eq },
+      { target: webhmi.EqTarget.MIC_A, eq: data.db.mic?.micAEq?.eq },
+      { target: webhmi.EqTarget.MIC_B, eq: data.db.mic?.micBEq?.eq },
+      { target: webhmi.EqTarget.REVERB, eq: data.db.reverb?.eq },
+      { target: webhmi.EqTarget.ECHO, eq: data.db.echo?.eq },
+      { target: webhmi.EqTarget.MAIN_OUTPUT, eq: data.db.mainOutput?.eq },
+      { target: webhmi.EqTarget.SUB_OUTPUT, eq: data.db.subOutput?.eq },
+      { target: webhmi.EqTarget.CENTER, eq: data.db.center?.eq },
+      { target: webhmi.EqTarget.SURROUND, eq: data.db.surround?.eq },
+    ]
+
+    for (const { target, eq } of eqMap) {
+      if (!eq) continue
+      if (typeof eq.bypass === 'boolean') actions.queueEqBypass(target, eq.bypass)
+      if (Array.isArray(eq.point)) {
+        for (const point of eq.point) {
+          actions.queueEqPoint(target, point)
+        }
+      }
+    }
+
+    void actions.flushNow()
+  }, [actions])
+
+  const handleImport = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (!file) return
+
+      try {
+        const text = await file.text()
+        const data = JSON.parse(text) as webhmi.IGetDbResponse
+        if (!data.db) throw new Error('Invalid configuration file: missing database content.')
+
+        const currentDeviceId = state.db?.deviceId
+        const currentVersion = state.db?.firmwareVersion
+
+        // 1. Check Device ID (Hard Error)
+        if (data.deviceId && currentDeviceId && data.deviceId !== currentDeviceId) {
+          setImportValidation({
+            type: 'error',
+            title: 'Device Mismatch',
+            message: `This configuration file is for "${data.deviceId}", but you are connected to "${currentDeviceId}". Importing is not allowed to prevent damage.`,
+          })
+          setPendingImportData(null)
+          setIsImportConfirmOpen(true)
+          e.target.value = ''
+          return
+        }
+
+        // 2. Check Firmware Version (Warning)
+        if (data.firmwareVersion && currentVersion && data.firmwareVersion !== currentVersion) {
+          setImportValidation({
+            type: 'warning',
+            title: 'Version Mismatch',
+            message: `The configuration version (${data.firmwareVersion}) does not match the device version (${currentVersion}). Some parameters might behave unexpectedly. Do you want to continue?`,
+          })
+          setPendingImportData(data)
+          setIsImportConfirmOpen(true)
+          e.target.value = ''
+          return
+        }
+
+        // 3. Perfect match
+        applyImportData(data)
+        e.target.value = ''
+      } catch (err) {
+        console.error('Import failed', err)
+        alert('导入失败: ' + (err instanceof Error ? err.message : String(err)))
+        e.target.value = ''
+      }
+    },
+    [state.db, applyImportData],
+  )
 
   useEffect(() => {
     const shouldDisconnectOnCleanup = didMountOnceRef.current
@@ -803,19 +958,20 @@ function DeviceDemo() {
     return modes.map((label, index) => ({ value: String(index), label }))
   }, [systemDb?.modeList])
 
+  const [isBleRenameDialogOpen, setIsBleRenameDialogOpen] = useState(false)
   const [bleNameDraft, setBleNameDraft] = useState('')
   useEffect(() => {
     const next = systemDb?.bleName ?? ''
     setBleNameDraft((prev) => (prev === next ? prev : next))
   }, [systemDb?.bleName])
 
-  const [modeNameDraft, setModeNameDraft] = useState('')
+  const [isModeRenameDialogOpen, setIsModeRenameDialogOpen] = useState(false)
+  const [modeNamesDraft, setModeNamesDraft] = useState<string[]>([])
   useEffect(() => {
-    const modes = systemDb?.modeList ?? []
-    const index = systemDb?.currentModeIndex
-    const next = typeof index === 'number' && index >= 0 && index < modes.length ? (modes[index] ?? '') : ''
-    setModeNameDraft((prev) => (prev === next ? prev : next))
-  }, [systemDb?.modeList, systemDb?.currentModeIndex])
+    if (!isModeRenameDialogOpen) {
+      setModeNamesDraft(systemDb?.modeList ?? [])
+    }
+  }, [systemDb?.modeList, isModeRenameDialogOpen])
 
   const showMusicParamsCard = hasAny(
     musicDb?.inputGain,
@@ -1284,45 +1440,103 @@ function DeviceDemo() {
                   <ParameterCard title="Bluetooth" contentClassName="sm:grid-cols-2">
                     <div className="grid gap-1 sm:col-span-2">
                       <Label className="text-xs text-muted-foreground">BLE Name</Label>
-                      <Label className="text-sm">{systemDb.bleName || '-'}</Label>
-                    </div>
-                    <div className="grid gap-1 sm:col-span-2">
-                      <Label className="text-xs text-muted-foreground">New BLE Name</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          value={bleNameDraft}
-                          disabled={systemDisabled}
-                          onChange={(e) => setBleNameDraft(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key !== 'Enter') return
-                            e.preventDefault()
-                            const next = bleNameDraft.trim()
-                            if (systemDisabled) return
-                            if (!next) return
-                            if (next === (systemDb.bleName ?? '')) return
-                            actions.queueSystem({ bleName: next })
-                            void actions.flushNow()
-                          }}
-                        />
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium">{systemDb.bleName || '-'}</Label>
                         <Button
-                          type="button"
-                          variant="secondary"
+                          variant="outline"
+                          disabled={systemDisabled}
+                          onClick={() => {
+                            setBleNameDraft(systemDb.bleName || '')
+                            setIsBleRenameDialogOpen(true)
+                          }}
+                        >
+                          Rename
+                        </Button>
+                      </div>
+                    </div>
+                  </ParameterCard>
+
+                  <Dialog open={isBleRenameDialogOpen} onOpenChange={setIsBleRenameDialogOpen}>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Rename Bluetooth Device</DialogTitle>
+                        <DialogDescription>
+                          Enter a new name for the BLE device.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="ble-name">New BLE Name</Label>
+                          <Input
+                            id="ble-name"
+                            value={bleNameDraft}
+                            onChange={(e) => setBleNameDraft(e.target.value)}
+                            placeholder="Enter BLE name"
+                            onKeyDown={(e) => {
+                              if (e.key !== 'Enter') return
+                              e.preventDefault()
+                              const next = bleNameDraft.trim()
+                              if (systemDisabled || !next || next === (systemDb.bleName ?? '')) return
+                              actions.queueSystem({ bleName: next })
+                              void actions.flushNow()
+                              setIsBleRenameDialogOpen(false)
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsBleRenameDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button
                           disabled={
                             systemDisabled || !bleNameDraft.trim() || bleNameDraft.trim() === (systemDb.bleName ?? '')
                           }
                           onClick={() => {
                             const next = bleNameDraft.trim()
                             if (!next) return
-                            if (next === (systemDb.bleName ?? '')) return
                             actions.queueSystem({ bleName: next })
                             void actions.flushNow()
+                            setIsBleRenameDialogOpen(false)
                           }}
                         >
                           Modify
                         </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Export Configuration</DialogTitle>
+                        <DialogDescription>
+                          Specify a name for your configuration file.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="filename">File Name</Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              id="filename"
+                              value={exportFilename}
+                              onChange={(e) => setExportFilename(e.target.value)}
+                              placeholder="Enter filename"
+                              className="flex-1"
+                            />
+                            <span className="text-sm text-muted-foreground">.webhmi</span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </ParameterCard>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsExportDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={performExport}>Export</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
 
                   <ParameterCard title="System" contentClassName="sm:grid-cols-2">
                     <ToggleControl
@@ -1333,15 +1547,15 @@ function DeviceDemo() {
                     />
 
                     {systemModeOptions.length > 0 && (
-                      <>
-                        <div className="grid gap-1">
-                          <Label className="text-xs text-muted-foreground">Mode</Label>
+                      <div className="grid gap-1 sm:col-span-2">
+                        <Label className="text-xs text-muted-foreground">Mode</Label>
+                        <div className="flex gap-2">
                           <Select
                             value={systemModeValue}
                             onValueChange={(value) => actions.queueSystem({ currentModeIndex: Number(value) })}
                             disabled={systemDisabled}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className="flex-1">
                               <SelectValue placeholder="Select mode" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1352,55 +1566,123 @@ function DeviceDemo() {
                               ))}
                             </SelectContent>
                           </Select>
+                          <Button
+                            variant="outline"
+                            disabled={systemDisabled || !systemDb?.modeList?.length}
+                            onClick={() => {
+                              setModeNamesDraft(systemDb?.modeList ?? [])
+                              setIsModeRenameDialogOpen(true)
+                            }}
+                          >
+                            Rename Modes
+                          </Button>
                         </div>
-                        <div className="grid gap-1 sm:col-span-2">
-                          <Label className="text-xs text-muted-foreground">New Mode Name</Label>
-                          <div className="flex gap-2">
-                            <Input
-                              value={modeNameDraft}
-                              disabled={systemDisabled || typeof systemDb?.currentModeIndex !== 'number'}
-                              onChange={(e) => setModeNameDraft(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key !== 'Enter') return
-                                e.preventDefault()
-                                const next = modeNameDraft.trim()
-                                const index = systemDb?.currentModeIndex
-                                if (systemDisabled || typeof index !== 'number' || !next) return
-                                const currentModes = systemDb?.modeList ?? []
-                                if (next === (currentModes[index] ?? '')) return
-                                const nextModes = [...currentModes]
-                                nextModes[index] = next
-                                actions.queueSystem({ modeList: nextModes })
-                                void actions.flushNow()
-                              }}
-                            />
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              disabled={
-                                systemDisabled ||
-                                typeof systemDb?.currentModeIndex !== 'number' ||
-                                !modeNameDraft.trim() ||
-                                modeNameDraft.trim() === ((systemDb?.modeList ?? [])[systemDb?.currentModeIndex ?? 0] ?? '')
-                              }
-                              onClick={() => {
-                                const next = modeNameDraft.trim()
-                                const index = systemDb?.currentModeIndex
-                                if (typeof index !== 'number' || !next) return
-                                const currentModes = systemDb?.modeList ?? []
-                                if (next === (currentModes[index] ?? '')) return
-                                const nextModes = [...currentModes]
-                                nextModes[index] = next
-                                actions.queueSystem({ modeList: nextModes })
-                                void actions.flushNow()
-                              }}
-                            >
-                              Modify
-                            </Button>
-                          </div>
-                        </div>
-                      </>
+                      </div>
                     )}
+
+                    <Dialog open={isModeRenameDialogOpen} onOpenChange={setIsModeRenameDialogOpen}>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>Rename Modes</DialogTitle>
+                          <DialogDescription>
+                            Enter new names for all available modes.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
+                          {modeNamesDraft.map((name, index) => (
+                            <div key={index} className="grid gap-2">
+                              <Label htmlFor={`mode-name-${index}`}>Mode {index + 1}</Label>
+                              <Input
+                                id={`mode-name-${index}`}
+                                value={name}
+                                onChange={(e) => {
+                                  const next = [...modeNamesDraft]
+                                  next[index] = e.target.value
+                                  setModeNamesDraft(next)
+                                }}
+                                placeholder={`Enter mode ${index + 1} name`}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setIsModeRenameDialogOpen(false)}>
+                            Cancel
+                          </Button>
+                          <Button
+                            disabled={
+                              systemDisabled ||
+                              modeNamesDraft.some(n => !n.trim()) ||
+                              JSON.stringify(modeNamesDraft.map(n => n.trim())) === JSON.stringify(systemDb?.modeList ?? [])
+                            }
+                            onClick={() => {
+                              const nextModes = modeNamesDraft.map(n => n.trim())
+                              actions.queueSystem({ modeList: nextModes })
+                              void actions.flushNow()
+                              setIsModeRenameDialogOpen(false)
+                            }}
+                          >
+                            Save Changes
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isImportConfirmOpen} onOpenChange={setIsImportConfirmOpen}>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle className={cn(importValidation?.type === 'error' ? 'text-destructive' : 'text-warning')}>
+                            {importValidation?.title}
+                          </DialogTitle>
+                          <DialogDescription>
+                            {importValidation?.message}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                          {importValidation?.type === 'error' ? (
+                            <Button onClick={() => setIsImportConfirmOpen(false)}>Close</Button>
+                          ) : (
+                            <>
+                              <Button variant="outline" onClick={() => setIsImportConfirmOpen(false)}>
+                                Cancel
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                onClick={() => {
+                                  if (pendingImportData) {
+                                    applyImportData(pendingImportData)
+                                    setIsImportConfirmOpen(false)
+                                    setPendingImportData(null)
+                                  }
+                                }}
+                              >
+                                Import Anyway
+                              </Button>
+                            </>
+                          )}
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                    <Separator className="sm:col-span-2 my-2" />
+                    <div className="grid grid-cols-2 gap-2 sm:col-span-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={systemDisabled}
+                      >
+                        Import
+                      </Button>
+                      <Button variant="outline" onClick={handleExport} disabled={systemDisabled}>
+                        Export
+                      </Button>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept=".webhmi"
+                        onChange={handleImport}
+                      />
+                    </div>
                   </ParameterCard>
 
                   <ParameterCard title="Defaults" contentClassName="sm:grid-cols-2">
