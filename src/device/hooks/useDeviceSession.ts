@@ -632,6 +632,8 @@ export function useDeviceSession(
                 filters: HID_DEVICE_PROFILES.map((p) => ({
                   vendorId: p.vendorId,
                   productId: p.productId,
+                  usagePage: p.usagePage,
+                  usage: p.usage,
                 })),
               })
             )[0]

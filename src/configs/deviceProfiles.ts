@@ -5,6 +5,8 @@ export type HidDeviceProfile = {
   productId: number
   reportId: number
   reportSize: number
+  usagePage?: number
+  usage?: number
 }
 
 export type BleDeviceProfile = {
@@ -23,6 +25,8 @@ export const HID_DEVICE_PROFILES: HidDeviceProfile[] = [
     productId: 0x40a0,
     reportId: 0x00,
     reportSize: 64,
+    usagePage: 0xff00,
+    usage: 0x01,
   },
   {
     id: 'hc6288-hid-2b53-17f6',
@@ -31,6 +35,8 @@ export const HID_DEVICE_PROFILES: HidDeviceProfile[] = [
     productId: 0x17f6,
     reportId: 0x00,
     reportSize: 64,
+    usagePage: 0xff00,
+    usage: 0x01,
   },
 ]
 
