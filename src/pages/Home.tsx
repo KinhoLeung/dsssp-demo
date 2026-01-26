@@ -39,10 +39,16 @@ function Home() {
         window.alert('当前浏览器不支持 WebHID。')
         return
       }
-      const hidFilters = HID_DEVICE_PROFILES.map((profile) => ({
+      const hidFilters = HID_DEVICE_PROFILES.map((profile) => (
+        profile.usagePage == undefined ? {
+          vendorId: profile.vendorId,
+          productId: profile.productId,
+        } : {
         vendorId: profile.vendorId,
         productId: profile.productId,
-      }))
+        usagePage: profile.usagePage,
+      }
+    ))
       if (hidFilters.length === 0) {
         window.alert('未配置可用的 HID 设备。')
         return

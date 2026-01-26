@@ -31,6 +31,7 @@ export const HID_DEVICE_PROFILES: HidDeviceProfile[] = [
     productId: 0x17f6,
     reportId: 0x00,
     reportSize: 64,
+    usagePage: 0xff00,
   },
 ]
 
