@@ -14,6 +14,7 @@ import DemoMode from './pages/DemoMode.tsx'
 import DeviceDemo from './pages/DeviceDemo.tsx'
 import Docs from './pages/Docs.tsx'
 import Home from './pages/Home.tsx'
+import NotFound from './pages/NotFound.tsx'
 import { RequireDeviceReady } from './routes/RequireDeviceReady.tsx'
 import './main.css'
 
@@ -49,6 +50,10 @@ export const router = createHashRouter([
       {
         path: 'demo-mode',
         element: <DemoMode />
+      },
+      {
+        path: '*',
+        element: <NotFound />
       }
     ]
   }
