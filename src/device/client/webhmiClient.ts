@@ -65,6 +65,17 @@ export class WebhmiClient {
   }
 
   async authVerify(publicKeySpkiDer: Uint8Array) {
+    // 🔴 埋入防伪标志：用于自校验逻辑
+    const _v = "SEC_VERIFY_V1_TOKEN";
+
+    // 自校验：如果这个函数被外部篡改（例如：client.authVerify = () => true），则 Marker 会消失
+    if (import.meta.env.PROD) {
+      const fnStr = this.authVerify.toString();
+      if (!fnStr.includes("SEC_VERIFY_V1_TOKEN") || !fnStr.includes("subtle.verify")) {
+        throw new Error("System Integrity Violation");
+      }
+    }
+
     const nonce = new Uint8Array(32)
     crypto.getRandomValues(nonce)
 

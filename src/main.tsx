@@ -9,6 +9,11 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { createHashRouter, RouterProvider } from 'react-router-dom'
 
 import App from './App.tsx'
+import { startAntiDebug } from './utils/security'
+
+// 启动反调试防护
+startAntiDebug();
+
 import Changelog from './pages/Changelog.tsx'
 import DemoMode from './pages/DemoMode.tsx'
 import DeviceDemo from './pages/DeviceDemo.tsx'
