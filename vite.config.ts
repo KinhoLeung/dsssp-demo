@@ -80,7 +80,23 @@ export default defineConfig(({ mode }) => {
       historyApiFallback: true
     },
     build: {
-      sourcemap: true,
+      minify: 'terser', // 指定使用 terser
+      terserOptions: {
+        compress: {
+          drop_console: true, // 生产环境移除 console
+          drop_debugger: true, // 移除 debugger
+        },
+        mangle: {
+          // 在这里可以定义更激进的混淆策略
+          toplevel: true, // 混淆最高层的变量名
+          keep_classnames: false,
+          keep_fnames: false,
+        },
+        format: {
+          comments: false, // 移除所有注释
+        },
+      },
+      sourcemap: false,
       rollupOptions: {}
     }
   }
