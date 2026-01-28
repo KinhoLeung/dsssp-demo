@@ -6,9 +6,9 @@
 
 const debugTrap = () => {
     try {
-        // 使用 Function 构造函数生成 debugger 语句，避开 Vite/Terser 的静态删除
-        const f = new Function('debugger');
-        f();
+        // 直接触发 debugger（避免 CSP 拦截 unsafe-eval / new Function）
+        // 注意：要让生产构建保留该语句，需要确保 terser 不启用 drop_debugger
+        debugger;
     } catch (e) {
         // ignore
     }

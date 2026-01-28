@@ -84,7 +84,8 @@ export default defineConfig(({ mode }) => {
       terserOptions: {
         compress: {
           drop_console: true, // 生产环境移除 console
-          drop_debugger: true, // 移除 debugger
+          // 需要保留 src/utils/security.ts 的反调试 debugger；不要全局移除
+          drop_debugger: false,
         },
         mangle: {
           // 在这里可以定义更激进的混淆策略
