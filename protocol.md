@@ -75,11 +75,12 @@ flags（1 bytes）
 
 用于描述帧的“处理方式/语义开关”（布尔性质），bit 位定义如下：
 
-* bit0 `RESPONSE`（ACK）：是否需要回应/是否为回应。上位机 → 设备：指设备是否需要回应这个 Request，0：不用回，1：需要回；设备 → 上位机：回应某个 Request 时应为 1，主动上报 `EVENT`=1 时必须为 0
-* bit1 `EVENT`：1=设备主动上报（不对应某个请求），此时 `RESPONSE`应该0
+* bit0 `RESPONSE`（ACK）：是否需要回应/是否为回应
+* bit1 `EVENT`：1=设备主动上报
+* bit2 `ENCRYPTED`：1=Payload 已被 AES-128-CTR 加密
 * 其它：保留
 
-> v1 初期最低实现：至少要支持 `RESPONSE`、`EVENT` 这两个位的解析（即使业务层暂时不用）。
+> 启用 `ENCRYPTED` 后，`payload` 字段承载的是密文。`len` 表示密文长度（AES-CTR 模式下密文长度=明文长度）。
 
 len（2 bytes）
 
@@ -112,11 +113,12 @@ ext（N bytes）
 v1 约定的 ext TLV 类型：
 
 * `0x80`：`req_id`，`L=2`，`V=u16 little-endian`。用于并发请求与响应匹配；请求与其响应必须携带相同 `req_id`
+* `0x81`：`iv_sync`，`L=4`，`V=u32 little-endian`。**当 ENCRYPTED=1 时必须存在**。携带本次加密使用的帧计数器（Frame Counter, 32-bit）。
 
 payload（len bytes）
 
 * 业务数据
-* 编码格式：protobuf 编码，除了Auth，其它都要用protobuf 编码
+* 编码格式：protobuf 编码（加密开启时为 protobuf 的密文）
 
 crc16（2 bytes）
 
@@ -128,7 +130,7 @@ crc16（2 bytes）
 
   即 CRC 输入为：`ver | hdr_len | msg_id | flags | len | ext... | payload`
 
-  **不含 magic，不含 crc16 本身**
+  **不含 magic，不含 crc16 本身，当 ENCRYPTED=1 时计算的是密文的 CRC**
 
 ## 4 msg_id 定义
 
@@ -136,7 +138,7 @@ crc16（2 bytes）
 
 | msg_id | 含义              | 说明                          |
 | ------ | ----------------- | ----------------------------- |
-| 0x0000 | Auth              | 认证设备，禁止第三方设备接入  |
+| 0x0000 | Auth              | 认证设备 + 密钥协商 (ECDH)    |
 | 0x0001 | GetDb             | 获取设备可配置数据数据库      |
 | 0x0002 | SetEq             | 设置 EQ 参数（patch）         |
 | 0x0003 | SetSystem         | 设置系统参数（patch）         |
@@ -147,56 +149,143 @@ crc16（2 bytes）
 | 0x0008 | SetMainOutput     | 设置 MainOutput 参数（patch） |
 | 0x0009 | SetSubOutput      | 设置 SubOutput 参数（patch）  |
 | 0x000a | SetCenter         | 设置 Center 参数（patch）     |
-| 0x000b | SetSurround       | 设置 Surround 参数（patch）  |
+| 0x000b | SetSurround       | 设置 Surround 参数（patch）   |
 | 0x000c | SwitchCurrentMode | 切换当前模式                  |
 | 0x000d | SaveMode          | 保存当前模式参数              |
 | 0x000e | ResetEq           | 重置EQ参数                    |
 
-## 5 payload 格式
+## 5 安全机制与交互流程
 
-### 5.1 认证（Auth） 0x0000
+### 5.1 安全传输约定 (Security Contract)
+
+#### 5.1.1 密钥派生
+
+双发通过 ECDH 算出 Shared Secret (32 bytes) 后，按如下方式派生会话参数：
+
+* **MasterSecret** = SharedSecret (32 bytes)
+* **KeyBlock** = SHA256(MasterSecret) (32 bytes)
+* **SessionKey** = KeyBlock[0...15] (16 bytes, for AES-128)
+* **SessionBaseIV** = KeyBlock[16...27] (12 bytes)
+
+#### 5.1.2 加密算法
+
+* **算法**：AES-128-CTR (TinyCrypt: `tc_ctr_mode`)
+* **IV 构造** (16 bytes)：
+  `SessionBaseIV (12B) || FrameCounter (4B Big-Endian)`
+  * 每次加密一个新的 Frame，使用一个新的 `FrameCounter`。
+  * `FrameCounter` 必须放在 `ext` (0x81) 字段中明文传输。
+* **Counter 空间划分 (重要)**：
+  为了防止双向通信使用相同的 Key 和 IV 导致密钥流重用 (Keystream Reuse)，双方必须使用互不重叠的 Counter 空间：
+  * **上位机发送 (Client Tx)**：初始值 `0x00000000`，范围 `0 ~ 0x7FFFFFFF` (最高位为0)。
+  * **设备发送 (Device Tx)**：初始值 `0x80000000`，范围 `0x80000000 ~ 0xFFFFFFFF` (最高位为1)。
+* **Anti-Replay (防重放)**：
+  * 接收端维护 `LastRxCounter`。
+  * 收到新包时，必须满足 `FrameCounter > LastRxCounter` 且 `FrameCounter` 位于对方的合法区间内。
+  * 若不满足（乱序或重放），丢弃该包。
+  * 握手重新连接时，Counter 重置为各自的初始值。
+
+### 5.2 握手与密钥协商 (Handshake)
+
+连接建立后，必须首先执行 **Auth (0x0000)** 指令。
+
+1. **Client Hello**:
+
+   * 上位机生成临时密钥 `(ClientPriv, ClientPub)`。
+   * 发送 `Auth Request`，Payload = `ClientPub`。
+   * 状态：**明文**
+
+2. **Server Hello & Sign**:
+
+   * 固件接收 `ClientPub`。
+   * 固件生成临时密钥 `(DevicePriv, DevicePub)`。
+   * 计算 `SharedSecret = ECDH(DevicePriv, ClientPub)`。
+   * 派生密钥 `KeyBlock = SHA256(SharedSecret)` -> `SessionKey`, `SessionIV`。
+   * 签名 `Sig = ECDSA(IdentityPriv, ClientPub || DevicePub)`。
+   * 发送 `Auth Response`，Payload = `DevicePub + Sig`。
+   * **Action**: 固件端**立即**初始化 AES-CTR 状态（Tx/Rx Counter = SessionIV），后续收发均加密。
+
+3. **Client Finish**:
+
+   * 上位机接收 `DevicePub` 和 `Sig`。
+   * 验签 `Verify(RootPubKey, Sig, ClientPub || DevicePub)`。
+   * 计算 `SharedSecret = ECDH(ClientPriv, DevicePub)`。
+   * 派生密钥 `KeyBlock = SHA256(SharedSecret)` -> `SessionKey`, `SessionIV`。
+   * **Action**: 上位机初始化 AES-CTR 状态，握手已完成。
+
+### 5.3 加密通信 (Secure Transport)
+
+握手完成后，后续所有指令（如 `GetDb`, `SetSystem` 等）均应开启加密。
+
+1. **发送方**:
+
+   * 准备明文 Payload。
+   * `Cipher = AES-CTR(Key, TxCtr, Payload)`。
+   * `TxCtr` 增加对应 Block 数。
+   * 组帧发送，Header 中设置 `ENCRYPTED=1`。
+
+2. **接收方**:
+
+   * 收到帧，发现 `ENCRYPTED=1`。
+   * `Plain = AES-CTR(Key, RxCtr, Cipher)`。
+   * `RxCtr` 增加对应 Block 数。
+   * 解析 Plain 为 Protobuf 数据并执行。
+
+### 5.4 异常处理与鲁棒性
+
+得益于显式帧计数器（Explicit Frame Counter），通信链路对丢包和乱序具有天然的鲁棒性。
+
+*   **丢包 (Packet Loss)**：若发生丢包，接收端仅丢失对应的数据帧。后续到达的帧由于携带了正确的 Counter，依然能被正确解密和处理。**不会导致通信中断或乱码。**
+*   **乱序与重放 (Reorder & Replay)**：接收端会检查 `FrameCounter > LastRxCounter`。若收到旧包（乱序到达或恶意重放），协议栈将直接**丢弃**该帧，不影响会话状态。
+*   **数据损坏 (CRC Error)**：若 CRC校验失败，说明数据在传输中受损。策略为**静默丢弃**当前帧，等待上位机重试（如有超时机制）。
+*   **仅在以下严重情况断开连接**：
+    *   Auth 握手失败（签名无效）。
+    *   收到无法解析的指令序列导致设备状态机异常。
+
+## 6 payload 格式
+
+### 6.1 认证（Auth） 0x0000
 
 > Auth 的数据结构属于 **payload 层**（业务层）；外层仍然使用第 3 章定义的 framing 数据帧承载与分包。
+> **Auth 过程必须明文传输 (old flags ENCRYPTED=0)**。
 
-#### 5.1.1 AuthChallenge（上位机→设备，msg_id=Auth，RESPONSE=1）
-
-payload：
-
-| nonce    |
-| -------- |
-| 32 bytes |
-
-#### 5.1.2 AuthResponse（设备→上位机，msg_id=Auth，RESPONSE=1）
+#### 6.1.1 AuthChallenge（上位机→设备，msg_id=Auth，RESPONSE=1）
 
 payload：
 
-| sig_len | signature |
-| ------- | --------- |
-| 1 byte  | 64 bytes  |
+| client_pub_key (P-256 Raw Key X\|\|Y) |
+| ------------------------------------- |
+| 64 bytes                              |
+
+* 上位机生成一对临时的 ECDH P-256 密钥对。
+* Payload 为上位机的公钥（不含 0x04 前缀，直接 X(32B) \|\| Y(32B)）。
+
+#### 6.1.2 AuthResponse（设备→上位机，msg_id=Auth，RESPONSE=1）
+
+payload：
+
+| device_pub_key | signature |
+| -------------- | --------- |
+| 64 bytes       | 64 bytes  |
 
 说明：
 
-- `sig_len`：当前固定为 `64`（ECDSA P-256 raw `r||s`）
-- `signature`：raw `r||s`（64 bytes）
+* `device_pub_key`: 设备生成的临时 ECDH 公钥（X\|\|Y）。
+* `signature`: 设备使用**身份私钥**对 `(client_pub_key || device_pub_key)` 进行的 ECDSA 签名（r\|\|s）。
+* **收到此帧后，上位机应立即验证签名并计算共享密钥。**
 
-签名消息：
+### 6.2 获取数据库（GetDb） 0x0001
 
-- `message = nonce`
-- `signature = ECDSA P-256 over SHA-256(message)`（在 WebCrypto 中用 `ECDSA(SHA-256)` 验签）
-
-### 5.2 获取数据库（GetDb） 0x0001
-
-#### 5.2.1 GetDbRequest（上位机→设备，msg_id=GetDb，RESPONSE=1）
+#### 6.2.1 GetDbRequest（上位机→设备，msg_id=GetDb，RESPONSE=1）
 
 len:0
 
 payload为空
 
-#### 5.2.2 GetDbResponse（设备→上位机，msg_id=GetDb，RESPONSE=1）
+#### 6.2.2 GetDbResponse（设备→上位机，msg_id=GetDb，RESPONSE=1）
 
 整个数据库：payload 使用 protobuf 编码，对应 `webhmi.GetDbResponse`（定义见 `webhmi.proto`）
 
-#### 5.2.3 数据库格式
+#### 6.2.3 数据库结构
 
 下面 JSON 仅用于说明字段含义/结构示例（实际传输为 protobuf，`freq` 为 Hz 的 `uint32`）：
 
@@ -843,128 +932,128 @@ payload为空
 
 ```
 
-### 5.3 设置 EQ 参数（SetEq）0x0002
+### 6.3 设置 EQ 参数（SetEq）0x0002
 
-#### 5.3.1 SetEqRequest（上位机→设备，msg_id=SetEq 0x0002，RESPONSE=0）
-
-payload：protobuf `webhmi.SetEqRequest`
-
-#### 5.3.2 SetEqReport（设备→上位机，msg_id=SetEq 0x0002，RESPONSE=0，EVENT=1）
+#### 6.3.1 SetEqRequest（上位机→设备，msg_id=SetEq 0x0002，RESPONSE=0）
 
 payload：protobuf `webhmi.SetEqRequest`
 
-### 5.4 设置系统参数（SetSystem）0x0003
+#### 6.3.2 SetEqReport（设备→上位机，msg_id=SetEq 0x0002，RESPONSE=0，EVENT=1）
 
-#### 5.4.1 SetSystemRequest（上位机→设备，msg_id=SetSystem 0x0003，RESPONSE=1）
+payload：protobuf `webhmi.SetEqRequest`
 
-payload：protobuf `webhmi.SetSystemRequest`
+### 6.4 设置系统参数（SetSystem）0x0003
 
-#### 5.4.2 SetSystemResponse（设备→上位机，msg_id=SetSystem 0x0003，RESPONSE=1）
-
-payload：protobuf `webhmi.SetSystemRequest`
-
-#### 5.4.3 SetSystemReport（设备→上位机，msg_id=SetSystem 0x0003，RESPONSE=0，EVENT=1）
+#### 6.4.1 SetSystemRequest（上位机→设备，msg_id=SetSystem 0x0003，RESPONSE=1）
 
 payload：protobuf `webhmi.SetSystemRequest`
 
-### 5.5 设置 Music 参数（SetMusic）0x0004
+#### 6.4.2 SetSystemResponse（设备→上位机，msg_id=SetSystem 0x0003，RESPONSE=1）
 
-#### 5.5.1 SetMusicRequest（上位机→设备，msg_id=SetMusic 0x0004，RESPONSE=0）
+payload：protobuf `webhmi.SetSystemRequest`
+
+#### 6.4.3 SetSystemReport（设备→上位机，msg_id=SetSystem 0x0003，RESPONSE=0，EVENT=1）
+
+payload：protobuf `webhmi.SetSystemRequest`
+
+### 6.5 设置 Music 参数（SetMusic）0x0004
+
+#### 6.5.1 SetMusicRequest（上位机→设备，msg_id=SetMusic 0x0004，RESPONSE=0）
 
 payload：protobuf `webhmi.SetMusicRequest`
 
-#### 5.5.2 SetMusicReport（设备→上位机，msg_id=SetMusic 0x0004，RESPONSE=0，EVENT=1）
+#### 6.5.2 SetMusicReport（设备→上位机，msg_id=SetMusic 0x0004，RESPONSE=0，EVENT=1）
 
 payload：protobuf `webhmi.SetMusicRequest`
 
-### 5.6 设置 Mic 参数（SetMic）0x0005
+### 6.6 设置 Mic 参数（SetMic）0x0005
 
-#### 5.6.1 SetMicRequest（上位机→设备，msg_id=SetMic 0x0005，RESPONSE=0）
-
-payload：protobuf `webhmi.SetMicRequest`
-
-#### 5.6.2 SetMicReport（设备→上位机，msg_id=SetMic 0x0005，RESPONSE=0，EVENT=1）
+#### 6.6.1 SetMicRequest（上位机→设备，msg_id=SetMic 0x0005，RESPONSE=0）
 
 payload：protobuf `webhmi.SetMicRequest`
 
-### 5.7 设置 Reverb 参数（SetReverb）0x0006
+#### 6.6.2 SetMicReport（设备→上位机，msg_id=SetMic 0x0005，RESPONSE=0，EVENT=1）
 
-#### 5.7.1 SetReverbRequest（上位机→设备，msg_id=SetReverb 0x0006，RESPONSE=0）
+payload：protobuf `webhmi.SetMicRequest`
+
+### 6.7 设置 Reverb 参数（SetReverb）0x0006
+
+#### 6.7.1 SetReverbRequest（上位机→设备，msg_id=SetReverb 0x0006，RESPONSE=0）
 
 payload：protobuf `webhmi.SetReverbRequest`
 
-#### 5.7.2 SetReverbReport（设备→上位机，msg_id=SetReverb 0x0006，RESPONSE=0，EVENT=1）
+#### 6.7.2 SetReverbReport（设备→上位机，msg_id=SetReverb 0x0006，RESPONSE=0，EVENT=1）
 
 payload：protobuf `webhmi.SetReverbRequest`
 
-### 5.8 设置 Echo 参数（SetEcho）0x0007
+### 6.8 设置 Echo 参数（SetEcho）0x0007
 
-#### 5.8.1 SetEchoRequest（上位机→设备，msg_id=SetEcho 0x0007，RESPONSE=0）
-
-payload：protobuf `webhmi.SetEchoRequest`
-
-#### 5.8.2 SetEchoReport（设备→上位机，msg_id=SetEcho 0x0007，RESPONSE=0，EVENT=1）
+#### 6.8.1 SetEchoRequest（上位机→设备，msg_id=SetEcho 0x0007，RESPONSE=0）
 
 payload：protobuf `webhmi.SetEchoRequest`
 
-### 5.9 设置 MainOutput 参数（SetMainOutput）0x0008
+#### 6.8.2 SetEchoReport（设备→上位机，msg_id=SetEcho 0x0007，RESPONSE=0，EVENT=1）
 
-#### 5.9.1 SetMainOutputRequest（上位机→设备，msg_id=SetMainOutput 0x0008，RESPONSE=0）
+payload：protobuf `webhmi.SetEchoRequest`
+
+### 6.9 设置 MainOutput 参数（SetMainOutput）0x0008
+
+#### 6.9.1 SetMainOutputRequest（上位机→设备，msg_id=SetMainOutput 0x0008，RESPONSE=0）
 
 payload：protobuf `webhmi.SetMainOutputRequest`
 
-#### 5.9.2 SetMainOutputReport（设备→上位机，msg_id=SetMainOutput 0x0008，RESPONSE=0，EVENT=1）
+#### 6.9.2 SetMainOutputReport（设备→上位机，msg_id=SetMainOutput 0x0008，RESPONSE=0，EVENT=1）
 
 payload：protobuf `webhmi.SetMainOutputRequest`
 
-### 5.10 设置 SubOutput 参数（SetSubOutput）0x0009
+### 6.10 设置 SubOutput 参数（SetSubOutput）0x0009
 
-#### 5.10.1 SetSubOutputRequest（上位机→设备，msg_id=SetSubOutput 0x0009，RESPONSE=0）
-
-payload：protobuf `webhmi.SetSubOutputRequest`
-
-#### 5.10.2 SetSubOutputReport（设备→上位机，msg_id=SetSubOutput 0x0009，RESPONSE=0，EVENT=1）
+#### 6.10.1 SetSubOutputRequest（上位机→设备，msg_id=SetSubOutput 0x0009，RESPONSE=0）
 
 payload：protobuf `webhmi.SetSubOutputRequest`
 
-### 5.11 设置 SubCenter 参数（SetCenter）0x000a
+#### 6.10.2 SetSubOutputReport（设备→上位机，msg_id=SetSubOutput 0x0009，RESPONSE=0，EVENT=1）
 
-#### 5.11.1 SetCenterRequest（上位机→设备，msg_id=SetSubOutput 0x000a，RESPONSE=0）
+payload：protobuf `webhmi.SetSubOutputRequest`
+
+### 6.11 设置 SubCenter 参数（SetCenter）0x000a
+
+#### 6.11.1 SetCenterRequest（上位机→设备，msg_id=SetSubOutput 0x000a，RESPONSE=0）
 
 payload：protobuf `webhmi.SetCenterRequest`
 
-#### 5.11.2 SetCenterReport（设备→上位机，msg_id=SetCenter 0x000a，RESPONSE=0，EVENT=1）
+#### 6.11.2 SetCenterReport（设备→上位机，msg_id=SetCenter 0x000a，RESPONSE=0，EVENT=1）
 
 payload：protobuf `webhmi.SetCenterRequest`
 
-### 5.12 设置 Surround 参数（SetSurround）0x000b
+### 6.12 设置 Surround 参数（SetSurround）0x000b
 
-#### 5.12.1 SetSurroundRequest（上位机→设备，msg_id=SetSurround 0x000b，RESPONSE=0）
-
-payload：protobuf `webhmi.SetSurroundRequest`
-
-#### 5.12.2 SetSurroundReport（设备→上位机，msg_id=SetSurround 0x000b，RESPONSE=0，EVENT=1）
+#### 6.12.1 SetSurroundRequest（上位机→设备，msg_id=SetSurround 0x000b，RESPONSE=0）
 
 payload：protobuf `webhmi.SetSurroundRequest`
 
-### 5.13 切换当前模式（SwitchCurrentMode）0x000c
+#### 6.12.2 SetSurroundReport（设备→上位机，msg_id=SetSurround 0x000b，RESPONSE=0，EVENT=1）
 
-#### 5.13.1 SwitchCurrentModeRequest（上位机→设备，msg_id=SwitchCurrentMode 0x000c，RESPONSE=1）
+payload：protobuf `webhmi.SetSurroundRequest`
+
+### 6.13 切换当前模式（SwitchCurrentMode）0x000c
+
+#### 6.13.1 SwitchCurrentModeRequest（上位机→设备，msg_id=SwitchCurrentMode 0x000c，RESPONSE=1）
 
 payload：protobuf `webhmi.SwitchCurrentModeRequest`
 
-#### 5.13.2 SwitchCurrentModeResponse（设备→上位机，msg_id=SwitchCurrentMode 0x000c，RESPONSE=1）
+#### 6.13.2 SwitchCurrentModeResponse（设备→上位机，msg_id=SwitchCurrentMode 0x000c，RESPONSE=1）
 
 payload：protobuf `webhmi.SwitchCurrentModeResponse`
 
-### 5.14 保存模式（SaveMode）0x000d
+### 6.14 保存模式（SaveMode）0x000d
 
-#### 5.14.1 SaveModeRequest（上位机→设备，msg_id=SaveMode 0x000d，RESPONSE=0）
+#### 6.14.1 SaveModeRequest（上位机→设备，msg_id=SaveMode 0x000d，RESPONSE=0）
 
 payload：protobuf `webhmi.SaveModeRequest`
 
-### 5.15 重置EQ参数（ResetEq）0x000e
+### 6.15 重置EQ参数（ResetEq）0x000e
 
-#### 5.15.1 ResetEqRequest（上位机→设备，msg_id=ResetEq 0x000e，RESPONSE=0）
+#### 6.15.1 ResetEqRequest（上位机→设备，msg_id=ResetEq 0x000e，RESPONSE=0）
 
 payload：protobuf `webhmi.ResetEqRequest`

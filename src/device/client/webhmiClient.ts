@@ -66,49 +66,114 @@ export class WebhmiClient {
 
   async authVerify(publicKeySpkiDer: Uint8Array) {
     // 🔴 埋入防伪标志：用于自校验逻辑
-    const _v = "SEC_VERIFY_V1_TOKEN";
+    // 必须确保该 Token 字符串字面量出现在最终编译的 JS 中，且未被 Tree-shaking 移除
+    const INTEGRITY_TOKEN = "SEC_VERIFY_V1_TOKEN";
 
     // 自校验：如果这个函数被外部篡改（例如：client.authVerify = () => true），则 Marker 会消失
     if (import.meta.env.PROD) {
       const fnStr = this.authVerify.toString();
-      if (!fnStr.includes("SEC_VERIFY_V1_TOKEN") || !fnStr.includes("subtle.verify")) {
+      // 仅检查 Token 是否存在，不再检查代码逻辑细节（如 subtle.verify），避免压缩导致变量重命名后误杀
+      if (!fnStr.includes(INTEGRITY_TOKEN)) {
         throw new Error("System Integrity Violation");
       }
     }
 
-    const nonce = new Uint8Array(32)
-    crypto.getRandomValues(nonce)
+    try {
+      // 1. Generate Ephemeral Key Pair (ECDH P-256)
+      const keyPair = await crypto.subtle.generateKey(
+        { name: 'ECDH', namedCurve: 'P-256' },
+        true,
+        ['deriveBits']
+      )
 
-    const frame = await this.session.request(MsgId.Auth, nonce)
-    const payload = frame.payload
-    if (payload.length < 1) throw new Error('Auth response too short')
+      // 2. Export Client Pub Key (Raw) -> 65 bytes (0x04 + X + Y)
+      const clientPubRaw = await crypto.subtle.exportKey('raw', keyPair.publicKey)
+      const clientPubBytes = new Uint8Array(clientPubRaw)
+      // Protocol requires Raw X||Y (64 bytes), stripping 0x04 header
+      const clientPubSimple = clientPubBytes.length === 65 ? clientPubBytes.subarray(1) : clientPubBytes
+      if (clientPubSimple.length !== 64) {
+        throw new Error(`Unexpected client pubkey length: ${clientPubSimple.length}`)
+      }
 
-    const sigLen = payload[0]
-    const signature = payload.subarray(1, 1 + sigLen)
-    if (signature.length !== sigLen) throw new Error('Auth signature truncated')
+      // 3. Send Request (Auth)
+      const frame = await this.session.request(MsgId.Auth, clientPubSimple)
+      if (!frame) throw new Error('Auth failed: no response')
+      const payload = frame.payload
 
-    const key = await crypto.subtle.importKey(
-      'spki',
-      publicKeySpkiDer,
-      { name: 'ECDSA', namedCurve: 'P-256' },
-      false,
-      ['verify'],
-    )
+      // 4. Parse Response (DevicePub(64) + Sig(64))
+      if (payload.length !== 128) {
+        // Fallback for old protocol? No, enforcing new.
+        throw new Error(`Auth response length mismatch. Got ${payload.length}, expected 128`)
+      }
+      const devicePubSimple = payload.subarray(0, 64)
+      const signature = payload.subarray(64) // Raw r||s
 
-    const rawOk = await crypto.subtle.verify(
-      { name: 'ECDSA', hash: 'SHA-256' },
-      key,
-      signature,
-      nonce,
-    )
-    if (rawOk) return true
+      // 5. Verify Signature (ECDSA P-256 over SHA-256(ClientPub || DevicePub))
+      const msg = new Uint8Array(128)
+      msg.set(clientPubSimple)
+      msg.set(devicePubSimple, 64)
 
-    if (signature.length === 64) {
-      const der = rawP256SigToDer(signature)
-      return await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, der, nonce)
+      const caKey = await crypto.subtle.importKey(
+        'spki',
+        publicKeySpkiDer,
+        { name: 'ECDSA', namedCurve: 'P-256' },
+        false,
+        ['verify']
+      )
+
+      const derSig = rawP256SigToDer(signature)
+      const sigOk = await crypto.subtle.verify(
+        { name: 'ECDSA', hash: 'SHA-256' },
+        caKey,
+        derSig,
+        msg as any
+      )
+      if (!sigOk) return false
+
+      // 6. Derive Shared Secret
+      // Re-add 0x04 prefix to import 'raw' P-256 key
+      const devicePubImport = new Uint8Array(65)
+      devicePubImport[0] = 0x04
+      devicePubImport.set(devicePubSimple, 1)
+
+      const deviceKey = await crypto.subtle.importKey(
+        'raw',
+        devicePubImport,
+        { name: 'ECDH', namedCurve: 'P-256' },
+        false,
+        []
+      )
+
+      const sharedBits = await crypto.subtle.deriveBits(
+        { name: 'ECDH', public: deviceKey },
+        keyPair.privateKey,
+        256
+      ) // 32 bytes
+
+      // 7. Derive Session Key & IV
+      const masterSecret = new Uint8Array(sharedBits)
+      const keyBlockBuf = await crypto.subtle.digest('SHA-256', masterSecret)
+      const keyBlock = new Uint8Array(keyBlockBuf) // 32 bytes
+
+      const sessionKeyRaw = keyBlock.subarray(0, 16)
+      const sessionBaseIv = keyBlock.subarray(16, 28) // 12 bytes
+
+      const sessionKey = await crypto.subtle.importKey(
+        'raw',
+        sessionKeyRaw,
+        { name: 'AES-CTR' },
+        false,
+        ['encrypt', 'decrypt']
+      )
+
+      // 8. Enable Encryption
+      this.session.enableEncryption(sessionKey, sessionBaseIv)
+
+      return true
+    } catch (e) {
+      console.error('Auth/Handshake failed:', e)
+      return false
     }
-
-    return false
   }
 
   async getDb(options: { timeoutMs?: number } = {}): Promise<webhmi.GetDbResponse> {
@@ -258,6 +323,7 @@ export class WebhmiClient {
     this.logRequest('SwitchCurrentModeRequest', request, this.pb.SwitchCurrentModeRequest)
     const payload = this.pb.SwitchCurrentModeRequest.encode(request).finish()
     const frame = await this.session.request(MsgId.SwitchCurrentMode, payload)
+    if (!frame) throw new Error('SwitchCurrentMode failed: no response')
     if (frame.payload.length === 0) return {}
     this.logResponse('SwitchCurrentModeResponse', frame.payload, this.pb.SwitchCurrentModeResponse)
     return this.pb.SwitchCurrentModeResponse.decode(frame.payload)

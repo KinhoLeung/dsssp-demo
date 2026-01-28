@@ -5,12 +5,14 @@ export const PROTOCOL_VERSION = 0x01
 
 export const FLAG_RESPONSE = 1 << 0
 export const FLAG_EVENT = 1 << 1
+export const FLAG_ENCRYPTED = 1 << 2
 
 export type DecodedFrame = {
   ver: number
   msgId: number
   flags: number
   reqId?: number
+  ivSync?: number
   payload: Uint8Array
   raw: Uint8Array
 }
@@ -19,6 +21,7 @@ export type EncodeFrameParams = {
   msgId: number
   flags: number
   reqId?: number
+  ivSync?: number
   payload?: Uint8Array
   ver?: number
 }
@@ -38,6 +41,17 @@ const encodeReqIdExt = (reqId: number) => {
   return ext
 }
 
+const encodeIvSyncExt = (ivSync: number) => {
+  const ext = new Uint8Array(6)
+  ext[0] = 0x81
+  ext[1] = 0x04
+  ext[2] = ivSync & 0xff
+  ext[3] = (ivSync >>> 8) & 0xff
+  ext[4] = (ivSync >>> 16) & 0xff
+  ext[5] = (ivSync >>> 24) & 0xff
+  return ext
+}
+
 const parseReqIdFromExt = (ext: Uint8Array): number | undefined => {
   let offset = 0
   while (offset + 2 <= ext.length) {
@@ -54,11 +68,31 @@ const parseReqIdFromExt = (ext: Uint8Array): number | undefined => {
   return undefined
 }
 
+const parseIvSyncFromExt = (ext: Uint8Array): number | undefined => {
+  let offset = 0
+  while (offset + 2 <= ext.length) {
+    const t = ext[offset]
+    const l = ext[offset + 1]
+    offset += 2
+    if (offset + l > ext.length) return undefined
+
+    if (t === 0x81 && l === 4) {
+      const v = ext[offset] | (ext[offset + 1] << 8) | (ext[offset + 2] << 16) | (ext[offset + 3] << 24)
+      return v >>> 0
+    }
+    offset += l
+  }
+  return undefined
+}
+
 export const encodeFrame = (params: EncodeFrameParams): Uint8Array => {
   const ver = typeof params.ver === 'number' ? params.ver : PROTOCOL_VERSION
   const payload = params.payload ?? new Uint8Array()
-  const ext = typeof params.reqId === 'number' ? encodeReqIdExt(params.reqId) : new Uint8Array()
-  const hdrLen = 7 + ext.length
+  const extReqId = typeof params.reqId === 'number' ? encodeReqIdExt(params.reqId) : new Uint8Array()
+  const extIvSync = typeof params.ivSync === 'number' ? encodeIvSyncExt(params.ivSync) : new Uint8Array()
+
+  const extLen = extReqId.length + extIvSync.length
+  const hdrLen = 7 + extLen
 
   const totalLen = 2 + hdrLen + payload.length + 2
   const out = new Uint8Array(totalLen)
@@ -72,8 +106,11 @@ export const encodeFrame = (params: EncodeFrameParams): Uint8Array => {
   out[6] = params.flags & 0xff
   writeU16Le(view, 7, payload.length)
 
-  out.set(ext, 9)
-  out.set(payload, 9 + ext.length)
+  // Append Extensions
+  out.set(extReqId, 9)
+  out.set(extIvSync, 9 + extReqId.length)
+
+  out.set(payload, 9 + extLen)
 
   const crcInput = out.subarray(2, out.length - 2)
   const crc = crc16CcittFalse(crcInput)
@@ -105,8 +142,9 @@ export const decodeFrame = (raw: Uint8Array): DecodedFrame => {
 
   const ext = raw.subarray(9, 9 + extLen)
   const reqId = parseReqIdFromExt(ext)
+  const ivSync = parseIvSyncFromExt(ext)
   const payload = raw.subarray(9 + extLen, 9 + extLen + payloadLen)
 
-  return { ver, msgId, flags, reqId, payload, raw }
+  return { ver, msgId, flags, reqId, ivSync, payload, raw }
 }
 
