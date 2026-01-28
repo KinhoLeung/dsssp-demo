@@ -42,6 +42,8 @@ function Home() {
       const hidFilters = HID_DEVICE_PROFILES.map((profile) => ({
         vendorId: profile.vendorId,
         productId: profile.productId,
+        usagePage: profile.usagePage,
+        usage: profile.usage,
       }))
       if (hidFilters.length === 0) {
         window.alert('未配置可用的 HID 设备。')

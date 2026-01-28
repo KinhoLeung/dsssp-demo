@@ -643,8 +643,11 @@ export function useDeviceSession(
         setSelectedHidDevice(device)
 
         const profile =
-          HID_DEVICE_PROFILES.find((p) => p.vendorId === device.vendorId && p.productId === device.productId) ??
-          HID_DEVICE_PROFILES[0]
+          HID_DEVICE_PROFILES.find((p) =>
+            p.vendorId === device.vendorId &&
+            p.productId === device.productId &&
+            device.collections.some(c => c.usagePage === p.usagePage && c.usage === p.usage)
+          ) ?? HID_DEVICE_PROFILES[0]
         if (!profile) throw new Error('No HID device profile configured')
 
         const transport = new HidTransport(device, { reportId: profile.reportId, reportSize: profile.reportSize })
@@ -656,10 +659,10 @@ export function useDeviceSession(
           console.warn('[HID] disconnected')
           void handleTransportDisconnected()
         }
-        navigator.hid.addEventListener('disconnect', onDisconnect)
+        navigator.hid?.addEventListener('disconnect', onDisconnect)
 
         setConnectedClient(nextClient, 'hid', () => {
-          navigator.hid.removeEventListener('disconnect', onDisconnect)
+          navigator.hid?.removeEventListener('disconnect', onDisconnect)
         })
 
         const ok = await doAuth(nextClient)
@@ -684,8 +687,7 @@ export function useDeviceSession(
       }
       if (clientRef.current) await disconnect()
       const interactive = options.interactive !== false
-      const profile = BLE_DEVICE_PROFILES[0]
-      if (!profile) {
+      if (BLE_DEVICE_PROFILES.length === 0) {
         window.alert('未配置可用的 BLE 设备。')
         return false
       }
@@ -704,6 +706,9 @@ export function useDeviceSession(
 
         if (!device) return false
         setSelectedBleDevice(device)
+
+        const profile =
+          BLE_DEVICE_PROFILES.find((p) => device.name?.includes(p.label)) ?? BLE_DEVICE_PROFILES[0]
 
         const transport = new BleTransport(device, {
           service: profile.service,

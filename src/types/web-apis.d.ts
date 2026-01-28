@@ -1,4 +1,4 @@
-export {}
+export { }
 
 declare global {
   interface HIDInputReportEvent extends Event {
@@ -7,19 +7,32 @@ declare global {
     reportId: number
   }
 
+  interface HIDCollectionInfo {
+    usagePage?: number
+    usage?: number
+  }
+
   interface HIDDevice extends EventTarget {
     vendorId: number
     productId: number
     opened: boolean
+    collections: HIDCollectionInfo[]
     open(): Promise<void>
     close(): Promise<void>
     sendReport(reportId: number, data: BufferSource): Promise<void>
-    addEventListener(type: 'inputreport', listener: (event: HIDInputReportEvent) => void): void
-    removeEventListener(type: 'inputreport', listener: (event: HIDInputReportEvent) => void): void
+    addEventListener(type: string, listener: (event: any) => void): void
+    removeEventListener(type: string, listener: (event: any) => void): void
   }
-  interface HID {
+
+  interface HIDConnectionEvent extends Event {
+    device: HIDDevice
+  }
+
+  interface HID extends EventTarget {
     getDevices(): Promise<HIDDevice[]>
     requestDevice(options: { filters: Array<Record<string, unknown>> }): Promise<HIDDevice[]>
+    addEventListener(type: string, listener: any, options?: boolean | AddEventListenerOptions): void
+    removeEventListener(type: string, listener: any, options?: boolean | EventListenerOptions): void
   }
 
   interface BluetoothRemoteGATTCharacteristic extends EventTarget {
@@ -47,8 +60,14 @@ declare global {
     name?: string
     gatt?: BluetoothRemoteGATTServer
   }
-  interface Bluetooth {
-    requestDevice(options: { acceptAllDevices?: boolean; filters?: Array<Record<string, unknown>> }): Promise<BluetoothDevice>
+  interface BluetoothRequestDeviceOptions {
+    filters?: Array<Record<string, unknown>>
+    optionalServices?: Array<number | string>
+    acceptAllDevices?: boolean
+  }
+
+  interface Bluetooth extends EventTarget {
+    requestDevice(options: BluetoothRequestDeviceOptions): Promise<BluetoothDevice>
   }
 
   interface Navigator {
