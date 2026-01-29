@@ -492,7 +492,7 @@ export const encodeSetEchoRequest = (message: SetEchoRequest) => {
   writer.uint32(4, message.echoDelayTime)
   writer.uint32(5, message.echoRepeat)
   writer.uint32(6, message.echoRightPredelay)
-  writer.uint32(7, message.echoRightDelay)
+  writer.int32(7, message.echoRightDelay)
   return writer.finish()
 }
 
@@ -1060,7 +1060,7 @@ const encodeEchoDb = (message: EchoDb) => {
   writer.uint32(5, message.echoDelayTime)
   writer.uint32(6, message.echoRepeat)
   writer.uint32(7, message.echoRightPredelay)
-  writer.uint32(8, message.echoRightDelay)
+  writer.int32(8, message.echoRightDelay)
   return writer.finish()
 }
 
@@ -1095,7 +1095,7 @@ const decodeEchoDb = (bytes: Uint8Array): EchoDb => {
         message.echoRightPredelay = reader.uint32()
         break
       case 8:
-        message.echoRightDelay = reader.uint32()
+        message.echoRightDelay = reader.int32()
         break
       default:
         reader.skip(wire)
@@ -1453,7 +1453,7 @@ const encodeEqPatch = (message: EqPatch) => {
 
 const encodeNoiseGatePatch = (message: NoiseGatePatch) => {
   const writer = new PbWriter()
-  writer.int32(1, message.gate)
+  writer.float(1, message.gate)
   writer.uint32(2, message.frameTime)
   writer.uint32(3, message.atkTime)
   writer.uint32(4, message.relTime)

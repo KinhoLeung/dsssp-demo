@@ -174,7 +174,7 @@ message EchoDb {
   optional uint32 echoDelayTime = 5;
   optional uint32 echoRepeat = 6;
   optional uint32 echoRightPredelay = 7;
-  optional uint32 echoRightDelay = 8;
+  optional int32 echoRightDelay = 8;
 
   optional bool echoLevelPhaseInversion = 9;
   optional bool micDirectLevelPhaseInversion = 10;
@@ -281,7 +281,7 @@ message SetEqRequest {
 }
 
 message NoiseGatePatch {
-  optional int32 gate = 1;
+  optional float gate = 1;
   optional uint32 frameTime = 2;
   optional uint32 atkTime = 3;
   optional uint32 relTime = 4;
@@ -397,7 +397,7 @@ message SetEchoRequest {
   optional uint32 echoDelayTime = 4;
   optional uint32 echoRepeat = 5;
   optional uint32 echoRightPredelay = 6;
-  optional uint32 echoRightDelay = 7;
+  optional int32 echoRightDelay = 7;
 
   optional bool echoLevelPhaseInversion = 8;
   optional bool micDirectLevelPhaseInversion = 9;

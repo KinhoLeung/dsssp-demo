@@ -41,7 +41,7 @@ const parameterRanges = {
     micBVolume: levelRange,
     bass: toneRange,
     mid: toneRange,
-    midFreq: range(20, 20000, 0.1),
+    midFreq: range(20, 20000, 1),
     treble: toneRange,
     noise: {
       gate: range(-90, -50, 0.1),
