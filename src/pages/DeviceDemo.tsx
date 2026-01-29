@@ -1095,8 +1095,20 @@ function DeviceDemo() {
       surroundDb.compressor.bypass,
     )
 
-  const [dragging, setDragging] = useState(false)
-  const [activeIndex, setActiveIndex] = useState<number>(0)
+  const [dragging, setDraggingState] = useState(false)
+  const isDraggingRef = useRef(false)
+  const setDragging = useCallback((d: boolean) => {
+    isDraggingRef.current = d
+    setDraggingState(d)
+  }, [])
+
+  const [activeIndex, setActiveIndexState] = useState<number>(0)
+  const activeIndexRef = useRef(0)
+  const setActiveIndex = useCallback((i: number) => {
+    if (activeIndexRef.current === i) return
+    activeIndexRef.current = i
+    setActiveIndexState(i)
+  }, [])
   const [panelStateByKey, setPanelStateByKey] = useState<Record<PanelKey, PanelState>>(() => {
     const out = {} as Record<PanelKey, PanelState>
     for (const panel of panels) out[panel.key] = { filters: [], pointIndexByUiIndex: [], allowedTypesByUiIndex: [] }
@@ -1108,12 +1120,19 @@ function DeviceDemo() {
     panelStateByKeyRef.current = panelStateByKey
   }, [panelStateByKey])
 
+  const stateRef = useRef(state)
+  useEffect(() => {
+    stateRef.current = state
+  }, [state])
+
   const actionsRef = useRef(actions)
   useEffect(() => {
     actionsRef.current = actions
   }, [actions])
 
   useEffect(() => {
+    if (isDraggingRef.current) return
+
     const out = {} as Record<PanelKey, PanelState>
     for (const panel of panels) {
       const eq = panel.getEq(state.db)
@@ -1136,11 +1155,11 @@ function DeviceDemo() {
   }, [panels, state.dbFetchId])
 
   const handleMouseLeave = () => {
-    if (!dragging) setActiveIndex(-1)
+    if (!isDraggingRef.current) setActiveIndex(-1)
   }
 
   const handleMouseEnter = ({ index }: { index: number }) => {
-    if (!dragging) setActiveIndex(index)
+    if (!isDraggingRef.current) setActiveIndex(index)
   }
 
   const uiRafIdRef = useRef<number | null>(null)
@@ -1209,7 +1228,7 @@ function DeviceDemo() {
 
       const { index: uiIndex, ended, ...filter } = filterEvent
 
-      // Ensure active state and dragging state are maintained during any interaction (drag or right-click adjust)
+      // Ensure active state and dragging state are maintained during any interaction
       if (!ended) {
         setActiveIndex(uiIndex)
         setDragging(true)
@@ -1238,11 +1257,24 @@ function DeviceDemo() {
       const filterType = mapGraphTypeToFilterType(filter.type)
       const gain = filter.type === 'BYPASS' ? 0 : filter.gain
       const q = filter.type === 'BYPASS' ? 1 : filter.q
+      const freq = Math.max(1, Math.round(filter.freq))
+
+      // Optimization: Only queue if the rounded values have actually changed in our local DB view
+      const sourceDb = stateRef.current.db
+      if (sourceDb) {
+        const currentEq = def.getEq(sourceDb)
+        if (currentEq?.point) {
+          const cp = currentEq.point.find((p) => p && p.index === deviceIndex)
+          if (cp && cp.type === filterType && nearlyEqual(cp.freq ?? 0, freq) && nearlyEqual(cp.gain ?? 0, gain) && nearlyEqual(cp.q ?? 0, q)) {
+            return
+          }
+        }
+      }
 
       actionsRef.current.queueEqPoint(def.target, {
         index: deviceIndex,
         type: filterType,
-        freq: Math.max(1, Math.round(filter.freq)),
+        freq,
         gain,
         q,
       })
