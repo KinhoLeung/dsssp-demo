@@ -1,8 +1,10 @@
 import { Bluetooth, MonitorPlay, Usb } from 'lucide-react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import CodeHoverCards from '@/components/lightswind/code-hover-cards'
 import type { CardData } from '@/components/lightswind/code-hover-cards'
+import { Spinner } from '@/components/ui/spinner'
 import {
   BLE_DEVICE_PROFILES,
   HID_DEVICE_PROFILES,
@@ -10,6 +12,7 @@ import {
 } from '@/configs/deviceProfiles'
 import { setSelectedBleDevice, setSelectedHidDevice } from '@/device/selectedDevices'
 import { useDeviceSessionContext } from '@/device/session/deviceSessionContext'
+import { toast } from '@/hooks/use-toast'
 
 const cards = [
   {
@@ -31,12 +34,13 @@ const cards = [
 
 function Home() {
   const navigate = useNavigate()
-  const { actions } = useDeviceSessionContext()
+  const { state, actions } = useDeviceSessionContext()
+  const [connectingMessage, setConnectingMessage] = useState('')
 
   const handleCardClick = async (card: CardData) => {
     if (card.id === 'usb') {
       if (!navigator.hid) {
-        window.alert('当前浏览器不支持 WebHID。')
+        window.alert('WebHID is not supported by this browser.')
         return
       }
       const hidFilters = HID_DEVICE_PROFILES.map((profile) => ({
@@ -46,30 +50,45 @@ function Home() {
         usage: profile.usage,
       }))
       if (hidFilters.length === 0) {
-        window.alert('未配置可用的 HID 设备。')
+        window.alert('No HID device profiles configured.')
         return
       }
       try {
         const [device] = await navigator.hid.requestDevice({ filters: hidFilters })
         if (!device) return
         setSelectedHidDevice(device)
+        setConnectingMessage(`Connecting to ${device.productName || 'USB Device'}...`)
         const ok = await actions.connectHid({ interactive: false })
-        if (ok) navigate('/device-demo?transport=hid')
-      } catch {
-        // ignored (user cancelled)
+        if (ok) {
+          navigate('/device-demo?transport=hid')
+        } else {
+          toast.destructive({
+            title: 'Connection Failed',
+            description: state.error || state.authError || 'Failed to connect to USB device.'
+          })
+        }
+      } catch (e) {
+        if ((e as Error).name !== 'NotFoundError' && (e as Error).name !== 'AbortError') {
+          toast.destructive({
+            title: 'Connection Error',
+            description: (e as Error).message
+          })
+        }
+      } finally {
+        setConnectingMessage('')
       }
       return
     }
     if (card.id === 'ble') {
       if (!navigator.bluetooth) {
-        window.alert('当前浏览器不支持 WebBLE。')
+        window.alert('WebBLE is not supported by this browser.')
         return
       }
       const bleFilters = BLE_DEVICE_PROFILES.map((profile) => ({
         services: [profile.service],
       }))
       if (bleFilters.length === 0) {
-        window.alert('未配置可用的 BLE 设备。')
+        window.alert('No BLE device profiles configured.')
         return
       }
       try {
@@ -78,10 +97,25 @@ function Home() {
           optionalServices: uniqueBleServices(),
         })
         setSelectedBleDevice(device)
+        setConnectingMessage(`Connecting to ${device.name || 'Bluetooth Device'}...`)
         const ok = await actions.connectBle({ interactive: false })
-        if (ok) navigate('/device-demo?transport=ble')
-      } catch {
-        // ignored (user cancelled)
+        if (ok) {
+          navigate('/device-demo?transport=ble')
+        } else {
+          toast.destructive({
+            title: 'Connection Failed',
+            description: state.error || state.authError || 'Failed to connect to Bluetooth device.'
+          })
+        }
+      } catch (e) {
+        if ((e as Error).name !== 'NotFoundError' && (e as Error).name !== 'AbortError') {
+          toast.destructive({
+            title: 'Connection Error',
+            description: (e as Error).message
+          })
+        }
+      } finally {
+        setConnectingMessage('')
       }
       return
     }
@@ -91,7 +125,7 @@ function Home() {
   }
 
   return (
-    <section className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 py-8 min-h-[calc(100vh-8rem)]">
+    <section className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 py-8 min-h-[calc(100vh-8rem)] relative">
       <div className="flex flex-1 items-center justify-center">
         <CodeHoverCards
           cards={cards}
@@ -104,6 +138,18 @@ function Home() {
           onCardClick={handleCardClick}
         />
       </div>
+
+      {connectingMessage && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm transition-all duration-300 animate-in fade-in">
+          <div className="flex flex-col items-center gap-4 p-8 rounded-xl bg-card border shadow-lg">
+            <Spinner className="size-12 text-primary" />
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-lg font-medium animate-pulse">{connectingMessage}</p>
+              <p className="text-sm text-muted-foreground">This may take a few seconds, please do not close the page.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

@@ -619,7 +619,7 @@ export function useDeviceSession(
   const connectHid = useCallback(
     async (options: { interactive?: boolean } = {}): Promise<boolean> => {
       if (!navigator.hid) {
-        window.alert('当前浏览器不支持 WebHID。')
+        window.alert('WebHID is not supported by this browser.')
         return false
       }
       if (clientRef.current) await disconnect()
@@ -686,13 +686,13 @@ export function useDeviceSession(
   const connectBle = useCallback(
     async (options: { interactive?: boolean } = {}): Promise<boolean> => {
       if (!navigator.bluetooth) {
-        window.alert('当前浏览器不支持 WebBLE。')
+        window.alert('WebBLE is not supported by this browser.')
         return false
       }
       if (clientRef.current) await disconnect()
       const interactive = options.interactive !== false
       if (BLE_DEVICE_PROFILES.length === 0) {
-        window.alert('未配置可用的 BLE 设备。')
+        window.alert('No BLE device profiles configured.')
         return false
       }
 

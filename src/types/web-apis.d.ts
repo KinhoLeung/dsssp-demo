@@ -15,6 +15,7 @@ declare global {
   interface HIDDevice extends EventTarget {
     vendorId: number
     productId: number
+    productName: string
     opened: boolean
     collections: HIDCollectionInfo[]
     open(): Promise<void>

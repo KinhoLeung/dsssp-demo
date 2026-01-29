@@ -11,6 +11,7 @@ import {
   NavBody,
   NavItems,
 } from '@/components/ui/resizable-navbar'
+import { Toaster } from '@/components/ui/toaster'
 import { DeviceSessionProvider } from '@/device/session/deviceSessionContext'
 
 const navItems = [
@@ -58,6 +59,7 @@ function App() {
           <Outlet />
         </DeviceSessionProvider>
       </main>
+      <Toaster />
     </div>
   )
 }

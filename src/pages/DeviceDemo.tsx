@@ -875,7 +875,7 @@ function DeviceDemo() {
         e.target.value = ''
       } catch (err) {
         console.error('Import failed', err)
-        alert('导入失败: ' + (err instanceof Error ? err.message : String(err)))
+        alert('Import failed: ' + (err instanceof Error ? err.message : String(err)))
         e.target.value = ''
       }
     },
