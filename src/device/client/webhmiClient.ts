@@ -5,43 +5,6 @@ import { RpcSession } from '../session'
 import type { Transport } from '../transport'
 import type { DecodedFrame } from '../protocol/frame'
 
-function concatBytes(a: Uint8Array, b: Uint8Array) {
-  const out = new Uint8Array(a.length + b.length)
-  out.set(a)
-  out.set(b, a.length)
-  return out
-}
-
-function derEncodeInteger(bytes: Uint8Array) {
-  let start = 0
-  while (start < bytes.length && bytes[start] === 0) start++
-  const trimmed = bytes.subarray(start)
-  const needsLeadingZero = trimmed.length > 0 && trimmed[0] > 0x7f
-  const value = needsLeadingZero ? concatBytes(new Uint8Array([0]), trimmed) : trimmed.length ? trimmed : new Uint8Array([0])
-
-  const out = new Uint8Array(2 + value.length)
-  out[0] = 0x02
-  out[1] = value.length
-  out.set(value, 2)
-  return out
-}
-
-function rawP256SigToDer(raw: Uint8Array) {
-  if (raw.length !== 64) throw new Error('Expected raw P-256 signature (64 bytes)')
-  const r = raw.subarray(0, 32)
-  const s = raw.subarray(32, 64)
-
-  const rDer = derEncodeInteger(r)
-  const sDer = derEncodeInteger(s)
-  const seqLen = rDer.length + sDer.length
-
-  const out = new Uint8Array(2 + seqLen)
-  out[0] = 0x30
-  out[1] = seqLen
-  out.set(rDer, 2)
-  out.set(sDer, 2 + rDer.length)
-  return out
-}
 
 export class WebhmiClient {
   private readonly session: RpcSession
@@ -96,9 +59,11 @@ export class WebhmiClient {
       }
 
       // 3. Send Request (Auth)
+      console.debug('[WebhmiClient] Sending Auth request (Client Hello)...')
       const frame = await this.session.request(MsgId.Auth, clientPubSimple)
       if (!frame) throw new Error('Auth failed: no response')
       const payload = frame.payload
+      console.debug('[WebhmiClient] Received Auth response (Server Hello).')
 
       // 4. Parse Response (DevicePub(64) + Sig(64))
       if (payload.length !== 128) {
@@ -115,19 +80,20 @@ export class WebhmiClient {
 
       const caKey = await crypto.subtle.importKey(
         'spki',
-        publicKeySpkiDer,
+        publicKeySpkiDer as any,
         { name: 'ECDSA', namedCurve: 'P-256' },
         false,
         ['verify']
       )
 
-      const derSig = rawP256SigToDer(signature)
+      console.debug('[WebhmiClient] Verifying Server signature...')
       const sigOk = await crypto.subtle.verify(
         { name: 'ECDSA', hash: 'SHA-256' },
         caKey,
-        derSig,
+        signature as any,
         msg as any
       )
+      console.debug('[WebhmiClient] Signature verification:', sigOk ? 'OK' : 'FAILED')
       if (!sigOk) return false
 
       // 6. Derive Shared Secret
@@ -167,6 +133,7 @@ export class WebhmiClient {
       )
 
       // 8. Enable Encryption
+      console.info('[WebhmiClient] Handshake successful. Enabling encryption.')
       this.session.enableEncryption(sessionKey, sessionBaseIv)
 
       return true

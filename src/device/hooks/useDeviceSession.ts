@@ -374,8 +374,10 @@ export function useDeviceSession(
       }
 
       try {
+        console.info('[useDeviceSession] Starting authVerify...')
         const ok = await targetClient.authVerify(publicKeySpkiDer)
         setState((s) => ({ ...s, authOk: ok, authError: ok ? '' : 'Signature verification failed' }))
+        console.info('[useDeviceSession] authVerify result:', ok)
         return ok
       } catch (e) {
         setState((s) => ({ ...s, authOk: false, authError: e instanceof Error ? e.message : String(e) }))
@@ -391,6 +393,7 @@ export function useDeviceSession(
 
     setState((s) => ({ ...s, busy: true, error: '' }))
     try {
+      console.info('[useDeviceSession] Requesting database (GetDb)...')
       const message = await targetClient.getDb()
       const db = targetClient.getDbToObject(message, { enums: Number }) as unknown as webhmi.IGetDbResponse
       const dbForPrint = targetClient.getDbToObject(message, { enums: String, longs: String })
@@ -399,6 +402,7 @@ export function useDeviceSession(
       resetPending()
       baseDbRef.current = cloneObject(db)
       setState((s) => ({ ...s, db, dbJson: pretty, dbFetchId: s.dbFetchId + 1 }))
+      console.info('[useDeviceSession] Database refreshed successfully.')
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
       console.error('[GetDbResponse] failed', message)
@@ -1045,7 +1049,7 @@ export function useDeviceSession(
 
   const queueEqBypass = useCallback(
     (target: webhmi.EqTarget, bypass: boolean) => {
-      const entry = pendingRef.current.eq.get(target) ?? { points: new Map() }
+      const entry: PendingEqTarget = pendingRef.current.eq.get(target) ?? { points: new Map() }
       entry.bypass = bypass
       pendingRef.current.eq.set(target, entry)
 

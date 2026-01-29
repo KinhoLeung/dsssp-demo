@@ -91,20 +91,24 @@ export class RpcSession {
         throw new Error('Tx FrameCounter overflow (Client range exhausted)')
       }
       ivSync = this.txFrameCounter >>> 0
-      this.txFrameCounter = (this.txFrameCounter + 1) >>> 0
 
       // Construct IV: Base(12) + Counter(4 BE)
       const iv = new Uint8Array(16)
       iv.set(this.sessionBaseIv)
       const v = new DataView(iv.buffer)
-      v.setUint32(12, ivSync, false) // Big Endian for 32-bit Counter in CTR IV
+      v.setUint32(12, ivSync, false)
 
+      console.debug(`[RpcSession] Encrypting msgId=0x${msgId.toString(16)} with ivSync=0x${ivSync.toString(16)}`)
       const cipher = await crypto.subtle.encrypt(
         { name: 'AES-CTR', counter: iv, length: 128 },
         this.cryptoKey,
         payload as any,
       )
       finalPayload = new Uint8Array(cipher)
+
+      // Increment Tx Counter by number of blocks
+      const blocksUsed = Math.max(1, Math.ceil(payload.length / 16))
+      this.txFrameCounter = (this.txFrameCounter + blocksUsed) >>> 0
     }
 
     const expectResponse = options.expectResponse !== false
@@ -132,6 +136,7 @@ export class RpcSession {
     })
 
     try {
+      console.debug(`[RpcSession] TX msgId=0x${msgId.toString(16)} flags=${flags} reqId=${reqId} len=${finalPayload.length}`)
       await this.transport.write(raw)
     } catch (e) {
       const entry = this.inFlight.get(reqId!)
@@ -154,6 +159,7 @@ export class RpcSession {
 
   private onBytes(chunk: Uint8Array) {
     this.processQueue = this.processQueue.then(async () => {
+      console.debug(`[RpcSession] received chunk, len=${chunk.length}`)
       const frames = this.decoder.push(chunk)
       for (const frame of frames) {
         await this.handleFrame(frame)
@@ -189,6 +195,7 @@ export class RpcSession {
       }
       this.lastRxFrameCounter = ivSyncU32
 
+      console.debug(`[RpcSession] Decrypting msgId=0x${frame.msgId.toString(16)} with ivSync=0x${ivSyncU32.toString(16)}`)
       try {
         // Construct IV
         const iv = new Uint8Array(16)
@@ -202,11 +209,17 @@ export class RpcSession {
           frame.payload as any,
         )
         frame.payload = new Uint8Array(plain)
+
+        // Increment Rx Counter by blocks
+        const blocksUsed = Math.max(1, Math.ceil(frame.payload.length / 16))
+        this.lastRxFrameCounter = (ivSyncU32 + blocksUsed - 1) >>> 0
       } catch (e) {
         console.error('[RpcSession] Decrypt failed:', e)
         return
       }
     }
+
+    console.debug(`[RpcSession] RX msgId=0x${frame.msgId.toString(16)} flags=${frame.flags} reqId=${frame.reqId} len=${frame.payload.length}`)
 
     if (frame.flags & FLAG_EVENT) {
       for (const handler of this.eventHandlers) handler(frame)
