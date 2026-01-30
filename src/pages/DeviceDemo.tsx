@@ -762,8 +762,8 @@ function DeviceDemo() {
       delete (cleanDb.db as any).system
     }
 
-    const json = JSON.stringify(cleanDb, null, 2)
-    const blob = new Blob([json], { type: 'application/json' })
+    const buffer = webhmi.GetDbResponse.encode(cleanDb as webhmi.IGetDbResponse).finish()
+    const blob = new Blob([buffer as any], { type: 'application/octet-stream' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -837,8 +837,8 @@ function DeviceDemo() {
       if (!file) return
 
       try {
-        const text = await file.text()
-        const data = JSON.parse(text) as webhmi.IGetDbResponse
+        const buffer = await file.arrayBuffer()
+        const data = webhmi.GetDbResponse.decode(new Uint8Array(buffer))
         if (!data.db) throw new Error('Invalid configuration file: missing database content.')
 
         const currentDeviceId = state.db?.deviceId
