@@ -1236,6 +1236,9 @@ function DeviceDemo() {
         setDragging(false)
       }
 
+      const jointDebug = stateRef.current.db?.db?.mic?.micEqJointDebugging
+      const otherKey = (jointDebug && (key === 'mica' || key === 'micb')) ? (key === 'mica' ? 'micb' : 'mica') : null
+
       if (ended) {
         const pendingForKey = pendingUiPatchesRef.current.get(key)
         if (pendingForKey) {
@@ -1243,13 +1246,30 @@ function DeviceDemo() {
           if (pendingForKey.size === 0) pendingUiPatchesRef.current.delete(key)
         }
 
+        if (otherKey) {
+          const pendingForOther = pendingUiPatchesRef.current.get(otherKey)
+          if (pendingForOther) {
+            pendingForOther.delete(uiIndex)
+            if (pendingForOther.size === 0) pendingUiPatchesRef.current.delete(otherKey)
+          }
+        }
+
         const patches = new Map<PanelKey, Map<number, Partial<GraphFilter>>>()
         patches.set(key, new Map([[uiIndex, filter]]))
+        if (otherKey) patches.set(otherKey, new Map([[uiIndex, filter]]))
+
         applyUiPatches(patches)
       } else {
         const byIndex = pendingUiPatchesRef.current.get(key) ?? new Map<number, Partial<GraphFilter>>()
         byIndex.set(uiIndex, filter)
         pendingUiPatchesRef.current.set(key, byIndex)
+
+        if (otherKey) {
+          const byIndexOther = pendingUiPatchesRef.current.get(otherKey) ?? new Map<number, Partial<GraphFilter>>()
+          byIndexOther.set(uiIndex, filter)
+          pendingUiPatchesRef.current.set(otherKey, byIndexOther)
+        }
+
         scheduleUiFlush()
       }
 
@@ -1271,13 +1291,23 @@ function DeviceDemo() {
         }
       }
 
-      actionsRef.current.queueEqPoint(def.target, {
+      const pointPatch = {
         index: deviceIndex,
         type: filterType,
         freq,
         gain,
         q,
-      })
+      }
+      actionsRef.current.queueEqPoint(def.target, pointPatch)
+
+      // Sync changes if Mic Joint Debugging is enabled
+      // `jointDebug` and `otherKey` already calculated above
+      if (jointDebug && otherKey) {
+        const otherPanel = panelByKey[otherKey]
+        if (otherPanel) {
+          actionsRef.current.queueEqPoint(otherPanel.target, pointPatch)
+        }
+      }
     },
     [applyUiPatches, panelByKey, scheduleUiFlush, setActiveIndex, setDragging],
   )
@@ -1291,6 +1321,16 @@ function DeviceDemo() {
       const uiIndex = filterEvent.index
       const deviceIndex = stateForPanel.pointIndexByUiIndex[uiIndex] ?? uiIndex
       void actionsRef.current.resetEqPointToDefault(def.target, deviceIndex)
+
+      // Sync changes if Mic Joint Debugging is enabled
+      const jointDebug = stateForPanel.pointIndexByUiIndex.length > 0 && stateRef.current.db?.db?.mic?.micEqJointDebugging
+      if (jointDebug && (key === 'mica' || key === 'micb')) {
+        const otherKey = key === 'mica' ? 'micb' : 'mica'
+        const otherPanel = panelByKey[otherKey]
+        if (otherPanel) {
+          void actionsRef.current.resetEqPointToDefault(otherPanel.target, deviceIndex)
+        }
+      }
     },
     [panelByKey],
   )
@@ -2004,8 +2044,20 @@ function DeviceDemo() {
                   handleMouseEnter={handleMouseEnter}
                   handleMouseLeave={handleMouseLeave}
                   setDragging={setDragging}
-                  onReset={() => void actions.resetEq(panelByKey[micKey].target)}
-                  onBypassChange={(pressed) => actions.queueEqBypass(panelByKey[micKey].target, pressed)}
+                  onReset={() => {
+                    void actions.resetEq(panelByKey[micKey].target)
+                    if (state.db?.db?.mic?.micEqJointDebugging) {
+                      const otherKey = micKey === 'mica' ? 'micb' : 'mica'
+                      void actions.resetEq(panelByKey[otherKey].target)
+                    }
+                  }}
+                  onBypassChange={(pressed) => {
+                    actions.queueEqBypass(panelByKey[micKey].target, pressed)
+                    if (state.db?.db?.mic?.micEqJointDebugging) {
+                      const otherKey = micKey === 'mica' ? 'micb' : 'mica'
+                      actions.queueEqBypass(panelByKey[otherKey].target, pressed)
+                    }
+                  }}
                 />
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {showMicParamsCard && (
