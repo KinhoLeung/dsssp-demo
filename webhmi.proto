@@ -378,6 +378,8 @@ message SetMicRequest {
 
   optional NoiseGatePatch noise = 9;
   optional CompressorPatch compressor = 10;
+
+  optional EqTarget target = 11;
 }
 
 message SetReverbRequest {

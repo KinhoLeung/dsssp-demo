@@ -330,6 +330,7 @@ export type SetMicRequest = {
   treble?: number
   noise?: NoiseGatePatch
   compressor?: CompressorPatch
+  target?: EqTarget
 }
 
 export type SetReverbRequest = {
@@ -472,6 +473,7 @@ export const encodeSetMicRequest = (message: SetMicRequest) => {
   writer.float(8, message.treble)
   writer.message(9, message.noise ? encodeNoiseGatePatch(message.noise) : undefined)
   writer.message(10, message.compressor ? encodeCompressorPatch(message.compressor) : undefined)
+  writer.uint32(11, message.target)
   return writer.finish()
 }
 

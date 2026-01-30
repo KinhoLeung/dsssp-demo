@@ -1968,7 +1968,12 @@ function DeviceDemo() {
                           <Toggle
                             variant="outline"
                             pressed={!!micDb?.micEqJointDebugging}
-                            onPressedChange={(pressed) => actions.queueMic({ micEqJointDebugging: pressed })}
+                            onPressedChange={(pressed) =>
+                              actions.queueMic({
+                                micEqJointDebugging: pressed,
+                                target: micKey === 'mica' ? webhmi.EqTarget.MIC_A : webhmi.EqTarget.MIC_B,
+                              })
+                            }
                             disabled={micDisabled}
                           >
                             Mic EQ Link
