@@ -1968,7 +1968,29 @@ function DeviceDemo() {
                           <Toggle
                             variant="outline"
                             pressed={!!micDb?.micEqJointDebugging}
-                            onPressedChange={(pressed) => actions.queueMic({ micEqJointDebugging: pressed })}
+                            onPressedChange={(pressed) => {
+                              if (pressed) {
+                                const sourceKey = micKey
+                                const targetKey = micKey === 'mica' ? 'micb' : 'mica'
+                                const sourcePanel = panelByKey[sourceKey]
+                                const targetPanel = panelByKey[targetKey]
+                                const sourceEq = sourcePanel?.getEq(state.db)
+
+                                if (sourceEq && targetPanel) {
+                                  // Copy bypass
+                                  if (typeof sourceEq.bypass === 'boolean') {
+                                    actions.queueEqBypass(targetPanel.target, sourceEq.bypass)
+                                  }
+                                  // Copy points
+                                  if (Array.isArray(sourceEq.point)) {
+                                    for (const p of sourceEq.point) {
+                                      actions.queueEqPoint(targetPanel.target, p)
+                                    }
+                                  }
+                                }
+                              }
+                              actions.queueMic({ micEqJointDebugging: pressed })
+                            }}
                             disabled={micDisabled}
                           >
                             Mic EQ Link
