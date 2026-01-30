@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 
 import CodeHoverCards from '@/components/lightswind/code-hover-cards'
 import type { CardData } from '@/components/lightswind/code-hover-cards'
+import ColourfulText from "@/components/ui/colourful-text";
 import { Spinner } from '@/components/ui/spinner'
 import {
   BLE_DEVICE_PROFILES,
@@ -125,8 +126,21 @@ function Home() {
   }
 
   return (
-    <section className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 py-8 min-h-[calc(100vh-8rem)] relative">
-      <div className="flex flex-1 items-center justify-center">
+    <section className="mx-auto flex w-full max-w-6xl flex-1 flex-col min-h-[calc(100vh-8rem)] relative">
+      <div className="flex-1 flex flex-col items-center justify-center w-full p-6">
+        <div className="flex flex-col items-center text-center space-y-10">
+          <h1 className="text-7xl sm:text-8xl font-extrabold tracking-tight drop-shadow-sm">
+            <span className="bg-gradient-to-br from-foreground to-muted-foreground bg-clip-text text-transparent">Welcome to </span>
+            <span className="inline-block"><ColourfulText text="WebHMI" /></span>
+          </h1>
+          <p className="max-w-2xl text-lg sm:text-xl text-muted-foreground leading-relaxed">
+            This is where you configure devices via <span className="font-medium text-foreground">USB</span> or <span className="font-medium text-foreground">BLE</span>, play around with unique settings, and customize it to your liking.
+          </p>
+        </div>
+      </div>
+
+      {/* Cards Section: Fixed center anchor */}
+      <div className="flex-none flex items-center justify-center w-full py-8">
         <CodeHoverCards
           cards={cards}
           className="justify-center"
@@ -137,6 +151,13 @@ function Home() {
           showCode={false}
           onCardClick={handleCardClick}
         />
+      </div>
+
+      {/* Footer Section: Occupies bottom space and centers content */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full p-6">
+        <p className="max-w-4xl text-center text-lg sm:text-xl text-muted-foreground leading-relaxed">
+          Experience the best performance on <span className="font-medium text-foreground">Google Chrome</span> or <span className="font-medium text-foreground">Microsoft Edge</span>.
+        </p>
       </div>
 
       {connectingMessage && (
