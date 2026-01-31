@@ -92,6 +92,10 @@ export class RpcSession {
       }
       ivSync = this.txFrameCounter >>> 0
 
+      // Increment Tx Counter by number of blocks immediately to prevent race conditions
+      const blocksUsed = Math.max(1, Math.ceil(payload.length / 16))
+      this.txFrameCounter = (this.txFrameCounter + blocksUsed) >>> 0
+
       // Construct IV: Base(12) + Counter(4 BE)
       const iv = new Uint8Array(16)
       iv.set(this.sessionBaseIv)
@@ -105,10 +109,6 @@ export class RpcSession {
         payload as any,
       )
       finalPayload = new Uint8Array(cipher)
-
-      // Increment Tx Counter by number of blocks
-      const blocksUsed = Math.max(1, Math.ceil(payload.length / 16))
-      this.txFrameCounter = (this.txFrameCounter + blocksUsed) >>> 0
     }
 
     const expectResponse = options.expectResponse !== false
