@@ -59,9 +59,9 @@ export const Navbar = ({ children, className }: NavbarProps) => {
       {React.Children.map(children, (child) =>
         React.isValidElement(child)
           ? React.cloneElement(
-              child as React.ReactElement<{ visible?: boolean }>,
-              { visible },
-            )
+            child as React.ReactElement<{ visible?: boolean }>,
+            { visible },
+          )
           : child,
       )}
     </motion.div>
@@ -146,7 +146,7 @@ export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
         damping: 50,
       }}
       className={cn(
-        "relative z-50 mx-0 flex w-full max-w-none flex-col items-center justify-between rounded-none border border-border bg-background px-0 py-2 lg:hidden",
+        "relative z-50 mx-0 flex w-full max-w-none flex-col items-center justify-between rounded-none border border-border bg-background px-4 py-2 lg:hidden",
         className,
       )}
     >
@@ -203,10 +203,18 @@ export const MobileNavToggle = ({
   isOpen: boolean;
   onClick: () => void;
 }) => {
-  return isOpen ? (
-    <IconX className="text-foreground" onClick={onClick} />
-  ) : (
-    <IconMenu2 className="text-foreground" onClick={onClick} />
+  return (
+    <button
+      onClick={onClick}
+      className="flex h-10 w-10 items-center justify-center rounded-md hover:bg-accent focus:outline-none"
+      aria-label="Toggle Menu"
+    >
+      {isOpen ? (
+        <IconX className="h-6 w-6 text-foreground" />
+      ) : (
+        <IconMenu2 className="h-6 w-6 text-foreground" />
+      )}
+    </button>
   );
 };
 
@@ -214,7 +222,7 @@ export const NavbarLogo = () => {
   return (
     <a
       href="#"
-      className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-foreground"
+      className="relative z-20 flex items-center space-x-2 px-2 py-2 text-sm font-normal text-foreground"
     >
       <img
         src={GameIconsSettingsKnobs}
@@ -242,9 +250,9 @@ export const NavbarButton = ({
   className?: string;
   variant?: "primary" | "secondary" | "dark" | "gradient";
 } & (
-  | React.ComponentPropsWithoutRef<"a">
-  | React.ComponentPropsWithoutRef<"button">
-)) => {
+    | React.ComponentPropsWithoutRef<"a">
+    | React.ComponentPropsWithoutRef<"button">
+  )) => {
   const baseStyles =
     "px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-bold relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center";
 
