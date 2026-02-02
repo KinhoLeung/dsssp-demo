@@ -857,7 +857,25 @@ function DeviceDemo() {
           return
         }
 
-        // 2. Check Firmware Version (Warning)
+        // 2. Check Firmware Version
+        const getMajor = (v: string) => v.replace(/^v/i, '').split('.')[0]
+        const importMajor = data.firmwareVersion ? getMajor(data.firmwareVersion) : null
+        const currentMajor = currentVersion ? getMajor(currentVersion) : null
+
+        // 2a. Major Version Mismatch (Hard Error)
+        if (importMajor && currentMajor && importMajor !== currentMajor) {
+          setImportValidation({
+            type: 'error',
+            title: 'Critical Version Mismatch',
+            message: `This configuration (Major v${importMajor}) is incompatible with your device (Major v${currentMajor}). To prevent damage, importing is not allowed.`,
+          })
+          setPendingImportData(null)
+          setIsImportConfirmOpen(true)
+          e.target.value = ''
+          return
+        }
+
+        // 2b. Minor/Patch Version Mismatch (Warning)
         if (data.firmwareVersion && currentVersion && data.firmwareVersion !== currentVersion) {
           setImportValidation({
             type: 'warning',
