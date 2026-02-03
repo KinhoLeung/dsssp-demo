@@ -1,9 +1,9 @@
-# 支持的设备
+# Supported Devices
 
-WebHMI 致力于兼容基于标准音频处理协议的各类硬件。以下是目前官方测试并通过验证的设备列表。
+WebHMI is committed to compatibility with various hardware based on standard audio processing protocols. The following is a list of devices currently officially tested and verified.
 
-## 设备兼容性列表 (Compatibility Matrix)
+## Compatibility Matrix
 
-| 系列 / 型号           | USB | 蓝牙  |
-| :-------------------- | :-: | :----: |
-| **HC6288 系列** | ✅ |   ❌   |
+| Series / Model    |  USB  | Bluetooth |
+| :---------------- | :---: | :-------: |
+| **HC6288 Series** |   ✅   |     ❌     |

@@ -1,27 +1,27 @@
-# FAQ (常见问题)
+# FAQ
 
-这里总结了在使用 WebHMI 过程中可能遇到的常见问题及其解决方案。
+Common questions and solutions encountered while using WebHMI are summarized here.
 
-## 连接相关
+## Connection
 
-### Q: 为什么点击“USB 连接”后提示“找不到兼容设备”？
+### Q: Why do I get a "Compatible device not found" error after clicking "USB Connection"?
 
-1. 确认设备已开机并正确连接至电脑。
-2. 检查 USB 数据线是否损坏，或尝试更换电脑上的 USB 端口（建议使用主板直连端口）。
-3. 某些系统可能需要安装特定的驱动程序才能识别为 HID 设备，但在大多数情况下（Windows/macOS）是免驱的。
+1. Ensure the device is powered on and correctly connected to the computer.
+2. Check if the USB cable is damaged, or try a different USB port on your computer (direct motherboard ports are recommended).
+3. Some systems may require specific drivers to recognize the device as an HID device, but in most cases (Windows/macOS), it is driver-free.
 
-### Q: 浏览器提示“WebHID/Web Bluetooth 不受支持”？
+### Q: Browser says "WebHID/Web Bluetooth not supported"?
 
-请确保您使用的是最新版本的 **Google Chrome** 或 **Microsoft Edge** 浏览器。由于隐私和安全限制，Firefox 和 Safari 目前尚未完全支持这些协议。
+Please ensure you are using the latest version of **Google Chrome** or **Microsoft Edge**. Due to privacy and security restrictions, Firefox and Safari do not currently fully support these protocols.
 
-### Q: 为什么蓝牙无法搜索到我的设备？
+### Q: Why can't Bluetooth find my device?
 
-1. 确认设备的蓝牙功能已开启并处于“可发现”状态。
-2. 检查设备是否已被其他电脑/手机/平板或应用占用。
-3. 请确保您的电脑/手机/平板的蓝牙硬件已开启。
+1. Ensure the device's Bluetooth is turned on and in "discoverable" mode.
+2. check if the device is already occupied by another computer/phone/tablet or application.
+3. Ensure your computer/phone/tablet's Bluetooth hardware is enabled.
 
-## 文件管理
+## File Management
 
-### Q: .webhmi 文件可以在不同设备间通用吗？
+### Q: Can .webhmi files be used across different devices?
 
-只要设备的型号和主版本一致，配置是可以通用的。
+As long as the device model and major firmware version match, the configuration is compatible.
