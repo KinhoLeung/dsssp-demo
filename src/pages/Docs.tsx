@@ -66,7 +66,7 @@ function DocsSidebar({ activeSlug, onSelect, ...props }: DocsSidebarProps) {
   return (
     <Sidebar
       {...props}
-      className="sticky top-0 h-screen overflow-y-auto border-r-0 bg-transparent"
+      className="sticky top-0 h-screen overflow-y-auto border-none group-data-[side=left]:border-none bg-transparent"
       style={{ "--sidebar-background": "transparent" } as React.CSSProperties}
     >
 
