@@ -83,7 +83,8 @@
       "importFailed": "导入失败：{{error}}"
     },
     "mode": {
-      "enterName": "请输入模式 {{index}} 名称"
+      "enterName": "请输入模式 {{index}} 名称",
+      "savedToMode": "已保存到模式 {{index}}"
     }
   },
   "changelog": {

@@ -83,7 +83,8 @@
       "importFailed": "Import failed: {{error}}"
     },
     "mode": {
-      "enterName": "Enter mode {{index}} name"
+      "enterName": "Enter mode {{index}} name",
+      "savedToMode": "Saved to mode {{index}}"
     }
   },
   "changelog": {

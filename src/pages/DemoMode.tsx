@@ -1045,7 +1045,12 @@ function DemoMode() {
     },
     flushNow: async () => { },
     saveMode: async (index: number) => {
-      alert(`Saved to mode ${index}`)
+      alert(
+        t('demoMode.mode.savedToMode', {
+          index,
+          defaultValue: 'Saved to mode {{index}}',
+        }),
+      )
     },
     switchCurrentMode: async (index: number) => {
       mergeDb({ currentModeIndex: index }, ['system'])
@@ -1938,7 +1943,13 @@ function DemoMode() {
                           <Input
                             id="ble-name"
                             value={bleNameDraft}
-                            onChange={(e) => setBleNameDraft(e.target.value)}
+                            maxLength={64}
+                            onChange={(e) => {
+                              const val = e.target.value
+                              if (new TextEncoder().encode(val).length <= 64) {
+                                setBleNameDraft(val)
+                              }
+                            }}
                             placeholder={uiText('Enter BLE name')}
                             onKeyDown={(e) => {
                               if (e.key !== 'Enter') return
@@ -2121,10 +2132,14 @@ function DemoMode() {
                               <Input
                                 id={`mode-name-${index}`}
                                 value={name}
+                                maxLength={64}
                                 onChange={(e) => {
-                                  const next = [...modeNamesDraft]
-                                  next[index] = e.target.value
-                                  setModeNamesDraft(next)
+                                  const val = e.target.value
+                                  if (new TextEncoder().encode(val).length <= 64) {
+                                    const next = [...modeNamesDraft]
+                                    next[index] = val
+                                    setModeNamesDraft(next)
+                                  }
                                 }}
                                 placeholder={t('demoMode.mode.enterName', {
                                   index: index + 1,
