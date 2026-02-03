@@ -1,10 +1,11 @@
 import { Bluetooth, MonitorPlay, Usb } from 'lucide-react'
 import { useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
 import CodeHoverCards from '@/components/lightswind/code-hover-cards'
 import type { CardData } from '@/components/lightswind/code-hover-cards'
-import ColourfulText from "@/components/ui/colourful-text";
+import ColourfulText from '@/components/ui/colourful-text'
 import { Spinner } from '@/components/ui/spinner'
 import {
   BLE_DEVICE_PROFILES,
@@ -15,33 +16,22 @@ import { setSelectedBleDevice, setSelectedHidDevice } from '@/device/selectedDev
 import { useDeviceSessionContext } from '@/device/session/deviceSessionContext'
 import { toast } from '@/hooks/use-toast'
 
-const cards = [
-  {
-    id: 'usb',
-    icon: Usb,
-    title: 'USB',
-  },
-  {
-    id: 'ble',
-    icon: Bluetooth,
-    title: 'BLE',
-  },
-  {
-    id: 'demo-mode',
-    icon: MonitorPlay,
-    title: 'Demo Mode',
-  }
-]
-
 function Home() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { state, actions } = useDeviceSessionContext()
-  const [connectingMessage, setConnectingMessage] = useState('')
+  const [connectingDevice, setConnectingDevice] = useState<string | null>(null)
+
+  const cards: CardData[] = [
+    { id: 'usb', icon: Usb, title: t('home.card.usb') },
+    { id: 'ble', icon: Bluetooth, title: t('home.card.ble') },
+    { id: 'demo-mode', icon: MonitorPlay, title: t('home.card.demoMode') },
+  ]
 
   const handleCardClick = async (card: CardData) => {
     if (card.id === 'usb') {
       if (!navigator.hid) {
-        window.alert('WebHID is not supported by this browser.')
+        window.alert(t('errors.webhidNotSupported'))
         return
       }
       const hidFilters = HID_DEVICE_PROFILES.map((profile) => ({
@@ -51,45 +41,45 @@ function Home() {
         usage: profile.usage,
       }))
       if (hidFilters.length === 0) {
-        window.alert('No HID device profiles configured.')
+        window.alert(t('errors.noHidProfiles'))
         return
       }
       try {
         const [device] = await navigator.hid.requestDevice({ filters: hidFilters })
         if (!device) return
         setSelectedHidDevice(device)
-        setConnectingMessage(`Connecting to ${device.productName || 'USB Device'}...`)
+        setConnectingDevice(device.productName || t('devices.usbDevice'))
         const ok = await actions.connectHid({ interactive: false })
         if (ok) {
           navigate('/device-demo?transport=hid')
         } else {
           toast.destructive({
-            title: 'Connection Failed',
-            description: state.error || state.authError || 'Failed to connect to USB device.'
+            title: t('toast.connectionFailed.title'),
+            description: state.error || state.authError || t('toast.connectionFailed.usb')
           })
         }
       } catch (e) {
         if ((e as Error).name !== 'NotFoundError' && (e as Error).name !== 'AbortError') {
           toast.destructive({
-            title: 'Connection Error',
+            title: t('toast.connectionError.title'),
             description: (e as Error).message
           })
         }
       } finally {
-        setConnectingMessage('')
+        setConnectingDevice(null)
       }
       return
     }
     if (card.id === 'ble') {
       if (!navigator.bluetooth) {
-        window.alert('WebBLE is not supported by this browser.')
+        window.alert(t('errors.webbleNotSupported'))
         return
       }
       const bleFilters = BLE_DEVICE_PROFILES.map((profile) => ({
         services: [profile.service],
       }))
       if (bleFilters.length === 0) {
-        window.alert('No BLE device profiles configured.')
+        window.alert(t('errors.noBleProfiles'))
         return
       }
       try {
@@ -98,25 +88,25 @@ function Home() {
           optionalServices: uniqueBleServices(),
         })
         setSelectedBleDevice(device)
-        setConnectingMessage(`Connecting to ${device.name || 'Bluetooth Device'}...`)
+        setConnectingDevice(device.name || t('devices.bluetoothDevice'))
         const ok = await actions.connectBle({ interactive: false })
         if (ok) {
           navigate('/device-demo?transport=ble')
         } else {
           toast.destructive({
-            title: 'Connection Failed',
-            description: state.error || state.authError || 'Failed to connect to Bluetooth device.'
+            title: t('toast.connectionFailed.title'),
+            description: state.error || state.authError || t('toast.connectionFailed.ble')
           })
         }
       } catch (e) {
         if ((e as Error).name !== 'NotFoundError' && (e as Error).name !== 'AbortError') {
           toast.destructive({
-            title: 'Connection Error',
+            title: t('toast.connectionError.title'),
             description: (e as Error).message
           })
         }
       } finally {
-        setConnectingMessage('')
+        setConnectingDevice(null)
       }
       return
     }
@@ -130,11 +120,19 @@ function Home() {
       <div className="flex-1 flex flex-col items-center justify-center w-full p-6">
         <div className="flex flex-col items-center text-center space-y-10">
           <h1 className="text-7xl sm:text-8xl font-extrabold tracking-tight drop-shadow-sm">
-            <span className="bg-gradient-to-br from-foreground to-muted-foreground bg-clip-text text-transparent">Welcome to </span>
+            <span className="bg-gradient-to-br from-foreground to-muted-foreground bg-clip-text text-transparent">
+              {t('home.welcomePrefix')}
+            </span>
             <span className="inline-block"><ColourfulText text="WebHMI" /></span>
           </h1>
           <p className="max-w-2xl text-lg sm:text-xl text-muted-foreground leading-relaxed">
-            This is where you configure devices via <span className="font-medium text-foreground">USB</span> or <span className="font-medium text-foreground">BLE</span>, play around with unique settings, and customize it to your liking.
+            <Trans
+              i18nKey="home.intro"
+              components={{
+                usb: <span className="font-medium text-foreground" />,
+                ble: <span className="font-medium text-foreground" />,
+              }}
+            />
           </p>
         </div>
       </div>
@@ -156,17 +154,25 @@ function Home() {
       {/* Footer Section: Occupies bottom space and centers content */}
       <div className="flex-1 flex flex-col items-center justify-center w-full p-6">
         <p className="max-w-4xl text-center text-lg sm:text-xl text-muted-foreground leading-relaxed">
-          Experience the best performance on <span className="font-medium text-foreground">Google Chrome</span> or <span className="font-medium text-foreground">Microsoft Edge</span>.
+          <Trans
+            i18nKey="home.footer"
+            components={{
+              chrome: <span className="font-medium text-foreground" />,
+              edge: <span className="font-medium text-foreground" />,
+            }}
+          />
         </p>
       </div>
 
-      {connectingMessage && (
+      {connectingDevice && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm transition-all duration-300 animate-in fade-in">
           <div className="flex flex-col items-center gap-4 p-8 rounded-xl bg-card border shadow-lg">
             <Spinner className="size-12 text-primary" />
             <div className="flex flex-col items-center gap-1">
-              <p className="text-lg font-medium animate-pulse">{connectingMessage}</p>
-              <p className="text-sm text-muted-foreground">This may take a few seconds, please do not close the page.</p>
+              <p className="text-lg font-medium animate-pulse">
+                {t('home.connectingTo', { device: connectingDevice })}
+              </p>
+              <p className="text-sm text-muted-foreground">{t('home.connectingNotice')}</p>
             </div>
           </div>
         </div>

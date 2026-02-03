@@ -15,6 +15,7 @@ import {
   setSelectedBleDevice,
   setSelectedHidDevice,
 } from '@/device/selectedDevices'
+import i18n from '@/locales/i18n'
 
 const base64ToBytes = (b64: string) => {
   let normalized = b64.replace(/[\r\n\s]/g, '').replace(/-/g, '+').replace(/_/g, '/')
@@ -619,7 +620,7 @@ export function useDeviceSession(
   const connectHid = useCallback(
     async (options: { interactive?: boolean } = {}): Promise<boolean> => {
       if (!navigator.hid) {
-        window.alert('WebHID is not supported by this browser.')
+        window.alert(i18n.t('errors.webhidNotSupported'))
         return false
       }
       if (clientRef.current) await disconnect()
@@ -686,13 +687,13 @@ export function useDeviceSession(
   const connectBle = useCallback(
     async (options: { interactive?: boolean } = {}): Promise<boolean> => {
       if (!navigator.bluetooth) {
-        window.alert('WebBLE is not supported by this browser.')
+        window.alert(i18n.t('errors.webbleNotSupported'))
         return false
       }
       if (clientRef.current) await disconnect()
       const interactive = options.interactive !== false
       if (BLE_DEVICE_PROFILES.length === 0) {
-        window.alert('No BLE device profiles configured.')
+        window.alert(i18n.t('errors.noBleProfiles'))
         return false
       }
 

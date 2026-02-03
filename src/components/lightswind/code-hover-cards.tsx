@@ -5,13 +5,6 @@ import {
   Github,
   Code,
   Dices,
-  Terminal,
-  Settings,
-  Heart,
-  Star,
-  Zap,
-  Trophy,
-  Shield,
 } from 'lucide-react';
 
 export interface CardData {
@@ -50,8 +43,6 @@ const DEFAULT_CARDS: CardData[] = [
   { id: '3', icon: Dices, title: 'Games', description: 'Interactive projects' },
 ];
 
-const DEFAULT_ICONS = [Github, Code, Dices, Terminal, Settings, Heart, Star, Zap, Trophy, Shield];
-
 const CodeHoverCards: React.FC<CodeHoverCardsProps> = ({
   cards = DEFAULT_CARDS,
   className,
@@ -71,7 +62,6 @@ const CodeHoverCards: React.FC<CodeHoverCardsProps> = ({
   disabled = false,
   showBorder = true,
   showCode = true,
-  theme = 'normal',
 }) => {
   const [mousePositions, setMousePositions] = useState<{ [key: string]: { x: number; y: number } }>({});
   const [randomTexts, setRandomTexts] = useState<{ [key: string]: string }>({});

@@ -1,15 +1,18 @@
-import * as React from "react"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
-import rehypeSlug from "rehype-slug"
+import * as React from 'react'
+import ReactMarkdown from 'react-markdown'
+import rehypeSlug from 'rehype-slug'
+import remarkGfm from 'remark-gfm'
+import { useTranslation } from 'react-i18next'
+
+import { cn } from '@/lib/utils'
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+} from '@/components/ui/breadcrumb'
+import { Separator } from '@/components/ui/separator'
 import {
   Sidebar,
   SidebarContent,
@@ -22,56 +25,30 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
+} from '@/components/ui/sidebar'
 
-// Load markdown files
-const markdownFiles = import.meta.glob('../docs/*.md', { query: '?raw', import: 'default', eager: true })
-
-const data = {
-  navMain: [
-    {
-      title: "Getting Started",
-      items: [
-        {
-          title: "User Guide",
-          slug: "user-guide",
-        },
-        {
-          title: "Supported Devices",
-          slug: "supported-devices",
-        },
-      ],
-    },
-    {
-      title: "Resources",
-      items: [
-        {
-          title: "FAQ",
-          slug: "faq",
-        },
-      ],
-    },
-  ],
-}
-
-
-
+// Load markdown files (supports localized subfolders like ../docs/zh/*.md)
+const markdownFiles = import.meta.glob('../docs/**/*.md', { query: '?raw', import: 'default', eager: true })
 
 interface DocsSidebarProps extends React.ComponentProps<typeof Sidebar> {
   activeSlug: string
-  onSelect: (slug: string) => void
+  onSelectSlug: (slug: string) => void
+  navMain: {
+    title: string
+    items: { title: string; slug: string }[]
+  }[]
 }
 
-function DocsSidebar({ activeSlug, onSelect, ...props }: DocsSidebarProps) {
+function DocsSidebar({ activeSlug, onSelectSlug, navMain, ...props }: DocsSidebarProps) {
   return (
     <Sidebar
       {...props}
       className="sticky top-0 h-screen overflow-y-auto border-none group-data-[side=left]:border-none bg-transparent"
-      style={{ "--sidebar-background": "transparent" } as React.CSSProperties}
+      style={{ '--sidebar-background': 'transparent' } as React.CSSProperties}
     >
 
       <SidebarContent>
-        {data.navMain.map((group) => (
+        {navMain.map((group) => (
           <SidebarGroup key={group.title}>
             <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -80,7 +57,7 @@ function DocsSidebar({ activeSlug, onSelect, ...props }: DocsSidebarProps) {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       isActive={activeSlug === item.slug}
-                      onClick={() => onSelect(item.slug)}
+                      onClick={() => onSelectSlug(item.slug)}
                       className="cursor-pointer"
                     >
                       <span>{item.title}</span>
@@ -125,16 +102,36 @@ const extractHeadings = (markdown: string) => {
 }
 
 
-import { cn } from "@/lib/utils"
-
 export default function Docs() {
+  const { t, i18n } = useTranslation()
   const [activeSlug, setActiveSlug] = React.useState("user-guide")
   const [activeId, setActiveId] = React.useState<string>("")
 
+  const navMain = React.useMemo(
+    () => [
+      {
+        title: t("docs.groups.gettingStarted"),
+        items: [
+          { title: t("docs.items.userGuide"), slug: "user-guide" },
+          { title: t("docs.items.supportedDevices"), slug: "supported-devices" },
+        ],
+      },
+      {
+        title: t("docs.groups.resources"),
+        items: [{ title: t("docs.items.faq"), slug: "faq" }],
+      },
+    ],
+    [t]
+  )
+
   const content = React.useMemo(() => {
-    const path = `../docs/${activeSlug}.md`
-    return (markdownFiles[path] as string) || `# Error\n\nDocument not found: ${activeSlug}`
-  }, [activeSlug])
+    const isZh = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('zh')
+    const localizedPath = isZh ? `../docs/zh/${activeSlug}.md` : `../docs/${activeSlug}.md`
+    const fallbackPath = `../docs/${activeSlug}.md`
+    const localized = markdownFiles[localizedPath] as string | undefined
+    const fallback = markdownFiles[fallbackPath] as string | undefined
+    return localized || fallback || `# ${t('uiText.error')}\n\n${t('docs.errors.notFound', { slug: activeSlug })}`
+  }, [activeSlug, i18n.language, i18n.resolvedLanguage, t])
 
   const headings = React.useMemo(() => extractHeadings(content), [content])
 
@@ -181,26 +178,26 @@ export default function Docs() {
   }, [headings])
 
   const activeTitle = React.useMemo(() => {
-    for (const group of data.navMain) {
+    for (const group of navMain) {
       const item = group.items.find(i => i.slug === activeSlug)
       if (item) return item.title
     }
     return activeSlug
-  }, [activeSlug])
+  }, [activeSlug, navMain])
 
   const activeGroupTitle = React.useMemo(() => {
-    for (const group of data.navMain) {
+    for (const group of navMain) {
       if (group.items.find(i => i.slug === activeSlug)) {
         return group.title
       }
     }
-    return "Docs"
-  }, [activeSlug])
+    return t("docs.title")
+  }, [activeSlug, navMain, t])
 
   return (
     <div className="-mt-10 -mx-4 min-h-screen">
       <SidebarProvider className="min-h-screen">
-        <DocsSidebar activeSlug={activeSlug} onSelect={setActiveSlug} />
+        <DocsSidebar activeSlug={activeSlug} onSelectSlug={setActiveSlug} navMain={navMain} />
         <SidebarInset className="min-h-screen bg-transparent">
           <header className="flex h-14 shrink-0 items-center gap-2 border-b md:border-b-0 bg-transparent px-4">
             <SidebarTrigger className="-ml-1 md:hidden" />
@@ -237,7 +234,7 @@ export default function Docs() {
             {/* Table of Contents - Fixed Right Column */}
             <div className="hidden xl:block w-72 shrink-0 p-6 sticky top-0 self-start h-fit">
               <div className="text-sm">
-                <h4 className="font-medium mb-4 text-foreground/90">On this page</h4>
+                <h4 className="font-medium mb-4 text-foreground/90">{t("docs.onThisPage")}</h4>
                 <ul className="space-y-2">
                   {headings.map((heading) => (
                     <li key={heading.id}>

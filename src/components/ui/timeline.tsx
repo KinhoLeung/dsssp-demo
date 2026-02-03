@@ -1,11 +1,11 @@
 "use client";
 import {
-  useMotionValueEvent,
   useScroll,
   useTransform,
   motion,
 } from "motion/react";
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface TimelineEntry {
   title: string;
@@ -14,16 +14,24 @@ interface TimelineEntry {
 
 export const Timeline = ({
   data,
-  title = "Changelog",
-  description = "Track updates and improvements across releases.",
+  title,
+  description,
 }: {
   data: TimelineEntry[];
   title?: string;
   description?: string;
 }) => {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
+
+  const resolvedTitle = title ?? t("changelog.page.title", { defaultValue: "Changelog" });
+  const resolvedDescription =
+    description ??
+    t("changelog.page.description", {
+      defaultValue: "Track updates and improvements across releases.",
+    });
 
   useEffect(() => {
     if (ref.current) {
@@ -44,10 +52,10 @@ export const Timeline = ({
     <div className="w-full bg-transparent font-sans md:px-10" ref={containerRef}>
       <div className="max-w-7xl mx-auto py-20 px-4 md:px-8 lg:px-10">
         <h2 className="text-lg md:text-4xl mb-4 text-black dark:text-white max-w-4xl">
-          {title}
+          {resolvedTitle}
         </h2>
         <p className="text-neutral-700 dark:text-neutral-300 text-sm md:text-base max-w-sm">
-          {description}
+          {resolvedDescription}
         </p>
       </div>
 

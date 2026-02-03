@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import {
   MobileNav,
@@ -7,6 +8,7 @@ import {
   MobileNavMenu,
   MobileNavToggle,
   Navbar,
+  NavbarLanguageToggle,
   NavbarLogo,
   NavBody,
   NavItems,
@@ -14,13 +16,14 @@ import {
 import { Toaster } from '@/components/ui/toaster'
 import { DeviceSessionProvider } from '@/device/session/deviceSessionContext'
 
-const navItems = [
-  { name: 'Docs', link: '#/docs' },
-  { name: 'Changelog', link: '#/changelog' }
-]
-
 function App() {
   const [isOpen, setIsOpen] = useState(false)
+  const { t } = useTranslation()
+
+  const navItems = [
+    { name: t('nav.docs'), link: '#/docs' },
+    { name: t('nav.changelog'), link: '#/changelog' },
+  ]
 
   return (
     <div className="min-h-screen" onContextMenuCapture={(e) => e.preventDefault()}>
@@ -28,16 +31,21 @@ function App() {
         <NavBody>
           <NavbarLogo />
           <NavItems items={navItems} />
-          <div className="relative z-20 flex items-center gap-2" />
+          <div className="relative z-20 flex items-center gap-2">
+            <NavbarLanguageToggle />
+          </div>
         </NavBody>
 
         <MobileNav>
           <MobileNavHeader>
             <NavbarLogo />
-            <MobileNavToggle
-              isOpen={isOpen}
-              onClick={() => setIsOpen((open) => !open)}
-            />
+            <div className="flex items-center gap-2">
+              <NavbarLanguageToggle />
+              <MobileNavToggle
+                isOpen={isOpen}
+                onClick={() => setIsOpen((open) => !open)}
+              />
+            </div>
           </MobileNavHeader>
           <MobileNavMenu isOpen={isOpen} onClose={() => setIsOpen(false)}>
             {navItems.map((item) => (

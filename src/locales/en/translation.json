@@ -1,0 +1,230 @@
+{
+  "nav": {
+    "docs": "Docs",
+    "changelog": "Changelog"
+  },
+  "language": {
+    "switch": "Switch language",
+    "toggle": "Toggle language"
+  },
+  "home": {
+    "card": {
+      "usb": "USB",
+      "ble": "BLE",
+      "demoMode": "Demo Mode"
+    },
+    "welcomePrefix": "Welcome to ",
+    "intro": "This is where you configure devices via <usb>USB</usb> or <ble>BLE</ble>, play around with unique settings, and customize it to your liking.",
+    "footer": "Experience the best performance on <chrome>Google Chrome</chrome> or <edge>Microsoft Edge</edge>.",
+    "connectingTo": "Connecting to {{device}}...",
+    "connectingNotice": "This may take a few seconds, please do not close the page."
+  },
+  "devices": {
+    "usbDevice": "USB Device",
+    "bluetoothDevice": "Bluetooth Device"
+  },
+  "errors": {
+    "webhidNotSupported": "WebHID is not supported by this browser.",
+    "webbleNotSupported": "WebBLE is not supported by this browser.",
+    "noHidProfiles": "No HID device profiles configured.",
+    "noBleProfiles": "No BLE device profiles configured."
+  },
+  "toast": {
+    "deviceDisconnected": {
+      "title": "Device Disconnected",
+      "description": "The connection to the device has been lost. Please check the connection and try again."
+    },
+    "connectionFailed": {
+      "title": "Connection Failed",
+      "usb": "Failed to connect to USB device.",
+      "ble": "Failed to connect to Bluetooth device."
+    },
+    "connectionError": {
+      "title": "Connection Error"
+    }
+  },
+  "docs": {
+    "title": "Docs",
+    "errors": {
+      "notFound": "Document not found: {{slug}}"
+    },
+    "groups": {
+      "gettingStarted": "Getting Started",
+      "resources": "Resources"
+    },
+    "items": {
+      "userGuide": "User Guide",
+      "supportedDevices": "Supported Devices",
+      "faq": "FAQ"
+    },
+    "onThisPage": "On this page"
+  },
+  "notFound": {
+    "message": "This page could not be found."
+  },
+  "deviceDemo": {
+    "import": {
+      "invalidConfigMissingDb": "Invalid configuration file: missing database content.",
+      "deviceMismatch": "This configuration file is for \"{{deviceId}}\", but you are connected to \"{{currentDeviceId}}\". Importing is not allowed to prevent damage.",
+      "criticalVersionMismatch": "This configuration (Major v{{importMajor}}) is incompatible with your device (Major v{{currentMajor}}). To prevent damage, importing is not allowed.",
+      "versionMismatch": "The configuration version ({{firmwareVersion}}) does not match the device version ({{currentVersion}}). Some parameters might behave unexpectedly. Do you want to continue?",
+      "importFailed": "Import failed: {{error}}"
+    },
+    "mode": {
+      "enterName": "Enter mode {{index}} name"
+    }
+  },
+  "demoMode": {
+    "import": {
+      "invalidConfigMissingDb": "Invalid configuration file: missing database content.",
+      "deviceMismatch": "This configuration file is for \"{{deviceId}}\", but you are connected to \"{{currentDeviceId}}\". Importing is not allowed to prevent damage.",
+      "criticalVersionMismatch": "This configuration (Major v{{importMajor}}) is incompatible with your device (Major v{{currentMajor}}). To prevent damage, importing is not allowed.",
+      "versionMismatch": "The configuration version ({{firmwareVersion}}) does not match the device version ({{currentVersion}}). Some parameters might behave unexpectedly. Do you want to continue?",
+      "importFailed": "Import failed: {{error}}"
+    },
+    "mode": {
+      "enterName": "Enter mode {{index}} name"
+    }
+  },
+  "changelog": {
+    "page": {
+      "title": "Changelog",
+      "description": "Track updates and improvements across releases."
+    },
+    "v1_0_0": {
+      "title": "WebHMI v1.0.0 - Official Launch",
+      "items": [
+        "WebHMI platform officially launched, supporting direct interaction with hardware devices via WebHID and Web Bluetooth in modern browsers.",
+        "Robust Connection Management: Supports dual-mode connection (USB/HID and Bluetooth/BLE) for plug-and-play and wireless debugging.",
+        "Real-time Signal Visualization: Provides professional magnitude-frequency response curves, supporting drag-and-drop filter adjustment with synchronized feedback to hardware.",
+        "Full Parameter Control: In-depth adjustment for Music, Mic, Feedback Suppression, Effects, and all Output channels.",
+        "Cloud Sync & Export: Support exporting device parameters as .webhmi files or restoring configuration from local files.",
+        "Cross-platform Adaptation: Optimized responsive design for a smooth experience on both PC and mobile devices.",
+        "Built-in Help Center: Provides detailed user guides, supported device lists, and FAQs."
+      ]
+    }
+  },
+  "uiText": {
+    "error": "Error",
+    "on": "On",
+    "off": "Off",
+    "reset": "Reset",
+    "reset_eq_settings": "Reset EQ Settings?",
+    "this_will_restore_all_eq_settings_for_the_current_panel_to_their_default_values_this_action_cannot_be_undone": "This will restore all EQ settings for the current panel to their default values. This action cannot be undone.",
+    "cancel": "Cancel",
+    "bypass": "Bypass",
+    "phase_inversion": "Phase Inversion",
+    "device": "Device",
+    "version": "Version",
+    "music": "Music",
+    "mic": "Mic",
+    "reverb": "Reverb",
+    "echo": "Echo",
+    "main_output": "Main Output",
+    "sub_output": "Sub Output",
+    "center": "Center",
+    "surround": "Surround",
+    "system": "System",
+    "ble_name": "BLE Name",
+    "rename": "Rename",
+    "rename_bluetooth_device": "Rename Bluetooth Device",
+    "enter_a_new_name_for_the_ble_device": "Enter a new name for the BLE device.",
+    "new_ble_name": "New BLE Name",
+    "enter_ble_name": "Enter BLE name",
+    "modify": "Modify",
+    "export_configuration": "Export Configuration",
+    "specify_a_name_for_your_configuration_file": "Specify a name for your configuration file.",
+    "file_name": "File Name",
+    "enter_filename": "Enter filename",
+    "export": "Export",
+    "import": "Import",
+    "current_mode": "Current Mode",
+    "select_mode": "Select mode",
+    "save": "Save",
+    "save_current_to_mode": "Save Current to Mode",
+    "this_will_overwrite_the_selected_mode_with_your_current_parameters_this_action_cannot_be_undone": "This will overwrite the selected mode with your current parameters. This action cannot be undone.",
+    "target_mode": "Target Mode",
+    "confirm_save": "Confirm Save",
+    "rename_modes": "Rename Modes",
+    "enter_new_names_for_all_available_modes": "Enter new names for all available modes.",
+    "mode": "Mode",
+    "save_changes": "Save Changes",
+    "close": "Close",
+    "import_anyway": "Import Anyway",
+    "defaults": "Defaults",
+    "limits": "Limits",
+    "device_mismatch": "Device Mismatch",
+    "critical_version_mismatch": "Critical Version Mismatch",
+    "version_mismatch": "Version Mismatch",
+    "mic_eq_link": "Mic EQ Link",
+    "output": "Output",
+    "mixer": "Mixer",
+    "volume": "Volume",
+    "compressor": "Compressor",
+    "noise_gate": "Noise Gate",
+
+    "bt": "BT",
+    "udisk": "UDISK",
+    "spdif": "SPDIF",
+    "coa": "COA",
+    "usb_audio": "USB Audio",
+    "auto_input": "Auto Input",
+    "input1_bgm": "Input1 BGM",
+    "input2_aux": "Input2 Aux",
+    "level_1": "Level 1",
+    "level_2": "Level 2",
+    "level_3": "Level 3",
+    "level_4": "Level 4",
+    "level_5": "Level 5",
+    "level_6": "Level 6",
+
+    "attack": "Attack",
+    "attack_time": "Attack Time",
+    "bt_gain": "BT Gain",
+    "bass": "Bass",
+    "decay": "Decay",
+    "delay": "Delay",
+    "delay_time": "Delay Time",
+    "echo_level": "Echo Level",
+    "effect_default": "Effect Default",
+    "effect_max": "Effect Max",
+    "effect_volume": "Effect Volume",
+    "frame_time": "Frame Time",
+    "gate": "Gate",
+    "input_gain": "Input Gain",
+    "input_select": "Input Select",
+    "left_delay": "Left Delay",
+    "left_mute": "Left Mute",
+    "left_volume": "Left Volume",
+    "mic_a_volume": "Mic A Volume",
+    "mic_b_volume": "Mic B Volume",
+    "mic_default": "Mic Default",
+    "mic_direct_level": "Mic Direct Level",
+    "mic_fbx": "Mic FBX",
+    "mic_max": "Mic Max",
+    "mic_volume": "Mic Volume",
+    "mid": "Mid",
+    "mid_freq_hz": "Mid Freq (Hz)",
+    "music_default": "Music Default",
+    "music_level": "Music Level",
+    "music_max": "Music Max",
+    "music_pitch": "Music Pitch",
+    "music_volume": "Music Volume",
+    "mute": "Mute",
+    "panel_lock": "Panel Lock",
+    "pre_delay": "Pre-delay",
+    "ratio": "Ratio",
+    "release": "Release",
+    "release_time": "Release Time",
+    "repeat": "Repeat",
+    "reverb_level": "Reverb Level",
+    "right_delay": "Right Delay",
+    "right_mute": "Right Mute",
+    "right_pre_delay": "Right Pre-delay",
+    "right_volume": "Right Volume",
+    "threshold": "Threshold",
+    "treble": "Treble",
+    "udisk_gain": "UDisk Gain",
+    "use_default_volume": "Use Default Volume"
+  }
+}

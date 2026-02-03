@@ -2,6 +2,7 @@ import '@fontsource/poppins/index.css'
 
 import './utils/consoleProxy'
 import 'dsssp/font'
+import './locales/i18n'
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'

@@ -1375,7 +1375,7 @@ const decodeSurroundDb = (bytes: Uint8Array): SurroundDb => {
   return message
 }
 
-const encodeDeviceDb = (message: DeviceDb) => {
+export const encodeDeviceDb = (message: DeviceDb) => {
   const writer = new PbWriter()
   writer.message(1, message.system ? encodeSystemDb(message.system) : undefined)
   writer.message(2, message.music ? encodeMusicDb(message.music) : undefined)

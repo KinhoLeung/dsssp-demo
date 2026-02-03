@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { toast } from '@/hooks/use-toast'
+import i18n from '@/locales/i18n'
 
 import { useDeviceSession } from '../hooks/useDeviceSession'
 
@@ -13,8 +14,8 @@ export function DeviceSessionProvider({ children }: { children: React.ReactNode 
   const navigate = useNavigate()
   const onTransportDisconnected = useCallback(() => {
     toast.destructive({
-      title: 'Device Disconnected',
-      description: 'The connection to the device has been lost. Please check the connection and try again.',
+      title: i18n.t('toast.deviceDisconnected.title'),
+      description: i18n.t('toast.deviceDisconnected.description'),
     })
     navigate('/', { replace: true })
   }, [navigate])

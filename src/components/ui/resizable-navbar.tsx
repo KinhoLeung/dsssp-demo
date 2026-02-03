@@ -7,6 +7,8 @@ import {
 } from "motion/react";
 
 import React, { useState } from "react";
+import { Globe } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import GameIconsSettingsKnobs from "@/assets/GameIconsSettingsKnobs.svg";
 
 
@@ -188,6 +190,10 @@ export const MobileNavMenu = ({
             "absolute inset-x-0 top-16 z-50 flex w-full flex-col items-start justify-start gap-4 rounded-lg bg-background px-4 py-8 shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]",
             className,
           )}
+          onClickCapture={(e) => {
+            const target = e.target as HTMLElement | null;
+            if (target?.closest("a")) onClose();
+          }}
         >
           {children}
         </motion.div>
@@ -214,6 +220,32 @@ export const MobileNavToggle = ({
       ) : (
         <IconMenu2 className="h-6 w-6 text-foreground" />
       )}
+    </button>
+  );
+};
+
+const normalizeLanguage = (lng: string | undefined | null) => {
+  if (!lng) return "en";
+  if (lng.toLowerCase().startsWith("zh")) return "zh-CN";
+  return "en";
+};
+
+export const NavbarLanguageToggle = () => {
+  const { t, i18n } = useTranslation();
+  const current = normalizeLanguage(i18n.resolvedLanguage || i18n.language);
+  const next = current === "zh-CN" ? "en" : "zh-CN";
+  const nextLabel = next === "zh-CN" ? "中文" : "EN";
+
+  return (
+    <button
+      onClick={() => i18n.changeLanguage(next)}
+      className="flex h-10 items-center justify-center gap-2 rounded-md px-3 hover:bg-accent focus:outline-none"
+      aria-label={t("language.toggle")}
+      title={t("language.toggle")}
+      type="button"
+    >
+      <Globe className="h-4 w-4" />
+      <span className="text-sm font-medium text-foreground">{nextLabel}</span>
     </button>
   );
 };

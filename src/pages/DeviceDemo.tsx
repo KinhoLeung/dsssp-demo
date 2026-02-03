@@ -15,6 +15,7 @@ import {
   type GraphFilter,
 } from 'dsssp'
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import tailwindColors from 'tailwindcss/colors'
 
 import { FilterCard } from '../components'
@@ -76,6 +77,13 @@ type PanelKey =
   | 'surround'
 
 type MainTabKey = 'music' | 'mic' | 'reverb' | 'echo' | 'mainoutput' | 'suboutput' | 'center' | 'surround' | 'system'
+
+const uiTextKey = (text: string) =>
+  text
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
 
 type PanelDef = {
   key: PanelKey
@@ -310,6 +318,8 @@ function DspPanel({
   onReset,
   onBypassChange,
 }: DspPanelProps) {
+  const { t } = useTranslation()
+  const uiText = useCallback((text: string) => t(`uiText.${uiTextKey(text)}`, { defaultValue: text }), [t])
   const graphContainerRef = useRef<HTMLDivElement | null>(null)
   const [graphWidth, setGraphWidth] = useState(0)
 
@@ -355,24 +365,31 @@ function DspPanel({
         <div className="grid grid-cols-[auto,1fr,auto] items-center gap-3 pb-3">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="secondary">Reset</Button>
+              <Button variant="secondary">{uiText('Reset')}</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Reset EQ Settings?</AlertDialogTitle>
+                <AlertDialogTitle>{uiText('Reset EQ Settings?')}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will restore all EQ settings for the current panel to their default values. This action cannot be undone.
+                  {uiText(
+                    'This will restore all EQ settings for the current panel to their default values. This action cannot be undone.',
+                  )}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={onReset}>Reset</AlertDialogAction>
+                <AlertDialogCancel>{uiText('Cancel')}</AlertDialogCancel>
+                <AlertDialogAction onClick={onReset}>{uiText('Reset')}</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
           <div className="justify-self-center">{headerExtra}</div>
-          <Toggle aria-label="Bypass" variant="outline" pressed={bypass} onPressedChange={onBypassChange}>
-            Bypass
+          <Toggle
+            aria-label={uiText('Bypass')}
+            variant="outline"
+            pressed={bypass}
+            onPressedChange={onBypassChange}
+          >
+            {uiText('Bypass')}
           </Toggle>
         </div>
         <div ref={graphContainerRef} className="shadow-sm shadow-black relative w-full">
@@ -591,6 +608,7 @@ type ParameterCardProps = {
 }
 
 function ParameterCard({ title, className, contentClassName, children }: ParameterCardProps) {
+  const { t } = useTranslation()
   const hasTitle = !!title
   const contentClasses = [
     'grid gap-3 grid-cols-1',
@@ -603,7 +621,9 @@ function ParameterCard({ title, className, contentClassName, children }: Paramet
     <Card className={className}>
       {hasTitle ? (
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">{title}</CardTitle>
+          <CardTitle className="text-sm">
+            {t(`uiText.${uiTextKey(title!)}`, { defaultValue: title })}
+          </CardTitle>
         </CardHeader>
       ) : null}
       <CardContent className={contentClasses}>{children}</CardContent>
@@ -624,6 +644,8 @@ type NumberControlProps = {
 }
 
 function NumberControl({ label, value, step = 1, min, max, disabled, className, onChange, extra }: NumberControlProps) {
+  const { t } = useTranslation()
+  const translatedLabel = t(`uiText.${uiTextKey(label)}`, { defaultValue: label })
   return (
     <div className={cn("flex items-end gap-1", className)}>
       <NumberField
@@ -638,7 +660,7 @@ function NumberControl({ label, value, step = 1, min, max, disabled, className, 
         disabled={disabled}
         className="flex-1 gap-1"
       >
-        <NumberFieldLabel className="text-xs text-muted-foreground">{label}</NumberFieldLabel>
+        <NumberFieldLabel className="text-xs text-muted-foreground">{translatedLabel}</NumberFieldLabel>
         <NumberFieldGroup>
           <NumberFieldDecrementTrigger />
           <NumberFieldInput className="text-sm tabular-nums" />
@@ -659,9 +681,11 @@ type ToggleGroupControlProps = {
 }
 
 function ToggleGroupControl({ label, value, options, disabled, onChange }: ToggleGroupControlProps) {
+  const { t } = useTranslation()
+  const translatedLabel = t(`uiText.${uiTextKey(label)}`, { defaultValue: label })
   return (
     <div className="grid gap-1">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="text-xs text-muted-foreground">{translatedLabel}</Label>
       <ToggleGroup
         type="single"
         variant="outline"
@@ -674,7 +698,7 @@ function ToggleGroupControl({ label, value, options, disabled, onChange }: Toggl
       >
         {options.map((option) => (
           <ToggleGroupItem key={option.value} value={option.value}>
-            {option.label}
+            {t(`uiText.${uiTextKey(option.label)}`, { defaultValue: option.label })}
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
@@ -690,19 +714,23 @@ type ToggleControlProps = {
 }
 
 function ToggleControl({ label, pressed, disabled, onChange }: ToggleControlProps) {
+  const { t } = useTranslation()
   const isPressed = !!pressed
+  const translatedLabel = t(`uiText.${uiTextKey(label)}`, { defaultValue: label })
   return (
     <div className="grid gap-1">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="text-xs text-muted-foreground">{translatedLabel}</Label>
       <Toggle
-        aria-label={label}
+        aria-label={translatedLabel}
         variant="outline"
         pressed={isPressed}
         onPressedChange={onChange}
         disabled={disabled}
         className="px-2"
       >
-        {isPressed ? 'On' : 'Off'}
+        {isPressed
+          ? t(`uiText.${uiTextKey('On')}`, { defaultValue: 'On' })
+          : t(`uiText.${uiTextKey('Off')}`, { defaultValue: 'Off' })}
       </Toggle>
     </div>
   )
@@ -715,10 +743,11 @@ type PhaseInversionToggleProps = {
 }
 
 function PhaseInversionToggle({ pressed, disabled, onChange }: PhaseInversionToggleProps) {
+  const { t } = useTranslation()
   const isPressed = !!pressed
   return (
     <Toggle
-      aria-label="Phase Inversion"
+      aria-label={t(`uiText.${uiTextKey('Phase Inversion')}`, { defaultValue: 'Phase Inversion' })}
       variant="outline"
       pressed={isPressed}
       onPressedChange={onChange}
@@ -731,10 +760,13 @@ function PhaseInversionToggle({ pressed, disabled, onChange }: PhaseInversionTog
 }
 
 function DeviceDemo() {
+  const { t } = useTranslation()
   const { state, actions } = useDeviceSessionContext()
   const disconnect = actions.disconnect
   const didMountOnceRef = useRef(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const uiText = useCallback((text: string) => t(`uiText.${uiTextKey(text)}`, { defaultValue: text }), [t])
 
   const cleanInternalFields = useCallback((obj: any): any => {
     if (Array.isArray(obj)) return obj.map(cleanInternalFields)
@@ -839,7 +871,13 @@ function DeviceDemo() {
       try {
         const buffer = await file.arrayBuffer()
         const data = webhmi.GetDbResponse.decode(new Uint8Array(buffer))
-        if (!data.db) throw new Error('Invalid configuration file: missing database content.')
+        if (!data.db) {
+          throw new Error(
+            t('deviceDemo.import.invalidConfigMissingDb', {
+              defaultValue: 'Invalid configuration file: missing database content.',
+            }),
+          )
+        }
 
         const currentDeviceId = state.db?.deviceId
         const currentVersion = state.db?.firmwareVersion
@@ -848,8 +886,13 @@ function DeviceDemo() {
         if (data.deviceId && currentDeviceId && data.deviceId !== currentDeviceId) {
           setImportValidation({
             type: 'error',
-            title: 'Device Mismatch',
-            message: `This configuration file is for "${data.deviceId}", but you are connected to "${currentDeviceId}". Importing is not allowed to prevent damage.`,
+            title: uiText('Device Mismatch'),
+            message: t('deviceDemo.import.deviceMismatch', {
+              deviceId: data.deviceId,
+              currentDeviceId,
+              defaultValue:
+                'This configuration file is for "{{deviceId}}", but you are connected to "{{currentDeviceId}}". Importing is not allowed to prevent damage.',
+            }),
           })
           setPendingImportData(null)
           setIsImportConfirmOpen(true)
@@ -866,8 +909,13 @@ function DeviceDemo() {
         if (importMajor && currentMajor && importMajor !== currentMajor) {
           setImportValidation({
             type: 'error',
-            title: 'Critical Version Mismatch',
-            message: `This configuration (Major v${importMajor}) is incompatible with your device (Major v${currentMajor}). To prevent damage, importing is not allowed.`,
+            title: uiText('Critical Version Mismatch'),
+            message: t('deviceDemo.import.criticalVersionMismatch', {
+              importMajor,
+              currentMajor,
+              defaultValue:
+                'This configuration (Major v{{importMajor}}) is incompatible with your device (Major v{{currentMajor}}). To prevent damage, importing is not allowed.',
+            }),
           })
           setPendingImportData(null)
           setIsImportConfirmOpen(true)
@@ -879,8 +927,13 @@ function DeviceDemo() {
         if (data.firmwareVersion && currentVersion && data.firmwareVersion !== currentVersion) {
           setImportValidation({
             type: 'warning',
-            title: 'Version Mismatch',
-            message: `The configuration version (${data.firmwareVersion}) does not match the device version (${currentVersion}). Some parameters might behave unexpectedly. Do you want to continue?`,
+            title: uiText('Version Mismatch'),
+            message: t('deviceDemo.import.versionMismatch', {
+              firmwareVersion: data.firmwareVersion,
+              currentVersion,
+              defaultValue:
+                'The configuration version ({{firmwareVersion}}) does not match the device version ({{currentVersion}}). Some parameters might behave unexpectedly. Do you want to continue?',
+            }),
           })
           setPendingImportData(data)
           setIsImportConfirmOpen(true)
@@ -893,11 +946,16 @@ function DeviceDemo() {
         e.target.value = ''
       } catch (err) {
         console.error('Import failed', err)
-        alert('Import failed: ' + (err instanceof Error ? err.message : String(err)))
+        alert(
+          t('deviceDemo.import.importFailed', {
+            error: err instanceof Error ? err.message : String(err),
+            defaultValue: 'Import failed: {{error}}',
+          }),
+        )
         e.target.value = ''
       }
     },
-    [state.db, applyImportData],
+    [applyImportData, state.db, t, uiText],
   )
 
   useEffect(() => {
@@ -911,32 +969,32 @@ function DeviceDemo() {
 
   const panels: PanelDef[] = useMemo(
     () => [
-      { key: 'music', label: 'Music', target: webhmi.EqTarget.MUSIC, getEq: (db) => db?.db?.music?.eq ?? null },
-      { key: 'mica', label: 'Mic', target: webhmi.EqTarget.MIC_A, getEq: (db) => db?.db?.mic?.micAEq?.eq ?? null },
-      { key: 'micb', label: 'Mic', target: webhmi.EqTarget.MIC_B, getEq: (db) => db?.db?.mic?.micBEq?.eq ?? null },
-      { key: 'reverb', label: 'Reverb', target: webhmi.EqTarget.REVERB, getEq: (db) => db?.db?.reverb?.eq ?? null },
-      { key: 'echo', label: 'Echo', target: webhmi.EqTarget.ECHO, getEq: (db) => db?.db?.echo?.eq ?? null },
+      { key: 'music', label: uiText('Music'), target: webhmi.EqTarget.MUSIC, getEq: (db) => db?.db?.music?.eq ?? null },
+      { key: 'mica', label: uiText('Mic'), target: webhmi.EqTarget.MIC_A, getEq: (db) => db?.db?.mic?.micAEq?.eq ?? null },
+      { key: 'micb', label: uiText('Mic'), target: webhmi.EqTarget.MIC_B, getEq: (db) => db?.db?.mic?.micBEq?.eq ?? null },
+      { key: 'reverb', label: uiText('Reverb'), target: webhmi.EqTarget.REVERB, getEq: (db) => db?.db?.reverb?.eq ?? null },
+      { key: 'echo', label: uiText('Echo'), target: webhmi.EqTarget.ECHO, getEq: (db) => db?.db?.echo?.eq ?? null },
       {
         key: 'mainoutput',
-        label: 'Main Output',
+        label: uiText('Main Output'),
         target: webhmi.EqTarget.MAIN_OUTPUT,
         getEq: (db) => db?.db?.mainOutput?.eq ?? null,
       },
       {
         key: 'suboutput',
-        label: 'Sub Output',
+        label: uiText('Sub Output'),
         target: webhmi.EqTarget.SUB_OUTPUT,
         getEq: (db) => db?.db?.subOutput?.eq ?? null,
       },
-      { key: 'center', label: 'Center', target: webhmi.EqTarget.CENTER, getEq: (db) => db?.db?.center?.eq ?? null },
+      { key: 'center', label: uiText('Center'), target: webhmi.EqTarget.CENTER, getEq: (db) => db?.db?.center?.eq ?? null },
       {
         key: 'surround',
-        label: 'Surround',
+        label: uiText('Surround'),
         target: webhmi.EqTarget.SURROUND,
         getEq: (db) => db?.db?.surround?.eq ?? null,
       },
     ],
-    [],
+    [uiText],
   )
 
   const panelByKey = useMemo(() => Object.fromEntries(panels.map((p) => [p.key, p])) as Record<PanelKey, PanelDef>, [panels])
@@ -1454,13 +1512,13 @@ function DeviceDemo() {
             <CardContent className="p-4 flex flex-wrap items-end gap-x-6 gap-y-4 justify-center">
               <div className="flex items-end gap-12">
                 <div className="flex flex-col gap-1">
-                  <Label className="text-xs text-muted-foreground font-medium">Device</Label>
+                  <Label className="text-xs text-muted-foreground font-medium">{uiText('Device')}</Label>
                   <div className="h-9 flex items-center">
                     <span className="text-sm font-semibold text-white tracking-wide">{state.db?.deviceId || '-'}</span>
                   </div>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <Label className="text-xs text-muted-foreground font-medium">Version</Label>
+                  <Label className="text-xs text-muted-foreground font-medium">{uiText('Version')}</Label>
                   <div className="h-9 flex items-center">
                     <span className="text-sm font-semibold text-white tracking-wide">{state.db?.firmwareVersion || '-'}</span>
                   </div>
@@ -1520,15 +1578,15 @@ function DeviceDemo() {
           }}
         >
           <TabsList className="h-auto w-full flex-wrap justify-start gap-1 sm:justify-center">
-            {musicDb && <TabsTrigger value="music">Music</TabsTrigger>}
-            {micDb && <TabsTrigger value="mic">Mic</TabsTrigger>}
-            {reverbDb && <TabsTrigger value="reverb">Reverb</TabsTrigger>}
-            {echoDb && <TabsTrigger value="echo">Echo</TabsTrigger>}
-            {mainOutputDb && <TabsTrigger value="mainoutput">Main Output</TabsTrigger>}
-            {subOutputDb && <TabsTrigger value="suboutput">Sub Output</TabsTrigger>}
-            {centerDb && <TabsTrigger value="center">Center</TabsTrigger>}
-            {surroundDb && <TabsTrigger value="surround">Surround</TabsTrigger>}
-            {systemDb && <TabsTrigger value="system">System</TabsTrigger>}
+            {musicDb && <TabsTrigger value="music">{uiText('Music')}</TabsTrigger>}
+            {micDb && <TabsTrigger value="mic">{uiText('Mic')}</TabsTrigger>}
+            {reverbDb && <TabsTrigger value="reverb">{uiText('Reverb')}</TabsTrigger>}
+            {echoDb && <TabsTrigger value="echo">{uiText('Echo')}</TabsTrigger>}
+            {mainOutputDb && <TabsTrigger value="mainoutput">{uiText('Main Output')}</TabsTrigger>}
+            {subOutputDb && <TabsTrigger value="suboutput">{uiText('Sub Output')}</TabsTrigger>}
+            {centerDb && <TabsTrigger value="center">{uiText('Center')}</TabsTrigger>}
+            {surroundDb && <TabsTrigger value="surround">{uiText('Surround')}</TabsTrigger>}
+            {systemDb && <TabsTrigger value="system">{uiText('System')}</TabsTrigger>}
           </TabsList>
 
           {systemDb && (
@@ -1537,7 +1595,7 @@ function DeviceDemo() {
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   <ParameterCard contentClassName="sm:grid-cols-2">
                     <div className="grid gap-1 sm:col-span-2">
-                      <Label className="text-xs text-muted-foreground">BLE Name</Label>
+                      <Label className="text-xs text-muted-foreground">{uiText('BLE Name')}</Label>
                       <div className="flex items-center justify-between">
                         <Label className="text-sm font-medium">{systemDb.bleName || '-'}</Label>
                         <Button
@@ -1548,7 +1606,7 @@ function DeviceDemo() {
                             setIsBleRenameDialogOpen(true)
                           }}
                         >
-                          Rename
+                          {uiText('Rename')}
                         </Button>
                       </div>
                     </div>
@@ -1564,19 +1622,19 @@ function DeviceDemo() {
                   <Dialog open={isBleRenameDialogOpen} onOpenChange={setIsBleRenameDialogOpen}>
                     <DialogContent className="sm:max-w-[425px]">
                       <DialogHeader>
-                        <DialogTitle>Rename Bluetooth Device</DialogTitle>
+                        <DialogTitle>{uiText('Rename Bluetooth Device')}</DialogTitle>
                         <DialogDescription>
-                          Enter a new name for the BLE device.
+                          {uiText('Enter a new name for the BLE device.')}
                         </DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                          <Label htmlFor="ble-name">New BLE Name</Label>
+                          <Label htmlFor="ble-name">{uiText('New BLE Name')}</Label>
                           <Input
                             id="ble-name"
                             value={bleNameDraft}
                             onChange={(e) => setBleNameDraft(e.target.value)}
-                            placeholder="Enter BLE name"
+                            placeholder={uiText('Enter BLE name')}
                             onKeyDown={(e) => {
                               if (e.key !== 'Enter') return
                               e.preventDefault()
@@ -1591,7 +1649,7 @@ function DeviceDemo() {
                       </div>
                       <DialogFooter>
                         <Button variant="outline" onClick={() => setIsBleRenameDialogOpen(false)}>
-                          Cancel
+                          {uiText('Cancel')}
                         </Button>
                         <Button
                           disabled={
@@ -1605,7 +1663,7 @@ function DeviceDemo() {
                             setIsBleRenameDialogOpen(false)
                           }}
                         >
-                          Modify
+                          {uiText('Modify')}
                         </Button>
                       </DialogFooter>
                     </DialogContent>
@@ -1614,20 +1672,20 @@ function DeviceDemo() {
                   <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
                     <DialogContent className="sm:max-w-[425px]">
                       <DialogHeader>
-                        <DialogTitle>Export Configuration</DialogTitle>
+                        <DialogTitle>{uiText('Export Configuration')}</DialogTitle>
                         <DialogDescription>
-                          Specify a name for your configuration file.
+                          {uiText('Specify a name for your configuration file.')}
                         </DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                          <Label htmlFor="filename">File Name</Label>
+                          <Label htmlFor="filename">{uiText('File Name')}</Label>
                           <div className="flex items-center gap-2">
                             <Input
                               id="filename"
                               value={exportFilename}
                               onChange={(e) => setExportFilename(e.target.value)}
-                              placeholder="Enter filename"
+                              placeholder={uiText('Enter filename')}
                               className="flex-1"
                             />
                             <span className="text-sm text-muted-foreground">.webhmi</span>
@@ -1636,9 +1694,9 @@ function DeviceDemo() {
                       </div>
                       <DialogFooter>
                         <Button variant="outline" onClick={() => setIsExportDialogOpen(false)}>
-                          Cancel
+                          {uiText('Cancel')}
                         </Button>
-                        <Button onClick={performExport}>Export</Button>
+                        <Button onClick={performExport}>{uiText('Export')}</Button>
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
@@ -1646,14 +1704,16 @@ function DeviceDemo() {
                     {systemModeOptions.length > 0 && (
                       <>
                         <div className="grid gap-1.5 sm:col-span-2">
-                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium px-0.5">Current Mode</Label>
+                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium px-0.5">
+                            {uiText('Current Mode')}
+                          </Label>
                           <Select
                             value={systemModeValue}
                             onValueChange={(value) => void actions.switchCurrentMode(Number(value))}
                             disabled={systemDisabled}
                           >
                             <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select mode" />
+                              <SelectValue placeholder={uiText('Select mode')} />
                             </SelectTrigger>
                             <SelectContent>
                               {systemModeOptions.map((option) => (
@@ -1675,7 +1735,7 @@ function DeviceDemo() {
                               setIsSaveModeDialogOpen(true)
                             }}
                           >
-                            Save
+                            {uiText('Save')}
                           </Button>
                           <Button
                             variant="outline"
@@ -1686,7 +1746,7 @@ function DeviceDemo() {
                               setIsModeRenameDialogOpen(true)
                             }}
                           >
-                            Rename
+                            {uiText('Rename')}
                           </Button>
                         </div>
                       </>
@@ -1695,20 +1755,22 @@ function DeviceDemo() {
                     <Dialog open={isSaveModeDialogOpen} onOpenChange={setIsSaveModeDialogOpen}>
                       <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
-                          <DialogTitle>Save Current to Mode</DialogTitle>
+                          <DialogTitle>{uiText('Save Current to Mode')}</DialogTitle>
                           <DialogDescription>
-                            This will overwrite the selected mode with your current parameters. This action cannot be undone.
+                            {uiText(
+                              'This will overwrite the selected mode with your current parameters. This action cannot be undone.',
+                            )}
                           </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                           <div className="grid gap-2">
-                            <Label>Target Mode</Label>
+                            <Label>{uiText('Target Mode')}</Label>
                             <Select
                               value={String(saveTargetModeIndex)}
                               onValueChange={(v) => setSaveTargetModeIndex(Number(v))}
                             >
                               <SelectTrigger>
-                                <SelectValue placeholder="Select mode" />
+                                <SelectValue placeholder={uiText('Select mode')} />
                               </SelectTrigger>
                               <SelectContent>
                                 {systemModeOptions.map((option) => (
@@ -1722,7 +1784,7 @@ function DeviceDemo() {
                         </div>
                         <DialogFooter>
                           <Button variant="outline" onClick={() => setIsSaveModeDialogOpen(false)}>
-                            Cancel
+                            {uiText('Cancel')}
                           </Button>
                           <Button
                             variant="destructive"
@@ -1731,7 +1793,7 @@ function DeviceDemo() {
                               setIsSaveModeDialogOpen(false)
                             }}
                           >
-                            Confirm Save
+                            {uiText('Confirm Save')}
                           </Button>
                         </DialogFooter>
                       </DialogContent>
@@ -1740,15 +1802,17 @@ function DeviceDemo() {
                     <Dialog open={isModeRenameDialogOpen} onOpenChange={setIsModeRenameDialogOpen}>
                       <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
-                          <DialogTitle>Rename Modes</DialogTitle>
+                          <DialogTitle>{uiText('Rename Modes')}</DialogTitle>
                           <DialogDescription>
-                            Enter new names for all available modes.
+                            {uiText('Enter new names for all available modes.')}
                           </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-2">
                           {modeNamesDraft.map((name, index) => (
                             <div key={index} className="grid gap-2">
-                              <Label htmlFor={`mode-name-${index}`}>Mode {index + 1}</Label>
+                              <Label htmlFor={`mode-name-${index}`}>
+                                {uiText('Mode')} {index + 1}
+                              </Label>
                               <Input
                                 id={`mode-name-${index}`}
                                 value={name}
@@ -1757,14 +1821,17 @@ function DeviceDemo() {
                                   next[index] = e.target.value
                                   setModeNamesDraft(next)
                                 }}
-                                placeholder={`Enter mode ${index + 1} name`}
+                                placeholder={t('deviceDemo.mode.enterName', {
+                                  index: index + 1,
+                                  defaultValue: 'Enter mode {{index}} name',
+                                })}
                               />
                             </div>
                           ))}
                         </div>
                         <DialogFooter>
                           <Button variant="outline" onClick={() => setIsModeRenameDialogOpen(false)}>
-                            Cancel
+                            {uiText('Cancel')}
                           </Button>
                           <Button
                             disabled={
@@ -1779,7 +1846,7 @@ function DeviceDemo() {
                               setIsModeRenameDialogOpen(false)
                             }}
                           >
-                            Save Changes
+                            {uiText('Save Changes')}
                           </Button>
                         </DialogFooter>
                       </DialogContent>
@@ -1797,11 +1864,11 @@ function DeviceDemo() {
                         </DialogHeader>
                         <DialogFooter>
                           {importValidation?.type === 'error' ? (
-                            <Button onClick={() => setIsImportConfirmOpen(false)}>Close</Button>
+                            <Button onClick={() => setIsImportConfirmOpen(false)}>{uiText('Close')}</Button>
                           ) : (
                             <>
                               <Button variant="outline" onClick={() => setIsImportConfirmOpen(false)}>
-                                Cancel
+                                {uiText('Cancel')}
                               </Button>
                               <Button
                                 variant="destructive"
@@ -1813,7 +1880,7 @@ function DeviceDemo() {
                                   }
                                 }}
                               >
-                                Import Anyway
+                                {uiText('Import Anyway')}
                               </Button>
                             </>
                           )}
@@ -1827,10 +1894,10 @@ function DeviceDemo() {
                         onClick={() => fileInputRef.current?.click()}
                         disabled={systemDisabled}
                       >
-                        Import
+                        {uiText('Import')}
                       </Button>
                       <Button variant="outline" onClick={handleExport} disabled={systemDisabled}>
-                        Export
+                        {uiText('Export')}
                       </Button>
                       <input
                         type="file"
@@ -2118,7 +2185,7 @@ function DeviceDemo() {
                             }}
                             disabled={micDisabled}
                           >
-                            Mic EQ Link
+                            {uiText('Mic EQ Link')}
                           </Toggle>
                         )}
                       </div>

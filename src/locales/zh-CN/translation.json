@@ -1,0 +1,231 @@
+{
+  "nav": {
+    "docs": "文档",
+    "changelog": "更新日志"
+  },
+  "language": {
+    "switch": "切换语言",
+    "toggle": "切换语言"
+  },
+  "home": {
+    "card": {
+      "usb": "USB",
+      "ble": "BLE",
+      "demoMode": "演示模式"
+    },
+    "welcomePrefix": "欢迎使用 ",
+    "intro": "你可以通过 <usb>USB</usb> 或 <ble>BLE</ble> 配置设备，体验各种独特设置，并按你的喜好进行自定义。",
+    "footer": "建议在 <chrome>Google Chrome</chrome> 或 <edge>Microsoft Edge</edge> 上获得最佳体验。",
+    "connectingTo": "正在连接 {{device}}…",
+    "connectingNotice": "可能需要几秒钟，请不要关闭页面。"
+  },
+  "devices": {
+    "usbDevice": "USB 设备",
+    "bluetoothDevice": "蓝牙设备"
+  },
+  "errors": {
+    "webhidNotSupported": "当前浏览器不支持 WebHID。",
+    "webbleNotSupported": "当前浏览器不支持 WebBLE。",
+    "noHidProfiles": "未配置 HID 设备配置文件。",
+    "noBleProfiles": "未配置 BLE 设备配置文件。"
+  },
+  "toast": {
+    "deviceDisconnected": {
+      "title": "设备已断开",
+      "description": "与设备的连接已中断，请检查连接后重试。"
+    },
+    "connectionFailed": {
+      "title": "连接失败",
+      "usb": "连接 USB 设备失败。",
+      "ble": "连接蓝牙设备失败。"
+    },
+    "connectionError": {
+      "title": "连接错误"
+    }
+  },
+  "docs": {
+    "title": "文档",
+    "errors": {
+      "notFound": "未找到文档：{{slug}}"
+    },
+    "groups": {
+      "gettingStarted": "快速开始",
+      "resources": "资源"
+    },
+    "items": {
+      "userGuide": "使用指南",
+      "supportedDevices": "支持的设备",
+      "faq": "常见问题"
+    },
+    "onThisPage": "本页目录"
+  },
+  "notFound": {
+    "message": "页面不存在。"
+  },
+  "deviceDemo": {
+    "import": {
+      "invalidConfigMissingDb": "配置文件无效：缺少数据库内容。",
+      "deviceMismatch": "该配置文件适用于“{{deviceId}}”，但当前连接的是“{{currentDeviceId}}”。为避免损坏，禁止导入。",
+      "criticalVersionMismatch": "该配置（主版本 v{{importMajor}}）与当前设备（主版本 v{{currentMajor}}）不兼容。为避免损坏，禁止导入。",
+      "versionMismatch": "配置版本（{{firmwareVersion}}）与设备版本（{{currentVersion}}）不一致，部分参数可能异常。是否继续？",
+      "importFailed": "导入失败：{{error}}"
+    },
+    "mode": {
+      "enterName": "请输入模式 {{index}} 名称"
+    }
+  },
+  "demoMode": {
+    "import": {
+      "invalidConfigMissingDb": "配置文件无效：缺少数据库内容。",
+      "deviceMismatch": "该配置文件适用于“{{deviceId}}”，但当前连接的是“{{currentDeviceId}}”。为避免损坏，禁止导入。",
+      "criticalVersionMismatch": "该配置（主版本 v{{importMajor}}）与当前设备（主版本 v{{currentMajor}}）不兼容。为避免损坏，禁止导入。",
+      "versionMismatch": "配置版本（{{firmwareVersion}}）与设备版本（{{currentVersion}}）不一致，部分参数可能异常。是否继续？",
+      "importFailed": "导入失败：{{error}}"
+    },
+    "mode": {
+      "enterName": "请输入模式 {{index}} 名称"
+    }
+  },
+  "changelog": {
+    "page": {
+      "title": "更新日志",
+      "description": "跟踪各版本的更新与改进。"
+    },
+    "v1_0_0": {
+      "title": "WebHMI v1.0.0 - 正式发布",
+      "items": [
+        "WebHMI 平台正式上线，支持在现代浏览器中通过 WebHID 与 Web Bluetooth 直接与硬件设备交互。",
+        "稳定的连接管理：支持 USB/HID 与 Bluetooth/BLE 双模式连接，满足即插即用与无线调试。",
+        "实时信号可视化：提供专业的幅频响应曲线，支持拖拽滤波器调整并同步反馈到硬件。",
+        "全量参数控制：支持对 Music、Mic、反馈抑制、效果以及所有输出通道进行深度调节。",
+        "云端同步与导出：支持将设备参数导出为 .webhmi 文件或从本地文件恢复配置。",
+        "跨平台适配：针对 PC 与移动端进行响应式优化，获得更流畅的体验。",
+        "内置帮助中心：提供详细使用指南、支持设备列表与常见问题解答。"
+      ]
+    }
+  },
+  "uiText": {
+    "error": "错误",
+    "on": "开",
+    "off": "关",
+    "reset": "重置",
+    "reset_eq_settings": "重置 EQ 设置？",
+    "this_will_restore_all_eq_settings_for_the_current_panel_to_their_default_values_this_action_cannot_be_undone": "这将把当前面板的所有 EQ 设置恢复为默认值。此操作不可撤销。",
+    "cancel": "取消",
+    "bypass": "旁路",
+    "phase_inversion": "相位反转",
+    "device": "设备",
+    "version": "版本",
+    "music": "音乐",
+    "mic": "麦克风",
+    "reverb": "混响",
+    "echo": "回声",
+    "main_output": "主输出",
+    "sub_output": "超低音输出",
+    "center": "中置输出",
+    "surround": "环绕输出",
+    "system": "系统",
+    "ble_name": "BLE 名称",
+    "rename": "重命名",
+    "rename_bluetooth_device": "重命名蓝牙设备",
+    "enter_a_new_name_for_the_ble_device": "请输入 BLE 设备的新名称。",
+    "new_ble_name": "新的 BLE 名称",
+    "enter_ble_name": "请输入 BLE 名称",
+    "modify": "修改",
+    "export_configuration": "导出配置",
+    "specify_a_name_for_your_configuration_file": "请为配置文件指定名称。",
+    "file_name": "文件名",
+    "enter_filename": "请输入文件名",
+    "export": "导出",
+    "import": "导入",
+    "current_mode": "当前模式",
+    "select_mode": "选择模式",
+    "save": "保存",
+    "save_current_to_mode": "保存当前到模式",
+    "this_will_overwrite_the_selected_mode_with_your_current_parameters_this_action_cannot_be_undone": "这将用当前参数覆盖所选模式。此操作不可撤销。",
+    "target_mode": "目标模式",
+    "confirm_save": "确认保存",
+    "rename_modes": "重命名模式",
+    "enter_new_names_for_all_available_modes": "请为所有可用模式输入新名称。",
+    "mode": "模式",
+    "save_changes": "保存更改",
+    "close": "关闭",
+    "import_anyway": "仍然导入",
+    "defaults": "默认值",
+    "limits": "限制",
+    "device_mismatch": "设备不匹配",
+    "critical_version_mismatch": "主版本不兼容",
+    "version_mismatch": "版本不匹配",
+
+    "mic_eq_link": "麦克风 EQ 联调",
+    "output": "输出",
+    "mixer": "混音",
+    "volume": "音量",
+    "compressor": "限幅器",
+    "noise_gate": "噪声门",
+
+    "bt": "蓝牙",
+    "udisk": "U盘",
+    "spdif": "光纤",
+    "coa": "同轴",
+    "usb_audio": "声卡输入",
+    "auto_input": "自动输入",
+    "input1_bgm": "输入1 BGM",
+    "input2_aux": "输入2 AUX",
+    "level_1": "等级 1",
+    "level_2": "等级 2",
+    "level_3": "等级 3",
+    "level_4": "等级 4",
+    "level_5": "等级 5",
+    "level_6": "等级 6",
+
+    "attack": "启动时间",
+    "attack_time": "建立时间",
+    "bt_gain": "蓝牙增益",
+    "bass": "低音",
+    "decay": "混响时间",
+    "delay": "延时",
+    "delay_time": "延时时间",
+    "echo_level": "回声电平",
+    "effect_default": "效果默认音量",
+    "effect_max": "效果最大音量",
+    "effect_volume": "效果音量",
+    "frame_time": "帧时间",
+    "gate": "静噪门限",
+    "input_gain": "输入增益",
+    "input_select": "输入选择",
+    "left_delay": "左声道延时",
+    "left_mute": "左声道静音",
+    "left_volume": "左声道音量",
+    "mic_a_volume": "麦克风A音量",
+    "mic_b_volume": "麦克风B音量",
+    "mic_default": "麦克风默认音量",
+    "mic_direct_level": "麦克风直达电平",
+    "mic_fbx": "麦反馈抑制",
+    "mic_max": "麦最大音量",
+    "mic_volume": "麦音量",
+    "mid": "中音",
+    "mid_freq_hz": "中音频率（Hz）",
+    "music_default": "音乐默认音量",
+    "music_level": "音乐电平",
+    "music_max": "音乐最大音量",
+    "music_pitch": "音乐音调",
+    "music_volume": "音乐音量",
+    "mute": "静音",
+    "panel_lock": "面板锁定",
+    "pre_delay": "预延时",
+    "ratio": "压缩比例",
+    "release": "释放时间",
+    "release_time": "恢复时间",
+    "repeat": "重复比率",
+    "reverb_level": "混响电平",
+    "right_delay": "右声道延时",
+    "right_mute": "右声道静音",
+    "right_pre_delay": "右声道预延时",
+    "right_volume": "右声道音量",
+    "threshold": "启动门限",
+    "treble": "高音",
+    "udisk_gain": "U盘增益",
+    "use_default_volume": "使用默认音量"
+  }
+}
