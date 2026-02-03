@@ -1136,42 +1136,26 @@ function DemoMode() {
   const applyImportData = useCallback((data: webhmi.IGetDbResponse) => {
     if (!data.db) return
 
-    // Update basic sections
-    if (data.db.system) actions.queueSystem(data.db.system)
-    if (data.db.music) actions.queueMusic(data.db.music)
-    if (data.db.mic) actions.queueMic(data.db.mic)
-    if (data.db.reverb) actions.queueReverb(data.db.reverb)
-    if (data.db.echo) actions.queueEcho(data.db.echo)
-    if (data.db.mainOutput) actions.queueMainOutput(data.db.mainOutput)
-    if (data.db.subOutput) actions.queueSubOutput(data.db.subOutput)
-    if (data.db.center) actions.queueCenter(data.db.center)
-    if (data.db.surround) actions.queueSurround(data.db.surround)
+    setDbResponse((prev: any) => {
+      const next = JSON.parse(JSON.stringify(prev))
+      if (!next.db) next.db = {}
 
-    // Update EQs
-    const eqMap: Array<{ target: webhmi.EqTarget; eq: webhmi.IEq | null | undefined }> = [
-      { target: webhmi.EqTarget.MUSIC, eq: data.db.music?.eq },
-      { target: webhmi.EqTarget.MIC_A, eq: data.db.mic?.micAEq?.eq },
-      { target: webhmi.EqTarget.MIC_B, eq: data.db.mic?.micBEq?.eq },
-      { target: webhmi.EqTarget.REVERB, eq: data.db.reverb?.eq },
-      { target: webhmi.EqTarget.ECHO, eq: data.db.echo?.eq },
-      { target: webhmi.EqTarget.MAIN_OUTPUT, eq: data.db.mainOutput?.eq },
-      { target: webhmi.EqTarget.SUB_OUTPUT, eq: data.db.subOutput?.eq },
-      { target: webhmi.EqTarget.CENTER, eq: data.db.center?.eq },
-      { target: webhmi.EqTarget.SURROUND, eq: data.db.surround?.eq },
-    ]
+      // Apply top level fields
+      if (data.deviceId) next.deviceId = data.deviceId
+      if (data.firmwareVersion) next.firmwareVersion = data.firmwareVersion
 
-    for (const { target, eq } of eqMap) {
-      if (!eq) continue
-      if (typeof eq.bypass === 'boolean') actions.queueEqBypass(target, eq.bypass)
-      if (Array.isArray(eq.point)) {
-        for (const point of eq.point) {
-          actions.queueEqPoint(target, point)
+      // Apply sections present in the imported data
+      Object.keys(data.db!).forEach((key) => {
+        const val = (data.db as any)[key]
+        if (val !== undefined && val !== null) {
+          next.db[key] = JSON.parse(JSON.stringify(val))
         }
-      }
-    }
+      })
 
-    void actions.flushNow()
-  }, [actions])
+      return next
+    })
+    setDbFetchId((id) => id + 1)
+  }, [])
 
   const handleImport = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
