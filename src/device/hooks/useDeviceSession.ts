@@ -1047,6 +1047,59 @@ export function useDeviceSession(
     [markUserChange],
   )
 
+  const switchCurrentMode = useCallback(
+    async (index: number) => {
+      const targetClient = clientRef.current
+      if (!targetClient) return
+      if (stateRef.current.authOk !== true) return
+
+      setState((s) => ({ ...s, busy: true, error: '' }))
+      try {
+        const response = await targetClient.switchCurrentMode({ currentModeIndex: index })
+        if (response.db) {
+          const nextDb = cloneObject(stateRef.current.db)
+          if (nextDb) {
+            nextDb.db = response.db as webhmi.IDeviceDb
+            const dbForPrint = targetClient.getDbToObject(nextDb as any, { enums: String, longs: String })
+            const pretty = JSON.stringify(dbForPrint, null, 2)
+
+            resetPending()
+            baseDbRef.current = cloneObject(nextDb)
+            setState((s) => ({
+              ...s,
+              db: nextDb,
+              dbJson: pretty,
+              dbFetchId: s.dbFetchId + 1,
+              busy: false,
+              error: '',
+              dirty: false,
+            }))
+          }
+        }
+      } catch (e) {
+        setState((s) => ({ ...s, error: e instanceof Error ? e.message : String(e), busy: false }))
+      }
+    },
+    [resetPending],
+  )
+
+  const saveMode = useCallback(
+    async (index: number) => {
+      const targetClient = clientRef.current
+      if (!targetClient) return
+      if (stateRef.current.authOk !== true) return
+
+      setState((s) => ({ ...s, busy: true, error: '' }))
+      try {
+        await targetClient.saveMode({ currentModeIndex: index })
+        setState((s) => ({ ...s, busy: false, error: '' }))
+      } catch (e) {
+        setState((s) => ({ ...s, error: e instanceof Error ? e.message : String(e), busy: false }))
+      }
+    },
+    [],
+  )
+
   const queueEqBypass = useCallback(
     (target: webhmi.EqTarget, bypass: boolean) => {
       const entry: PendingEqTarget = pendingRef.current.eq.get(target) ?? { points: new Map() }
@@ -1105,6 +1158,8 @@ export function useDeviceSession(
       queueSurround,
       queueEqBypass,
       queueEqPoint,
+      switchCurrentMode,
+      saveMode,
       resetPending,
     },
   }

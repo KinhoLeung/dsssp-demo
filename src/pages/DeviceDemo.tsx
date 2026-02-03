@@ -991,6 +991,14 @@ function DeviceDemo() {
     }
   }, [systemDb?.modeList, isModeRenameDialogOpen])
 
+  const [isSaveModeDialogOpen, setIsSaveModeDialogOpen] = useState(false)
+  const [saveTargetModeIndex, setSaveTargetModeIndex] = useState<number>(0)
+  useEffect(() => {
+    if (typeof systemDb?.currentModeIndex === 'number') {
+      setSaveTargetModeIndex(systemDb.currentModeIndex)
+    }
+  }, [systemDb?.currentModeIndex, isSaveModeDialogOpen])
+
   const showMusicParamsCard = hasAny(
     musicDb?.inputGain,
     musicDb?.musicPitch,
@@ -1527,7 +1535,7 @@ function DeviceDemo() {
             <TabsContent value="system">
               <div className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  <ParameterCard title="Bluetooth" contentClassName="sm:grid-cols-2">
+                  <ParameterCard contentClassName="sm:grid-cols-2">
                     <div className="grid gap-1 sm:col-span-2">
                       <Label className="text-xs text-muted-foreground">BLE Name</Label>
                       <div className="flex items-center justify-between">
@@ -1544,6 +1552,13 @@ function DeviceDemo() {
                         </Button>
                       </div>
                     </div>
+
+                    <ToggleControl
+                      label="Panel Lock"
+                      pressed={systemDb.panelLock ?? undefined}
+                      disabled={systemDisabled}
+                      onChange={(pressed) => actions.queueSystem({ panelLock: pressed })}
+                    />
                   </ParameterCard>
 
                   <Dialog open={isBleRenameDialogOpen} onOpenChange={setIsBleRenameDialogOpen}>
@@ -1627,25 +1642,17 @@ function DeviceDemo() {
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
-
-                  <ParameterCard title="System" contentClassName="sm:grid-cols-2">
-                    <ToggleControl
-                      label="Panel Lock"
-                      pressed={systemDb.panelLock ?? undefined}
-                      disabled={systemDisabled}
-                      onChange={(pressed) => actions.queueSystem({ panelLock: pressed })}
-                    />
-
+                  <ParameterCard title="Mode" contentClassName="sm:grid-cols-2">
                     {systemModeOptions.length > 0 && (
-                      <div className="grid gap-1 sm:col-span-2">
-                        <Label className="text-xs text-muted-foreground">Mode</Label>
-                        <div className="flex gap-2">
+                      <>
+                        <div className="grid gap-1.5 sm:col-span-2">
+                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium px-0.5">Current Mode</Label>
                           <Select
                             value={systemModeValue}
-                            onValueChange={(value) => actions.queueSystem({ currentModeIndex: Number(value) })}
+                            onValueChange={(value) => void actions.switchCurrentMode(Number(value))}
                             disabled={systemDisabled}
                           >
-                            <SelectTrigger className="flex-1">
+                            <SelectTrigger className="w-full">
                               <SelectValue placeholder="Select mode" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1656,19 +1663,79 @@ function DeviceDemo() {
                               ))}
                             </SelectContent>
                           </Select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 mt-1 sm:col-span-2">
                           <Button
                             variant="outline"
+                            className="text-xs h-9"
+                            disabled={systemDisabled || !systemDb?.modeList?.length}
+                            onClick={() => {
+                              if (typeof systemDb?.currentModeIndex === 'number') setSaveTargetModeIndex(systemDb.currentModeIndex)
+                              setIsSaveModeDialogOpen(true)
+                            }}
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="text-xs h-9"
                             disabled={systemDisabled || !systemDb?.modeList?.length}
                             onClick={() => {
                               setModeNamesDraft(systemDb?.modeList ?? [])
                               setIsModeRenameDialogOpen(true)
                             }}
                           >
-                            Rename Modes
+                            Rename
                           </Button>
                         </div>
-                      </div>
+                      </>
                     )}
+
+                    <Dialog open={isSaveModeDialogOpen} onOpenChange={setIsSaveModeDialogOpen}>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>Save Current to Mode</DialogTitle>
+                          <DialogDescription>
+                            This will overwrite the selected mode with your current parameters. This action cannot be undone.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid gap-2">
+                            <Label>Target Mode</Label>
+                            <Select
+                              value={String(saveTargetModeIndex)}
+                              onValueChange={(v) => setSaveTargetModeIndex(Number(v))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select mode" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {systemModeOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setIsSaveModeDialogOpen(false)}>
+                            Cancel
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={async () => {
+                              await actions.saveMode(saveTargetModeIndex)
+                              setIsSaveModeDialogOpen(false)
+                            }}
+                          >
+                            Confirm Save
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
 
                     <Dialog open={isModeRenameDialogOpen} onOpenChange={setIsModeRenameDialogOpen}>
                       <DialogContent className="sm:max-w-[425px]">
@@ -3329,7 +3396,7 @@ function DeviceDemo() {
           )}
         </Tabs>
       </div>
-    </div>
+    </div >
   )
 }
 
