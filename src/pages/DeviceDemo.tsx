@@ -1537,7 +1537,10 @@ function DeviceDemo() {
                   max={typeof systemDb.musicMaxVolume === 'number' ? systemDb.musicMaxVolume : undefined}
                   disabled={systemDisabled}
                   className="w-32"
-                  onChange={(value) => actions.queueSystem({ musicVolume: Math.round(value) })}
+                  onChange={(value) => {
+                    const max = systemDb?.musicMaxVolume ?? 100
+                    actions.queueSystem({ musicVolume: Math.min(Math.round(value), max) })
+                  }}
                 />
                 <NumberControl
                   label="Mic Volume"
@@ -1546,7 +1549,10 @@ function DeviceDemo() {
                   max={typeof systemDb.micMaxVolume === 'number' ? systemDb.micMaxVolume : undefined}
                   disabled={systemDisabled}
                   className="w-32"
-                  onChange={(value) => actions.queueSystem({ micVolume: Math.round(value) })}
+                  onChange={(value) => {
+                    const max = systemDb?.micMaxVolume ?? 100
+                    actions.queueSystem({ micVolume: Math.min(Math.round(value), max) })
+                  }}
                 />
                 <NumberControl
                   label="Effect Volume"
@@ -1555,7 +1561,10 @@ function DeviceDemo() {
                   max={typeof systemDb.effectMaxVolume === 'number' ? systemDb.effectMaxVolume : undefined}
                   disabled={systemDisabled}
                   className="w-32"
-                  onChange={(value) => actions.queueSystem({ effectVolume: Math.round(value) })}
+                  onChange={(value) => {
+                    const max = systemDb?.effectMaxVolume ?? 100
+                    actions.queueSystem({ effectVolume: Math.min(Math.round(value), max) })
+                  }}
                 />
                 <div className="flex items-center h-[56px] pb-1">
                   <ToggleControl
@@ -1932,7 +1941,10 @@ function DeviceDemo() {
                       min={0}
                       max={typeof systemDb.musicMaxVolume === 'number' ? systemDb.musicMaxVolume : undefined}
                       disabled={systemDisabled}
-                      onChange={(value) => actions.queueSystem({ musicDefaultVolume: Math.round(value) })}
+                      onChange={(value) => {
+                        const max = systemDb?.musicMaxVolume ?? 100
+                        actions.queueSystem({ musicDefaultVolume: Math.min(Math.round(value), max) })
+                      }}
                     />
                     <NumberControl
                       label="Mic Default"
@@ -1940,7 +1952,10 @@ function DeviceDemo() {
                       min={0}
                       max={typeof systemDb.micMaxVolume === 'number' ? systemDb.micMaxVolume : undefined}
                       disabled={systemDisabled}
-                      onChange={(value) => actions.queueSystem({ micDefaultVolume: Math.round(value) })}
+                      onChange={(value) => {
+                        const max = systemDb?.micMaxVolume ?? 100
+                        actions.queueSystem({ micDefaultVolume: Math.min(Math.round(value), max) })
+                      }}
                     />
                     <NumberControl
                       label="Effect Default"
@@ -1948,7 +1963,10 @@ function DeviceDemo() {
                       min={0}
                       max={typeof systemDb.effectMaxVolume === 'number' ? systemDb.effectMaxVolume : undefined}
                       disabled={systemDisabled}
-                      onChange={(value) => actions.queueSystem({ effectDefaultVolume: Math.round(value) })}
+                      onChange={(value) => {
+                        const max = systemDb?.effectMaxVolume ?? 100
+                        actions.queueSystem({ effectDefaultVolume: Math.min(Math.round(value), max) })
+                      }}
                     />
                   </ParameterCard>
 
@@ -1956,26 +1974,56 @@ function DeviceDemo() {
                     <NumberControl
                       label="Music Max"
                       value={systemDb.musicMaxVolume ?? undefined}
-                      min={0}
+                      min={systemDb.musicDefaultVolume ?? 0}
                       max={80}
                       disabled={systemDisabled}
-                      onChange={(value) => actions.queueSystem({ musicMaxVolume: Math.round(value) })}
+                      onChange={(value) => {
+                        const rounded = Math.round(value)
+                        const def = systemDb?.musicDefaultVolume ?? 0
+                        const cur = systemDb?.musicVolume ?? 0
+                        const validMax = Math.max(rounded, def)
+                        const updates: any = { musicMaxVolume: validMax }
+                        if (validMax < cur) {
+                          updates.musicVolume = validMax
+                        }
+                        actions.queueSystem(updates)
+                      }}
                     />
                     <NumberControl
                       label="Mic Max"
                       value={systemDb.micMaxVolume ?? undefined}
-                      min={0}
+                      min={systemDb.micDefaultVolume ?? 0}
                       max={80}
                       disabled={systemDisabled}
-                      onChange={(value) => actions.queueSystem({ micMaxVolume: Math.round(value) })}
+                      onChange={(value) => {
+                        const rounded = Math.round(value)
+                        const def = systemDb?.micDefaultVolume ?? 0
+                        const cur = systemDb?.micVolume ?? 0
+                        const validMax = Math.max(rounded, def)
+                        const updates: any = { micMaxVolume: validMax }
+                        if (validMax < cur) {
+                          updates.micVolume = validMax
+                        }
+                        actions.queueSystem(updates)
+                      }}
                     />
                     <NumberControl
                       label="Effect Max"
                       value={systemDb.effectMaxVolume ?? undefined}
-                      min={0}
+                      min={systemDb.effectDefaultVolume ?? 0}
                       max={80}
                       disabled={systemDisabled}
-                      onChange={(value) => actions.queueSystem({ effectMaxVolume: Math.round(value) })}
+                      onChange={(value) => {
+                        const rounded = Math.round(value)
+                        const def = systemDb?.effectDefaultVolume ?? 0
+                        const cur = systemDb?.effectVolume ?? 0
+                        const validMax = Math.max(rounded, def)
+                        const updates: any = { effectMaxVolume: validMax }
+                        if (validMax < cur) {
+                          updates.effectVolume = validMax
+                        }
+                        actions.queueSystem(updates)
+                      }}
                     />
                   </ParameterCard>
                 </div>
