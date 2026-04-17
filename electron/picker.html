@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Device</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #09090b;
+      color: #fafafa;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    .header {
+      padding: 20px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      border-bottom: 1px solid #27272a;
+      flex-shrink: 0;
+    }
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .device-button {
+      background-color: #18181b;
+      color: #fafafa;
+      border: 1px solid #27272a;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: left;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .device-button:hover {
+      background-color: #27272a;
+      border-color: #3f3f46;
+    }
+    .device-name {
+      font-weight: 600;
+    }
+    .device-id {
+      font-size: 12px;
+      color: #a1a1aa;
+    }
+    .footer {
+      padding: 16px 24px;
+      border-top: 1px solid #27272a;
+      flex-shrink: 0;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .cancel-button {
+      background-color: transparent;
+      color: #fafafa;
+      border: 1px solid #3f3f46;
+      border-radius: 6px;
+      padding: 8px 24px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .cancel-button:hover {
+      background-color: #27272a;
+    }
+    .empty-state {
+      color: #a1a1aa;
+      font-size: 14px;
+      text-align: center;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header" id="title">Select a Device</div>
+  <div class="content" id="list">
+    <!-- Buttons go here via JS -->
+  </div>
+  <div class="footer">
+    <button class="cancel-button" onclick="cancel()">Cancel</button>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    ipcRenderer.on('devices', (event, type, devices, lang) => {
+      const isZh = lang === 'zh';
+      const typeStr = type === 'hid' ? 'USB / HID' : (isZh ? '蓝牙' : 'Bluetooth');
+      document.getElementById('title').innerText = isZh ? `选择 ${typeStr} 设备` : `Select ${typeStr} Device`;
+      document.querySelector('.cancel-button').innerText = isZh ? '取消' : 'Cancel';
+
+      const list = document.getElementById('list');
+      list.innerHTML = '';
+      
+      if (!devices || devices.length === 0) {
+        list.innerHTML = `<div class="empty-state">${isZh ? '未找到可用设备。' : 'No devices found.'}</div>`;
+        return;
+      }
+
+      devices.forEach(d => {
+        const btn = document.createElement('button');
+        btn.className = 'device-button';
+        
+        // Structure the content
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'device-name';
+        nameDiv.innerText = d.deviceName || d.name || (isZh ? '未知设备' : 'Unknown Device');
+        
+        const idDiv = document.createElement('div');
+        idDiv.className = 'device-id';
+        // For HID we might have vendorId/productId, for BLE we have deviceId
+        if (d.vendorId && d.productId) {
+          idDiv.innerText = `VID: 0x${d.vendorId.toString(16)} | PID: 0x${d.productId.toString(16)}`;
+        } else {
+          idDiv.innerText = d.deviceId || '';
+        }
+        
+        btn.appendChild(nameDiv);
+        btn.appendChild(idDiv);
+
+        btn.onclick = () => {
+          ipcRenderer.send('device-selected', d.deviceId);
+        };
+        list.appendChild(btn);
+      });
+    });
+
+    function cancel() {
+      ipcRenderer.send('device-selected', null);
+    }
+  </script>
+</body>
+</html>

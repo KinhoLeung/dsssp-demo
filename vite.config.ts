@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react-swc'
 import path from 'path'
 import { defineConfig } from 'vite'
 import svgr from 'vite-plugin-svgr'
+import { VitePWA } from 'vite-plugin-pwa'
 import util from 'node:util'
 
 const logProxyPlugin = () => ({
@@ -65,7 +66,36 @@ const getBase = (mode: string) => {
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   return {
-    plugins: [svgr(), react(), logProxyPlugin()],
+    plugins: [
+      svgr(),
+      react(),
+      logProxyPlugin(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        injectRegister: 'auto',
+        includeAssets: ['favicon-32x32.png', 'favicon-16x16.png', 'apple-touch-icon.png'],
+        manifest: {
+          name: 'WebHMI',
+          short_name: 'WebHMI',
+          description: 'WebHMI - Cross-platform Hardware Debugging & Control Panel',
+          theme_color: '#000000',
+          background_color: '#000000',
+          display: 'standalone',
+          icons: [
+            {
+              src: 'android-chrome-192x192.png',
+              sizes: '192x192',
+              type: 'image/png'
+            },
+            {
+              src: 'android-chrome-512x512.png',
+              sizes: '512x512',
+              type: 'image/png'
+            }
+          ]
+        }
+      })
+    ],
     base: getBase(mode),
     resolve: {
       alias: {
