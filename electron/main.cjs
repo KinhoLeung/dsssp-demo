@@ -7,7 +7,6 @@ function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
-    title: 'WebHMI',
     autoHideMenuBar: true,
     icon: path.join(__dirname, '../dist/favicon.ico'),
     webPreferences: {
@@ -18,11 +17,6 @@ function createWindow() {
   });
 
   mainWindow.removeMenu();
-
-  // 阻止 Electron 自动把网页的 <title> 标签内容同步覆盖到窗口标题上
-  mainWindow.on('page-title-updated', (evt) => {
-    evt.preventDefault();
-  });
 
   if (!app.isPackaged) {
     // Development mode: load from Vite dev server
