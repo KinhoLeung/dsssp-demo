@@ -48,6 +48,18 @@ enum EqTarget {
   SURROUND = 8;
 }
 
+enum DbSection {
+  SEC_SYSTEM = 0;
+  SEC_MUSIC = 1;
+  SEC_MIC = 2;
+  SEC_REVERB = 3;
+  SEC_ECHO = 4;
+  SEC_MAIN_OUTPUT = 5;
+  SEC_SUB_OUTPUT = 6;
+  SEC_CENTER = 7;
+  SEC_SURROUND = 8;
+}
+
 // ======== Full DB schema (GetDbResponse.db) ========
 
 message EqPoint {
@@ -252,12 +264,15 @@ message DeviceDb {
   optional SurroundDb surround = 9;
 }
 
-message GetDbRequest {}
+message GetDbRequest {
+  optional DbSection section = 1;
+}
 
 message GetDbResponse {
   optional string deviceId = 1;
   optional string firmwareVersion = 2;
   optional DeviceDb db = 3;
+  optional DbSection section = 4;
 }
 
 // ======== Patch requests (Set*) ========
@@ -433,7 +448,7 @@ message SwitchCurrentModeRequest {
 }
 
 message SwitchCurrentModeResponse {
-  optional DeviceDb db = 1;
+  optional uint32 currentModeIndex = 1;
 }
 
 message SaveModeRequest {

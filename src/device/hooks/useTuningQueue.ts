@@ -229,16 +229,14 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
       if (options.authOk !== true) return
 
       try {
-        const response = await client.switchCurrentMode({ currentModeIndex: index })
-        if (response.db) {
-          commitDeviceDbSnapshot(client, response.db as webhmi.IDeviceDb)
-        }
+        await client.switchCurrentMode({ currentModeIndex: index })
+        await refreshDb(client)
       } catch (e) {
         setFlushError(e instanceof Error ? e.message : String(e))
         throw e
       }
     },
-    [options.authOk, commitDeviceDbSnapshot],
+    [options.authOk, refreshDb],
   )
 
   const saveMode = useCallback(

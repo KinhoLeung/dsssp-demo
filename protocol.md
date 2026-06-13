@@ -274,13 +274,11 @@ payload：
 
 #### 6.2.1 GetDbRequest（上位机→设备，msg_id=GetDb，RESPONSE=1）
 
-len:0
-
-payload为空
+payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhmi.proto`），其中 `section` 字段用于请求特定分包模块数据以实现流式获取。
 
 #### 6.2.2 GetDbResponse（设备→上位机，msg_id=GetDb，RESPONSE=1）
 
-整个数据库：payload 使用 protobuf 编码，对应 `webhmi.GetDbResponse`（定义见 `webhmi.proto`）
+分包模块数据库数据：payload 使用 protobuf 编码，对应 `webhmi.GetDbResponse`（定义见 `webhmi.proto`），其中 `section` 字段指示了当前响应所属的模块。
 
 #### 6.2.3 数据库结构
 

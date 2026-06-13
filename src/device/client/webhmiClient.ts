@@ -144,11 +144,53 @@ export class WebhmiClient {
   }
 
   async getDb(options: { timeoutMs?: number } = {}): Promise<webhmi.GetDbResponse> {
-    const payload = this.pb.GetDbRequest?.encode?.({})?.finish?.() ?? new Uint8Array()
-    const frame = await this.session.request(MsgId.GetDb, payload, { timeoutMs: options.timeoutMs ?? 15_000 })
-    if (!frame) throw new Error('No response received for GetDb')
-    this.logResponse('GetDbResponse', frame.payload, this.pb.GetDbResponse)
-    return this.pb.GetDbResponse.decode(frame.payload)
+    const mergedDb: webhmi.IDeviceDb = {}
+    let deviceId = ''
+    let firmwareVersion = ''
+
+    const sectionsToFetch = [
+      this.pb.DbSection.SEC_SYSTEM,
+      this.pb.DbSection.SEC_MUSIC,
+      this.pb.DbSection.SEC_MIC,
+      this.pb.DbSection.SEC_REVERB,
+      this.pb.DbSection.SEC_ECHO,
+      this.pb.DbSection.SEC_MAIN_OUTPUT,
+      this.pb.DbSection.SEC_SUB_OUTPUT,
+      this.pb.DbSection.SEC_CENTER,
+      this.pb.DbSection.SEC_SURROUND,
+    ]
+
+    for (const sec of sectionsToFetch) {
+      const secRequest = this.pb.GetDbRequest.create({ section: sec })
+      const secPayload = this.pb.GetDbRequest.encode(secRequest).finish()
+      console.info(`[WebhmiClient] Requesting database section: ${this.pb.DbSection[sec]}...`)
+      const secFrame = await this.session.request(MsgId.GetDb, secPayload, { timeoutMs: options.timeoutMs ?? 15_000 })
+      if (!secFrame) throw new Error(`No response received for GetDb section ${this.pb.DbSection[sec]}`)
+
+      const secResponse = this.pb.GetDbResponse.decode(secFrame.payload)
+      this.logResponse(`GetDbResponse (Section ${this.pb.DbSection[sec]})`, secFrame.payload, this.pb.GetDbResponse)
+
+      if (secResponse.deviceId) deviceId = secResponse.deviceId
+      if (secResponse.firmwareVersion) firmwareVersion = secResponse.firmwareVersion
+
+      if (secResponse.db) {
+        if (sec === this.pb.DbSection.SEC_SYSTEM && secResponse.db.system) mergedDb.system = secResponse.db.system
+        else if (sec === this.pb.DbSection.SEC_MUSIC && secResponse.db.music) mergedDb.music = secResponse.db.music
+        else if (sec === this.pb.DbSection.SEC_MIC && secResponse.db.mic) mergedDb.mic = secResponse.db.mic
+        else if (sec === this.pb.DbSection.SEC_REVERB && secResponse.db.reverb) mergedDb.reverb = secResponse.db.reverb
+        else if (sec === this.pb.DbSection.SEC_ECHO && secResponse.db.echo) mergedDb.echo = secResponse.db.echo
+        else if (sec === this.pb.DbSection.SEC_MAIN_OUTPUT && secResponse.db.mainOutput) mergedDb.mainOutput = secResponse.db.mainOutput
+        else if (sec === this.pb.DbSection.SEC_SUB_OUTPUT && secResponse.db.subOutput) mergedDb.subOutput = secResponse.db.subOutput
+        else if (sec === this.pb.DbSection.SEC_CENTER && secResponse.db.center) mergedDb.center = secResponse.db.center
+        else if (sec === this.pb.DbSection.SEC_SURROUND && secResponse.db.surround) mergedDb.surround = secResponse.db.surround
+      }
+    }
+
+    return this.pb.GetDbResponse.create({
+      deviceId,
+      firmwareVersion,
+      db: mergedDb,
+    })
   }
 
   getDbToObject(message: webhmi.GetDbResponse, options: { enums?: unknown; longs?: unknown } = {}) {

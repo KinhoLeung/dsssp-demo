@@ -60,6 +60,18 @@ export enum EqTarget {
   SURROUND = 8,
 }
 
+export enum DbSection {
+  SEC_SYSTEM = 0,
+  SEC_MUSIC = 1,
+  SEC_MIC = 2,
+  SEC_REVERB = 3,
+  SEC_ECHO = 4,
+  SEC_MAIN_OUTPUT = 5,
+  SEC_SUB_OUTPUT = 6,
+  SEC_CENTER = 7,
+  SEC_SURROUND = 8,
+}
+
 export type EqPoint = {
   index?: number
   type?: FilterType
@@ -226,12 +238,15 @@ export type DeviceDb = {
   surround?: SurroundDb
 }
 
-export type GetDbRequest = {}
+export type GetDbRequest = {
+  section?: DbSection
+}
 
 export type GetDbResponse = {
   deviceId?: string
   firmwareVersion?: string
   db?: DeviceDb
+  section?: DbSection
 }
 
 export type EqPointPatch = {
@@ -378,7 +393,7 @@ export type SwitchCurrentModeRequest = {
 }
 
 export type SwitchCurrentModeResponse = {
-  db?: DeviceDb
+  currentModeIndex?: number
 }
 
 export type SaveModeRequest = {
@@ -390,7 +405,11 @@ export type ResetEqRequest = {
   index?: number[]
 }
 
-export const encodeGetDbRequest = (_: GetDbRequest) => new Uint8Array()
+export const encodeGetDbRequest = (message: GetDbRequest) => {
+  const writer = new PbWriter()
+  if (message.section !== undefined) writer.uint32(1, message.section)
+  return writer.finish()
+}
 
 export const decodeGetDbResponse = (bytes: Uint8Array): GetDbResponse => {
   const reader = new PbReader(bytes)
@@ -411,6 +430,9 @@ export const decodeGetDbResponse = (bytes: Uint8Array): GetDbResponse => {
         break
       case 3:
         message.db = decodeDeviceDb(reader.bytes())
+        break
+      case 4:
+        message.section = reader.uint32() as DbSection
         break
       default:
         reader.skip(wire)
@@ -546,7 +568,7 @@ export const decodeSwitchCurrentModeResponse = (bytes: Uint8Array): SwitchCurren
 
     switch (fieldNo) {
       case 1:
-        message.db = decodeDeviceDb(reader.bytes())
+        message.currentModeIndex = reader.uint32()
         break
       default:
         reader.skip(wire)
