@@ -163,6 +163,7 @@ message MicDb {
 
   optional NoiseGate noise = 11;
   optional Compressor compressor = 12;
+  repeated FbxMode fbxModeList = 13;
 }
 
 message ReverbDb {

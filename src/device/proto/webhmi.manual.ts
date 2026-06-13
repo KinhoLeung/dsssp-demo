@@ -155,6 +155,7 @@ export type MicDb = {
   treble?: number
   noise?: NoiseGate
   compressor?: Compressor
+  fbxModeList?: FbxMode[]
 }
 
 export type ReverbDb = {
@@ -986,6 +987,9 @@ const encodeMicDb = (message: MicDb) => {
   writer.float(10, message.treble)
   writer.message(11, message.noise ? encodeNoiseGate(message.noise) : undefined)
   writer.message(12, message.compressor ? encodeCompressor(message.compressor) : undefined)
+  if (message.fbxModeList && message.fbxModeList.length > 0) {
+    writer.packedVarint32(13, message.fbxModeList as unknown as number[])
+  }
   return writer.finish()
 }
 
@@ -1033,6 +1037,14 @@ const decodeMicDb = (bytes: Uint8Array): MicDb => {
         break
       case 12:
         message.compressor = decodeCompressor(reader.bytes())
+        break
+      case 13:
+        if (!message.fbxModeList) message.fbxModeList = []
+        if (wire === 2) {
+          message.fbxModeList.push(...(readPackedVarint32(reader) as FbxMode[]))
+        } else {
+          message.fbxModeList.push(reader.uint32() as FbxMode)
+        }
         break
       default:
         reader.skip(wire)

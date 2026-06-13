@@ -43,6 +43,31 @@ export type SelectOption = {
 export const hasNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
 export const hasBoolean = (value: unknown): value is boolean => typeof value === 'boolean'
 export const hasAny = (...values: unknown[]) => values.some((value) => hasNumber(value) || hasBoolean(value))
+export const hasEnum = (value: unknown, enumObj?: any): boolean => {
+  if (value === undefined || value === null || value === '') return false
+  if (!enumObj) return true
+  if (typeof value === 'number') {
+    return enumObj[value] !== undefined
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    if (!Number.isNaN(parsed)) {
+      return enumObj[parsed] !== undefined
+    }
+    return enumObj[value] !== undefined
+  }
+  return false
+}
+export const getEnumNumberValue = (value: unknown, enumObj: any): number => {
+  if (typeof value === 'number') return value
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    if (!Number.isNaN(parsed)) return parsed
+    const mapped = enumObj[value]
+    if (typeof mapped === 'number') return mapped
+  }
+  return NaN
+}
 
 export const INPUT_SELECT_OPTIONS: SelectOption[] = [
   { value: String(webhmi.InputSelect.BT), label: 'BT' },

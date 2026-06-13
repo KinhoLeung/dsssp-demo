@@ -6,6 +6,8 @@ import {
   hasNumber,
   hasBoolean,
   hasAny,
+  hasEnum,
+  getEnumNumberValue,
   nearlyEqual,
   panelStateEqual,
   buildPanelStateFromEq,
@@ -283,11 +285,14 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
   const subOutputDb = db?.subOutput ?? null
   const centerDb = db?.center ?? null
   const surroundDb = db?.surround ?? null
-  const musicInputSelectValue = typeof musicDb?.inputSelect === 'number' ? String(musicDb.inputSelect) : undefined
+  const musicInputSelectValue = useMemo(() => {
+    const val = getEnumNumberValue(musicDb?.inputSelect, webhmi.InputSelect)
+    return !Number.isNaN(val) ? String(val) : undefined
+  }, [musicDb?.inputSelect])
   const musicInputSelectOptions = useMemo(() => {
     if (musicDb?.inputSelectList && musicDb.inputSelectList.length > 0) {
       return musicDb.inputSelectList.map((val) => {
-        const numVal = Number(val)
+        const numVal = getEnumNumberValue(val, webhmi.InputSelect)
         const name = webhmi.InputSelect[numVal] || String(val)
         return {
           value: String(numVal),
@@ -297,7 +302,23 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
     }
     return INPUT_SELECT_OPTIONS
   }, [musicDb?.inputSelectList])
-  const micFbxValue = typeof micDb?.micFBX === 'number' ? String(micDb.micFBX) : undefined
+  const micFbxValue = useMemo(() => {
+    const val = getEnumNumberValue(micDb?.micFBX, webhmi.FbxMode)
+    return !Number.isNaN(val) ? String(val) : undefined
+  }, [micDb?.micFBX])
+  const micFbxOptions = useMemo(() => {
+    if (micDb?.fbxModeList && micDb.fbxModeList.length > 0) {
+      return micDb.fbxModeList.map((val) => {
+        const numVal = getEnumNumberValue(val, webhmi.FbxMode)
+        const name = webhmi.FbxMode[numVal] || String(val)
+        return {
+          value: String(numVal),
+          label: name,
+        }
+      })
+    }
+    return FBX_OPTIONS
+  }, [micDb?.fbxModeList])
   const systemModeValue = useMemo(() => {
     const index = systemDb?.currentModeIndex
     if (typeof index !== 'number') return undefined
@@ -343,29 +364,29 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
     }
   }, [systemDb?.currentModeIndex, isSaveModeDialogOpen])
 
-  const showMusicParamsCard = hasAny(
-    musicDb?.inputGain,
-    musicDb?.musicPitch,
-    musicDb?.btGain,
-    musicDb?.udiskGain,
-    musicDb?.inputSelect,
-    musicDb?.bass,
-    musicDb?.mid,
-    musicDb?.midFreq,
-    musicDb?.treble,
-  )
+  const showMusicParamsCard =
+    hasAny(
+      musicDb?.inputGain,
+      musicDb?.musicPitch,
+      musicDb?.btGain,
+      musicDb?.udiskGain,
+      musicDb?.bass,
+      musicDb?.mid,
+      musicDb?.midFreq,
+      musicDb?.treble,
+    ) || hasEnum(musicDb?.inputSelect, webhmi.InputSelect)
   const showMusicNoiseCard = !!musicDb?.noise && hasAny(musicDb.noise.gate, musicDb.noise.frameTime, musicDb.noise.atkTime, musicDb.noise.relTime)
 
-  const showMicParamsCard = hasAny(
-    micDb?.micAVolume,
-    micDb?.micBVolume,
-    micDb?.micEqJointDebugging,
-    micDb?.micFBX,
-    micDb?.bass,
-    micDb?.mid,
-    micDb?.midFreq,
-    micDb?.treble,
-  )
+  const showMicParamsCard =
+    hasAny(
+      micDb?.micAVolume,
+      micDb?.micBVolume,
+      micDb?.micEqJointDebugging,
+      micDb?.bass,
+      micDb?.mid,
+      micDb?.midFreq,
+      micDb?.treble,
+    ) || hasEnum(micDb?.micFBX, webhmi.FbxMode)
   const showMicNoiseCard = !!micDb?.noise && hasAny(micDb.noise.gate, micDb.noise.frameTime, micDb.noise.atkTime, micDb.noise.relTime)
   const showMicCompressorCard = !!micDb?.compressor && hasAny(
     micDb.compressor.threshold,
@@ -1372,7 +1393,7 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                           onChange={(value) => actions.queueMusic({ udiskGain: Math.round(value) })}
                         />
                       )}
-                      {hasNumber(musicDb?.inputSelect) && (
+                      {hasEnum(musicDb?.inputSelect, webhmi.InputSelect) && (
                         <div className="sm:col-span-2 md:col-span-4">
                           <ToggleGroupControl
                             label="Input Select"
@@ -1575,12 +1596,12 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                         />
                       )}
 
-                      {hasNumber(micDb?.micFBX) && (
+                      {hasEnum(micDb?.micFBX, webhmi.FbxMode) && (
                         <div className="sm:col-span-2 md:col-span-4">
                           <ToggleGroupControl
                             label="Mic FBX"
                             value={micFbxValue}
-                            options={FBX_OPTIONS}
+                            options={micFbxOptions}
                             disabled={micDisabled}
                             onChange={(value) => {
                               const parsed = Number(value)

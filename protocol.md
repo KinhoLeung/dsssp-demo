@@ -490,7 +490,7 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
             "micEqJointDebugging": false,
             "micAVolume": 75,
             "micBVolume": 75,
-            "micFBX": 0,
+            "micFBX": "Off",
             "bass": 0.0,
             "mid": 0.0,
             "midFreq": 1000,
@@ -507,7 +507,16 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "attack": 50,
                 "release": 200,
                 "bypass": false
-            }
+            },
+            "fbxModeList": [
+                "Off",
+                "Level1",
+                "Level2",
+                "Level3",
+                "Level4",
+                "Level5",
+                "Level6"
+            ]
         },
         "reverb": {
             "eq": {
