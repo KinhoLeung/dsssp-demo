@@ -21,10 +21,9 @@ enum InputSelect {
   UDISK = 1;
   SPDIF = 2;
   COA = 3;
-  USB_Audio = 4;
-  Auto_Input = 5;
-  Input1_BGM = 6;
-  Input2_aux = 7;
+  USB = 4;
+  AUX1 = 6;
+  AUX2 = 7;
 }
 
 enum FbxMode {
@@ -129,6 +128,7 @@ message MusicDb {
   optional float treble = 10;
 
   optional NoiseGate noise = 11;
+  repeated InputSelect inputSelectList = 12;
 }
 
 message MicEqDb {

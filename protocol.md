@@ -149,7 +149,7 @@ crc16（2 bytes）
 | 0x0008 | SetMainOutput     | 设置 MainOutput 参数（patch） |
 | 0x0009 | SetSubOutput      | 设置 SubOutput 参数（patch）  |
 | 0x000a | SetCenter         | 设置 Center 参数（patch）     |
-| 0x000b | SetSurround       | 设置 Surround 参数（patch）  |
+| 0x000b | SetSurround       | 设置 Surround 参数（patch）   |
 | 0x000c | SwitchCurrentMode | 切换当前模式                  |
 | 0x000d | SaveMode          | 保存当前模式参数              |
 | 0x000e | ResetEq           | 重置EQ参数                    |
@@ -367,6 +367,14 @@ payload为空
             "udiskGain": 0,
             "musicPitch": 0.0,
             "inputSelect": "BT",
+            "inputSelectList": [
+                "BT",
+                "UDISK",
+                "SPDIF",
+                "USB",
+                "AUX1",
+                "AUX2"
+            ],
             "bass": 0.0,
             "mid": 0.0,
             "midFreq": 1000,

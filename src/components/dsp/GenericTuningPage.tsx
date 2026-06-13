@@ -284,6 +284,19 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
   const centerDb = db?.center ?? null
   const surroundDb = db?.surround ?? null
   const musicInputSelectValue = typeof musicDb?.inputSelect === 'number' ? String(musicDb.inputSelect) : undefined
+  const musicInputSelectOptions = useMemo(() => {
+    if (musicDb?.inputSelectList && musicDb.inputSelectList.length > 0) {
+      return musicDb.inputSelectList.map((val) => {
+        const numVal = Number(val)
+        const name = webhmi.InputSelect[numVal] || String(val)
+        return {
+          value: String(numVal),
+          label: name,
+        }
+      })
+    }
+    return INPUT_SELECT_OPTIONS
+  }, [musicDb?.inputSelectList])
   const micFbxValue = typeof micDb?.micFBX === 'number' ? String(micDb.micFBX) : undefined
   const systemModeValue = useMemo(() => {
     const index = systemDb?.currentModeIndex
@@ -1364,7 +1377,7 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                           <ToggleGroupControl
                             label="Input Select"
                             value={musicInputSelectValue}
-                            options={INPUT_SELECT_OPTIONS}
+                            options={musicInputSelectOptions}
                             disabled={musicDisabled}
                             onChange={(value) => {
                               const parsed = Number(value)

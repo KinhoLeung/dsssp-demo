@@ -33,10 +33,9 @@ export enum InputSelect {
   UDISK = 1,
   SPDIF = 2,
   COA = 3,
-  USB_Audio = 4,
-  Auto_Input = 5,
-  Input1_BGM = 6,
-  Input2_aux = 7,
+  USB = 4,
+  AUX1 = 6,
+  AUX2 = 7,
 }
 
 export enum FbxMode {
@@ -126,6 +125,7 @@ export type MusicDb = {
   midFreq?: number
   treble?: number
   noise?: NoiseGate
+  inputSelectList?: InputSelect[]
 }
 
 export type MicEqDb = { eq?: Eq }
@@ -860,6 +860,9 @@ const encodeMusicDb = (message: MusicDb) => {
   writer.uint32(9, message.midFreq)
   writer.float(10, message.treble)
   writer.message(11, message.noise ? encodeNoiseGate(message.noise) : undefined)
+  if (message.inputSelectList && message.inputSelectList.length > 0) {
+    writer.packedVarint32(12, message.inputSelectList as unknown as number[])
+  }
   return writer.finish()
 }
 
@@ -904,6 +907,14 @@ const decodeMusicDb = (bytes: Uint8Array): MusicDb => {
         break
       case 11:
         message.noise = decodeNoiseGate(reader.bytes())
+        break
+      case 12:
+        if (!message.inputSelectList) message.inputSelectList = []
+        if (wire === 2) {
+          message.inputSelectList.push(...(readPackedVarint32(reader) as InputSelect[]))
+        } else {
+          message.inputSelectList.push(reader.uint32() as InputSelect)
+        }
         break
       default:
         reader.skip(wire)

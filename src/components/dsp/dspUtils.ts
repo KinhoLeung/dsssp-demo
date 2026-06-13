@@ -49,10 +49,9 @@ export const INPUT_SELECT_OPTIONS: SelectOption[] = [
   { value: String(webhmi.InputSelect.UDISK), label: 'UDISK' },
   { value: String(webhmi.InputSelect.SPDIF), label: 'SPDIF' },
   { value: String(webhmi.InputSelect.COA), label: 'COA' },
-  { value: String(webhmi.InputSelect.USB_Audio), label: 'USB Audio' },
-  { value: String(webhmi.InputSelect.Auto_Input), label: 'Auto Input' },
-  { value: String(webhmi.InputSelect.Input1_BGM), label: 'Input1 BGM' },
-  { value: String(webhmi.InputSelect.Input2_aux), label: 'Input2 Aux' },
+  { value: String(webhmi.InputSelect.USB), label: 'USB' },
+  { value: String(webhmi.InputSelect.AUX1), label: 'AUX1' },
+  { value: String(webhmi.InputSelect.AUX2), label: 'AUX2' },
 ]
 
 export const FBX_OPTIONS: SelectOption[] = [

@@ -87,7 +87,15 @@
                 "frameTime": 2000,
                 "atkTime": 500,
                 "relTime": 300
-            }
+            },
+            "inputSelectList":[
+                "BT",
+                "UDISK",
+                "SPDIF",
+                "USB",
+                "AUX1",
+                "AUX2"
+            ]
         },
         "mic": {
             "micAEq": {
