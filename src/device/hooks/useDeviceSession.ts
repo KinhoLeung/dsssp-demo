@@ -79,6 +79,19 @@ export function useDeviceSession(
       const pb = getWebhmiNamespace()
 
       const unsub = nextClient.onEvent(({ msgId, payload }) => {
+        if (msgId === MsgId.SwitchCurrentMode) {
+          try {
+            const msg = pb.SwitchCurrentModeResponse.decode(payload)
+            const report = pb.SwitchCurrentModeResponse.toObject(msg, { defaults: false })
+            if (report.db) {
+              queue.commitDeviceDbSnapshot(nextClient, report.db as webhmi.IDeviceDb)
+            }
+          } catch (e) {
+            console.error(`[web:rx] failed to decode EVENT msgId=0x${msgId.toString(16)}:`, e)
+          }
+          return
+        }
+
         queue.updateDbDraft((db) => {
           if (!db.db) return db
           try {
@@ -174,7 +187,7 @@ export function useDeviceSession(
         unsub()
       })
     },
-    [queue.updateDbDraft, connection.setCleanup],
+    [queue.commitDeviceDbSnapshot, queue.updateDbDraft, connection.setCleanup],
   )
 
   const connectHid = useCallback(

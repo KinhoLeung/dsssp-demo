@@ -219,9 +219,14 @@ export class WebhmiClient {
       const msgName = MsgId[msgId]
       if (!msgName) return
 
-      const requestPbType = (this.pb as any)[`${msgName}Request`]
-      if (requestPbType) {
-        this.logResponse(msgName, payload, requestPbType, true)
+      const eventPbType =
+        msgId === MsgId.SwitchCurrentMode
+          ? this.pb.SwitchCurrentModeResponse
+          : (this.pb as any)[`${msgName}Request`]
+
+      if (eventPbType) {
+        const eventName = msgId === MsgId.SwitchCurrentMode ? 'SwitchCurrentModeReport' : msgName
+        this.logResponse(eventName, payload, eventPbType, true)
       }
     })
   }

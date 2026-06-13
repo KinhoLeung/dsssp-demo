@@ -149,7 +149,7 @@ crc16（2 bytes）
 | 0x0008 | SetMainOutput     | 设置 MainOutput 参数（patch） |
 | 0x0009 | SetSubOutput      | 设置 SubOutput 参数（patch）  |
 | 0x000a | SetCenter         | 设置 Center 参数（patch）     |
-| 0x000b | SetSurround       | 设置 Surround 参数（patch）   |
+| 0x000b | SetSurround       | 设置 Surround 参数（patch）  |
 | 0x000c | SwitchCurrentMode | 切换当前模式                  |
 | 0x000d | SaveMode          | 保存当前模式参数              |
 | 0x000e | ResetEq           | 重置EQ参数                    |
@@ -193,7 +193,6 @@ crc16（2 bytes）
    * 上位机生成临时密钥 `(ClientPriv, ClientPub)`。
    * 发送 `Auth Request`，Payload = `ClientPub`。
    * 状态：**明文**
-
 2. **Server Hello & Sign**:
 
    * 固件接收 `ClientPub`。
@@ -203,7 +202,6 @@ crc16（2 bytes）
    * 签名 `Sig = ECDSA(IdentityPriv, ClientPub || DevicePub)`。
    * 发送 `Auth Response`，Payload = `DevicePub + Sig`。
    * **Action**: 固件端**立即**初始化 AES-CTR 状态（Tx/Rx Counter = SessionIV），后续收发均加密。
-
 3. **Client Finish**:
 
    * 上位机接收 `DevicePub` 和 `Sig`。
@@ -222,7 +220,6 @@ crc16（2 bytes）
    * `Cipher = AES-CTR(Key, TxCtr, Payload)`。
    * `TxCtr` 增加对应 Block 数。
    * 组帧发送，Header 中设置 `ENCRYPTED=1`。
-
 2. **接收方**:
 
    * 收到帧，发现 `ENCRYPTED=1`。
@@ -234,12 +231,12 @@ crc16（2 bytes）
 
 得益于显式帧计数器（Explicit Frame Counter），通信链路对丢包和乱序具有天然的鲁棒性。
 
-*   **丢包 (Packet Loss)**：若发生丢包，接收端仅丢失对应的数据帧。后续到达的帧由于携带了正确的 Counter，依然能被正确解密和处理。**不会导致通信中断或乱码。**
-*   **乱序与重放 (Reorder & Replay)**：接收端会检查 `FrameCounter > LastRxCounter`。若收到旧包（乱序到达或恶意重放），协议栈将直接**丢弃**该帧，不影响会话状态。
-*   **数据损坏 (CRC Error)**：若 CRC校验失败，说明数据在传输中受损。策略为**静默丢弃**当前帧，等待上位机重试（如有超时机制）。
-*   **仅在以下严重情况断开连接**：
-    *   Auth 握手失败（签名无效）。
-    *   收到无法解析的指令序列导致设备状态机异常。
+* **丢包 (Packet Loss)**：若发生丢包，接收端仅丢失对应的数据帧。后续到达的帧由于携带了正确的 Counter，依然能被正确解密和处理。**不会导致通信中断或乱码。**
+* **乱序与重放 (Reorder & Replay)**：接收端会检查 `FrameCounter > LastRxCounter`。若收到旧包（乱序到达或恶意重放），协议栈将直接**丢弃**该帧，不影响会话状态。
+* **数据损坏 (CRC Error)**：若 CRC校验失败，说明数据在传输中受损。策略为**静默丢弃**当前帧，等待上位机重试（如有超时机制）。
+* **仅在以下严重情况断开连接**：
+  * Auth 握手失败（签名无效）。
+  * 收到无法解析的指令序列导致设备状态机异常。
 
 ## 6 payload 格式
 
@@ -1043,6 +1040,10 @@ payload：protobuf `webhmi.SetSurroundRequest`
 payload：protobuf `webhmi.SwitchCurrentModeRequest`
 
 #### 6.13.2 SwitchCurrentModeResponse（设备→上位机，msg_id=SwitchCurrentMode 0x000c，RESPONSE=1）
+
+payload：protobuf `webhmi.SwitchCurrentModeResponse`
+
+#### 6.13.3 SwitchCurrentModeReport（设备→上位机，msg_id=SwitchCurrentMode 0x000c，RESPONSE=0，EVENT=1）
 
 payload：protobuf `webhmi.SwitchCurrentModeResponse`
 

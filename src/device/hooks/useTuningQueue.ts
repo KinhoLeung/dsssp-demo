@@ -142,6 +142,23 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
     }
   }, [resetPending])
 
+  const commitDeviceDbSnapshot = useCallback((client: WebhmiClient, deviceDb: webhmi.IDeviceDb) => {
+    const nextDb: webhmi.IGetDbResponse = {
+      ...(cloneObject(baseDbRef.current ?? {}) as webhmi.IGetDbResponse),
+      db: cloneObject(deviceDb),
+    }
+    const dbForPrint = client.getDbToObject(nextDb as any, { enums: String, longs: String })
+    const pretty = JSON.stringify(dbForPrint, null, 2)
+
+    resetPending()
+    baseDbRef.current = cloneObject(nextDb)
+    setDb(nextDb)
+    setDbJson(pretty)
+    setDbFetchId((id) => id + 1)
+    setDirty(false)
+    setFlushError('')
+  }, [resetPending])
+
   const resetEq = useCallback(async (client: WebhmiClient, target: webhmi.EqTarget, indices?: number[]) => {
     if (options.authOk !== true) return
 
@@ -214,27 +231,14 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
       try {
         const response = await client.switchCurrentMode({ currentModeIndex: index })
         if (response.db) {
-          const nextDb = cloneObject(db)
-          if (nextDb) {
-            nextDb.db = response.db as webhmi.IDeviceDb
-            const dbForPrint = client.getDbToObject(nextDb as any, { enums: String, longs: String })
-            const pretty = JSON.stringify(dbForPrint, null, 2)
-
-            resetPending()
-            baseDbRef.current = cloneObject(nextDb)
-            setDb(nextDb)
-            setDbJson(pretty)
-            setDbFetchId((id) => id + 1)
-            setDirty(false)
-            setFlushError('')
-          }
+          commitDeviceDbSnapshot(client, response.db as webhmi.IDeviceDb)
         }
       } catch (e) {
         setFlushError(e instanceof Error ? e.message : String(e))
         throw e
       }
     },
-    [options.authOk, db, resetPending],
+    [options.authOk, commitDeviceDbSnapshot],
   )
 
   const saveMode = useCallback(
@@ -581,6 +585,7 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
     clearDb,
     updateDbDraft,
     refreshDb,
+    commitDeviceDbSnapshot,
     resetEq,
     resetEqPointToDefault,
     switchCurrentMode,
