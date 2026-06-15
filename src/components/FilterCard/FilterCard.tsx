@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from 'react'
 import tailwindColors from 'tailwindcss/colors'
 
 import filterColors from '../../configs/colors'
+import type { EqRangeConfig } from '../../configs/parameterRanges'
 import scale from '../../configs/scale'
 
 import { FilterInput, FilterSelect, SliderInput } from '.'
@@ -22,6 +23,7 @@ const FilterCard = ({
   filter,
   allowedTypes,
   disabled,
+  eqRange,
   onEnter,
   onLeave,
   onChange
@@ -31,15 +33,25 @@ const FilterCard = ({
   filter: GraphFilter
   allowedTypes?: FilterType[] | null
   disabled: boolean
+  eqRange?: EqRangeConfig
   onLeave?: () => void
   onEnter?: (event: FilterChangeEvent) => void
   onChange: (event: FilterChangeEvent) => void
 }) => {
-  const { minFreq, maxFreq, minGain, maxGain, gainPrecision, minQ, maxQ, qPrecision } = scale
-  const resolvedGainPrecision = typeof gainPrecision === 'number' ? gainPrecision : 1
-  const resolvedQPrecision = typeof qPrecision === 'number' ? qPrecision : 1
-  const gainStep = Math.pow(10, -resolvedGainPrecision)
-  const qStep = Math.pow(10, -resolvedQPrecision)
+  const fallbackEqRange = {
+    freq: { min: scale.minFreq, max: scale.maxFreq, step: 1 },
+    gain: { min: scale.minGain, max: scale.maxGain, step: Math.pow(10, -(scale.gainPrecision ?? 1)) },
+    q: { min: scale.minQ, max: scale.maxQ, step: Math.pow(10, -(scale.qPrecision ?? 1)) }
+  }
+  const resolvedEqRange = eqRange ?? fallbackEqRange
+  const stepPrecision = (step: number, fallbackPrecision: number) => {
+    if (!Number.isFinite(step) || step <= 0) return fallbackPrecision
+    const [, decimals = ''] = String(step).split('.')
+    return decimals.length
+  }
+  const resolvedFreqPrecision = stepPrecision(resolvedEqRange.freq.step, 0)
+  const resolvedGainPrecision = stepPrecision(resolvedEqRange.gain.step, scale.gainPrecision ?? 1)
+  const resolvedQPrecision = stepPrecision(resolvedEqRange.q.step, scale.qPrecision ?? 1)
   const [noiseDataUrl, setNoiseDataUrl] = useState<string>('')
   // eslint-disable-next-line no-param-reassign
   if (disabled) filter = { type: 'BYPASS', freq: 0, gain: 0, q: 1 }
@@ -82,10 +94,10 @@ const FilterCard = ({
       />
 
       <FilterInput
-        min={minFreq}
-        max={maxFreq}
-        step={1}
-        precision={0}
+        min={resolvedEqRange.freq.min}
+        max={resolvedEqRange.freq.max}
+        step={resolvedEqRange.freq.step}
+        precision={resolvedFreqPrecision}
         label="Freq"
         value={filter.freq}
         disabled={disabled || zeroFreq}
@@ -94,9 +106,9 @@ const FilterCard = ({
 
       <div className="flex flex-row gap-1 w-full">
         <SliderInput
-          max={maxGain}
-          min={minGain}
-          step={gainStep}
+          max={resolvedEqRange.gain.max}
+          min={resolvedEqRange.gain.min}
+          step={resolvedEqRange.gain.step}
           precision={resolvedGainPrecision}
           className="flex-1"
           label="Gain"
@@ -109,9 +121,9 @@ const FilterCard = ({
 
         <SliderInput
           log
-          max={maxQ}
-          min={minQ}
-          step={qStep}
+          max={resolvedEqRange.q.max}
+          min={resolvedEqRange.q.min}
+          step={resolvedEqRange.q.step}
           precision={resolvedQPrecision}
           className="flex-1"
           label="Q"

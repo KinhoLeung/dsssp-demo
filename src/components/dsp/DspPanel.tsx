@@ -16,6 +16,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type React
 import { useTranslation } from 'react-i18next'
 import tailwindColors from 'tailwindcss/colors'
 
+import type { EqRangeConfig } from '../../configs/parameterRanges'
 import scale from '../../configs/scale'
 import theme, { getTheme } from '../../configs/theme'
 import FilterCard from '../FilterCard'
@@ -37,6 +38,7 @@ export type DspPanelProps = {
   pointIndexByUiIndex: number[]
   activeIndex: number
   dragging: boolean
+  eqRange?: EqRangeConfig
   headerExtra?: ReactNode
   handleFilterChange: (filterEvent: FilterChangeEvent) => void
   handlePointDoubleClick: (filterEvent: FilterPointEvent) => void
@@ -55,6 +57,7 @@ export function DspPanel({
   pointIndexByUiIndex,
   activeIndex,
   dragging,
+  eqRange,
   headerExtra,
   handleFilterChange,
   handlePointDoubleClick,
@@ -95,15 +98,33 @@ export function DspPanel({
   }, [graphWidth])
 
   const responsiveScale = useMemo(() => {
+    const rangedScale = eqRange
+      ? {
+          ...scale,
+          minFreq: eqRange.freq.min,
+          maxFreq: eqRange.freq.max,
+          minGain: eqRange.gain.min,
+          maxGain: eqRange.gain.max,
+          minQ: eqRange.q.min,
+          maxQ: eqRange.q.max,
+          displayMinFreq: Math.min(scale.displayMinFreq, eqRange.freq.min),
+          displayMaxFreq: Math.max(scale.displayMaxFreq, eqRange.freq.max),
+          displayMinGain: Math.min(scale.displayMinGain, eqRange.gain.min),
+          displayMaxGain: Math.max(scale.displayMaxGain, eqRange.gain.max),
+          frequencyTicks: scale.frequencyTicks.filter((tick) => tick >= eqRange.freq.min && tick <= eqRange.freq.max),
+          octaveLabels: scale.octaveLabels.filter((tick) => tick >= eqRange.freq.min && tick <= eqRange.freq.max),
+          majorTicks: scale.majorTicks.filter((tick) => tick >= eqRange.freq.min && tick <= eqRange.freq.max),
+        }
+      : scale
     const isMobile = graphWidth < 640
-    if (!isMobile) return scale
+    if (!isMobile) return rangedScale
 
     return {
-      ...scale,
+      ...rangedScale,
       // On mobile, only show ticks that are in the majorTicks list
-      frequencyTicks: scale.frequencyTicks.filter((tick) => scale.majorTicks.includes(tick)),
+      frequencyTicks: rangedScale.frequencyTicks.filter((tick) => rangedScale.majorTicks.includes(tick)),
     }
-  }, [graphWidth])
+  }, [eqRange, graphWidth])
 
   return (
     <Card>
@@ -213,6 +234,7 @@ export function DspPanel({
               onLeave={handleMouseLeave}
               onEnter={handleMouseEnter}
               onChange={handleFilterChange}
+              eqRange={eqRange}
             />
           ))}
         </div>
@@ -262,6 +284,7 @@ export function DspPanel({
                   onLeave={handleMouseLeave}
                   onEnter={handleMouseEnter}
                   onChange={handleFilterChange}
+                  eqRange={eqRange}
                 />
               </TabsContent>
             ))}

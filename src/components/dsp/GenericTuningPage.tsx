@@ -47,23 +47,12 @@ import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Toggle } from '@/components/ui/toggle'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import parameterRanges from '@/configs/parameterRanges'
+import { buildParameterRanges, clampToRange, withRangeBounds } from '@/configs/parameterRanges'
 import { webhmi } from '@/device/proto/generated/webhmi'
 import { useTuningState } from '@/hooks/useTuningState'
 import { cn } from '@/lib/utils'
 
 // Shared DSP UI components
-
-const {
-  music: musicRanges,
-  mic: micRanges,
-  reverb: reverbRanges,
-  echo: echoRanges,
-  mainOutput: mainOutputRanges,
-  subOutput: subOutputRanges,
-  center: centerRanges,
-  surround: surroundRanges,
-} = parameterRanges
 
 export type GenericTuningPageProps = {
   isDemoMode: boolean
@@ -285,6 +274,27 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
   const subOutputDb = db?.subOutput ?? null
   const centerDb = db?.center ?? null
   const surroundDb = db?.surround ?? null
+  const ranges = useMemo(() => buildParameterRanges(db), [db])
+  const {
+    system: systemRanges,
+    music: musicRanges,
+    mic: micRanges,
+    reverb: reverbRanges,
+    echo: echoRanges,
+    mainOutput: mainOutputRanges,
+    subOutput: subOutputRanges,
+    center: centerRanges,
+    surround: surroundRanges,
+  } = ranges
+  const systemMusicVolumeRange = withRangeBounds(systemRanges.musicVolume, { max: systemDb?.musicMaxVolume })
+  const systemMicVolumeRange = withRangeBounds(systemRanges.micVolume, { max: systemDb?.micMaxVolume })
+  const systemEffectVolumeRange = withRangeBounds(systemRanges.effectVolume, { max: systemDb?.effectMaxVolume })
+  const systemMusicDefaultVolumeRange = withRangeBounds(systemRanges.musicDefaultVolume, { max: systemDb?.musicMaxVolume })
+  const systemMicDefaultVolumeRange = withRangeBounds(systemRanges.micDefaultVolume, { max: systemDb?.micMaxVolume })
+  const systemEffectDefaultVolumeRange = withRangeBounds(systemRanges.effectDefaultVolume, { max: systemDb?.effectMaxVolume })
+  const systemMusicMaxVolumeRange = withRangeBounds(systemRanges.musicMaxVolume, { min: systemDb?.musicDefaultVolume })
+  const systemMicMaxVolumeRange = withRangeBounds(systemRanges.micMaxVolume, { min: systemDb?.micDefaultVolume })
+  const systemEffectMaxVolumeRange = withRangeBounds(systemRanges.effectMaxVolume, { min: systemDb?.effectDefaultVolume })
   const musicInputSelectValue = useMemo(() => {
     const val = getEnumNumberValue(musicDb?.inputSelect, webhmi.InputSelect)
     return !Number.isNaN(val) ? String(val) : undefined
@@ -838,37 +848,31 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                 <NumberControl
                   label="Music Volume"
                   value={systemDb.musicVolume ?? undefined}
-                  min={0}
-                  max={typeof systemDb.musicMaxVolume === 'number' ? systemDb.musicMaxVolume : undefined}
+                  {...systemMusicVolumeRange}
                   disabled={systemDisabled}
                   className="w-32"
                   onChange={(value) => {
-                    const max = systemDb?.musicMaxVolume ?? 100
-                    actions.queueSystem({ musicVolume: Math.min(Math.round(value), max) })
+                    actions.queueSystem({ musicVolume: clampToRange(Math.round(value), systemMusicVolumeRange) })
                   }}
                 />
                 <NumberControl
                   label="Mic Volume"
                   value={systemDb.micVolume ?? undefined}
-                  min={0}
-                  max={typeof systemDb.micMaxVolume === 'number' ? systemDb.micMaxVolume : undefined}
+                  {...systemMicVolumeRange}
                   disabled={systemDisabled}
                   className="w-32"
                   onChange={(value) => {
-                    const max = systemDb?.micMaxVolume ?? 100
-                    actions.queueSystem({ micVolume: Math.min(Math.round(value), max) })
+                    actions.queueSystem({ micVolume: clampToRange(Math.round(value), systemMicVolumeRange) })
                   }}
                 />
                 <NumberControl
                   label="Effect Volume"
                   value={systemDb.effectVolume ?? undefined}
-                  min={0}
-                  max={typeof systemDb.effectMaxVolume === 'number' ? systemDb.effectMaxVolume : undefined}
+                  {...systemEffectVolumeRange}
                   disabled={systemDisabled}
                   className="w-32"
                   onChange={(value) => {
-                    const max = systemDb?.effectMaxVolume ?? 100
-                    actions.queueSystem({ effectVolume: Math.min(Math.round(value), max) })
+                    actions.queueSystem({ effectVolume: clampToRange(Math.round(value), systemEffectVolumeRange) })
                   }}
                 />
                 <div className="flex items-center h-[56px] pb-1">
@@ -1243,34 +1247,28 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                     <NumberControl
                       label="Music Default"
                       value={systemDb.musicDefaultVolume ?? undefined}
-                      min={0}
-                      max={typeof systemDb.musicMaxVolume === 'number' ? systemDb.musicMaxVolume : undefined}
+                      {...systemMusicDefaultVolumeRange}
                       disabled={systemDisabled}
                       onChange={(value) => {
-                        const max = systemDb?.musicMaxVolume ?? 100
-                        actions.queueSystem({ musicDefaultVolume: Math.min(Math.round(value), max) })
+                        actions.queueSystem({ musicDefaultVolume: clampToRange(Math.round(value), systemMusicDefaultVolumeRange) })
                       }}
                     />
                     <NumberControl
                       label="Mic Default"
                       value={systemDb.micDefaultVolume ?? undefined}
-                      min={0}
-                      max={typeof systemDb.micMaxVolume === 'number' ? systemDb.micMaxVolume : undefined}
+                      {...systemMicDefaultVolumeRange}
                       disabled={systemDisabled}
                       onChange={(value) => {
-                        const max = systemDb?.micMaxVolume ?? 100
-                        actions.queueSystem({ micDefaultVolume: Math.min(Math.round(value), max) })
+                        actions.queueSystem({ micDefaultVolume: clampToRange(Math.round(value), systemMicDefaultVolumeRange) })
                       }}
                     />
                     <NumberControl
                       label="Effect Default"
                       value={systemDb.effectDefaultVolume ?? undefined}
-                      min={0}
-                      max={typeof systemDb.effectMaxVolume === 'number' ? systemDb.effectMaxVolume : undefined}
+                      {...systemEffectDefaultVolumeRange}
                       disabled={systemDisabled}
                       onChange={(value) => {
-                        const max = systemDb?.effectMaxVolume ?? 100
-                        actions.queueSystem({ effectDefaultVolume: Math.min(Math.round(value), max) })
+                        actions.queueSystem({ effectDefaultVolume: clampToRange(Math.round(value), systemEffectDefaultVolumeRange) })
                       }}
                     />
                   </ParameterCard>
@@ -1279,11 +1277,10 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                     <NumberControl
                       label="Music Max"
                       value={systemDb.musicMaxVolume ?? undefined}
-                      min={systemDb.musicDefaultVolume ?? 0}
-                      max={80}
+                      {...systemMusicMaxVolumeRange}
                       disabled={systemDisabled}
                       onChange={(value) => {
-                        const rounded = Math.round(value)
+                        const rounded = clampToRange(Math.round(value), systemMusicMaxVolumeRange)
                         const def = systemDb?.musicDefaultVolume ?? 0
                         const cur = systemDb?.musicVolume ?? 0
                         const validMax = Math.max(rounded, def)
@@ -1297,11 +1294,10 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                     <NumberControl
                       label="Mic Max"
                       value={systemDb.micMaxVolume ?? undefined}
-                      min={systemDb.micDefaultVolume ?? 0}
-                      max={80}
+                      {...systemMicMaxVolumeRange}
                       disabled={systemDisabled}
                       onChange={(value) => {
-                        const rounded = Math.round(value)
+                        const rounded = clampToRange(Math.round(value), systemMicMaxVolumeRange)
                         const def = systemDb?.micDefaultVolume ?? 0
                         const cur = systemDb?.micVolume ?? 0
                         const validMax = Math.max(rounded, def)
@@ -1315,11 +1311,10 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                     <NumberControl
                       label="Effect Max"
                       value={systemDb.effectMaxVolume ?? undefined}
-                      min={systemDb.effectDefaultVolume ?? 0}
-                      max={80}
+                      {...systemEffectMaxVolumeRange}
                       disabled={systemDisabled}
                       onChange={(value) => {
-                        const rounded = Math.round(value)
+                        const rounded = clampToRange(Math.round(value), systemEffectMaxVolumeRange)
                         const def = systemDb?.effectDefaultVolume ?? 0
                         const cur = systemDb?.effectVolume ?? 0
                         const validMax = Math.max(rounded, def)
@@ -1341,6 +1336,7 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
               <div className="flex flex-col gap-4">
                 <DspPanel
                   {...getPanelPower('music')}
+                  eqRange={musicRanges.eq}
                   filters={panelStateByKey.music.filters}
                   allowedTypesByUiIndex={panelStateByKey.music.allowedTypesByUiIndex}
                   pointIndexByUiIndex={panelStateByKey.music.pointIndexByUiIndex}
@@ -1495,6 +1491,7 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
               <div className="flex flex-col gap-4">
                 <DspPanel
                   {...getPanelPower(micKey)}
+                  eqRange={micKey === 'mica' ? micRanges.micAEq.eq : micRanges.micBEq.eq}
                   filters={panelStateByKey[micKey].filters}
                   allowedTypesByUiIndex={panelStateByKey[micKey].allowedTypesByUiIndex}
                   pointIndexByUiIndex={panelStateByKey[micKey].pointIndexByUiIndex}
@@ -1758,6 +1755,7 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
               <div className="flex flex-col gap-4">
                 <DspPanel
                   {...getPanelPower('reverb')}
+                  eqRange={reverbRanges.eq}
                   filters={panelStateByKey.reverb.filters}
                   allowedTypesByUiIndex={panelStateByKey.reverb.allowedTypesByUiIndex}
                   pointIndexByUiIndex={panelStateByKey.reverb.pointIndexByUiIndex}
@@ -1840,6 +1838,7 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
               <div className="flex flex-col gap-4">
                 <DspPanel
                   {...getPanelPower('echo')}
+                  eqRange={echoRanges.eq}
                   filters={panelStateByKey.echo.filters}
                   allowedTypesByUiIndex={panelStateByKey.echo.allowedTypesByUiIndex}
                   pointIndexByUiIndex={panelStateByKey.echo.pointIndexByUiIndex}
@@ -1949,6 +1948,7 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
               <div className="flex flex-col gap-4">
                 <DspPanel
                   {...getPanelPower('mainoutput')}
+                  eqRange={mainOutputRanges.eq}
                   filters={panelStateByKey.mainoutput.filters}
                   allowedTypesByUiIndex={panelStateByKey.mainoutput.allowedTypesByUiIndex}
                   pointIndexByUiIndex={panelStateByKey.mainoutput.pointIndexByUiIndex}
@@ -2188,6 +2188,7 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
               <div className="flex flex-col gap-4">
                 <DspPanel
                   {...getPanelPower('suboutput')}
+                  eqRange={subOutputRanges.eq}
                   filters={panelStateByKey.suboutput.filters}
                   allowedTypesByUiIndex={panelStateByKey.suboutput.allowedTypesByUiIndex}
                   pointIndexByUiIndex={panelStateByKey.suboutput.pointIndexByUiIndex}
@@ -2392,6 +2393,7 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
               <div className="flex flex-col gap-4">
                 <DspPanel
                   {...getPanelPower('center')}
+                  eqRange={centerRanges.eq}
                   filters={panelStateByKey.center.filters}
                   allowedTypesByUiIndex={panelStateByKey.center.allowedTypesByUiIndex}
                   pointIndexByUiIndex={panelStateByKey.center.pointIndexByUiIndex}
@@ -2591,6 +2593,7 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
               <div className="flex flex-col gap-4">
                 <DspPanel
                   {...getPanelPower('surround')}
+                  eqRange={surroundRanges.eq}
                   filters={panelStateByKey.surround.filters}
                   allowedTypesByUiIndex={panelStateByKey.surround.allowedTypesByUiIndex}
                   pointIndexByUiIndex={panelStateByKey.surround.pointIndexByUiIndex}

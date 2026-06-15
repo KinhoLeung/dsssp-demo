@@ -284,7 +284,9 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
 
 下面 JSON 仅用于说明字段含义/结构示例（实际传输为 protobuf，`freq` 为 Hz 的 `uint32`）：
 
-```
+范围/步进字段采用 `minXxx` / `maxXxx` / `stepXxx` 命名，由设备端随 `GetDbResponse` 下发，用于约束 Web 上位机控件。上位机在 Set* 请求中只提交实际参数值，不提交这些 UI 元数据。
+
+```json
 {
     "deviceId": "device demo",
     "firmwareVersion": "1.0.0",
@@ -308,7 +310,34 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
             "currentModeIndex": 0,
             "musicVolume": 60,
             "micVolume": 60,
-            "effectVolume": 60
+            "effectVolume": 60,
+            "minMusicMaxVolume": 0,
+            "maxMusicMaxVolume": 80,
+            "stepMusicMaxVolume": 1,
+            "minMicMaxVolume": 0,
+            "maxMicMaxVolume": 80,
+            "stepMicMaxVolume": 1,
+            "minEffectMaxVolume": 0,
+            "maxEffectMaxVolume": 80,
+            "stepEffectMaxVolume": 1,
+            "minMusicDefaultVolume": 0,
+            "maxMusicDefaultVolume": 80,
+            "stepMusicDefaultVolume": 1,
+            "minMicDefaultVolume": 0,
+            "maxMicDefaultVolume": 80,
+            "stepMicDefaultVolume": 1,
+            "minEffectDefaultVolume": 0,
+            "maxEffectDefaultVolume": 80,
+            "stepEffectDefaultVolume": 1,
+            "minMusicVolume": 0,
+            "maxMusicVolume": 80,
+            "stepMusicVolume": 1,
+            "minMicVolume": 0,
+            "maxMicVolume": 80,
+            "stepMicVolume": 1,
+            "minEffectVolume": 0,
+            "maxEffectVolume": 80,
+            "stepEffectVolume": 1
         },
         "music": {
             "eq": {
@@ -358,21 +387,22 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 ],
                 "lowPassTypeList": [
                     "LowPass"
-                ]
+                ],
+                "minFreq": 20,
+                "maxFreq": 20000,
+                "stepFreq": 1,
+                "minGain": -18.0,
+                "maxGain": 12.0,
+                "stepGain": 0.1,
+                "minQ": 0.1,
+                "maxQ": 25.0,
+                "stepQ": 0.1
             },
             "inputGain": 0,
             "btGain": 0,
             "udiskGain": 0,
             "musicPitch": 0.0,
             "inputSelect": "BT",
-            "inputSelectList": [
-                "BT",
-                "UDISK",
-                "SPDIF",
-                "USB",
-                "AUX1",
-                "AUX2"
-            ],
             "bass": 0.0,
             "mid": 0.0,
             "midFreq": 1000,
@@ -381,8 +411,52 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "gate": -50.0,
                 "frameTime": 2000,
                 "atkTime": 500,
-                "relTime": 300
-            }
+                "relTime": 300,
+                "minGate": -90.0,
+                "maxGate": -50.0,
+                "stepGate": 0.1,
+                "minFrameTime": 1,
+                "maxFrameTime": 5000,
+                "stepFrameTime": 1,
+                "minAtkTime": 1,
+                "maxAtkTime": 3000,
+                "stepAtkTime": 1,
+                "minRelTime": 1,
+                "maxRelTime": 3000,
+                "stepRelTime": 1
+            },
+            "inputSelectList":[
+                "BT",
+                "UDISK",
+                "SPDIF",
+                "USB",
+                "AUX1",
+                "AUX2"
+            ],
+            "minInputGain": -10,
+            "maxInputGain": 0,
+            "stepInputGain": 1,
+            "minBtGain": -10,
+            "maxBtGain": 0,
+            "stepBtGain": 1,
+            "minUdiskGain": -10,
+            "maxUdiskGain": 0,
+            "stepUdiskGain": 1,
+            "minMusicPitch": -12.5,
+            "maxMusicPitch": 12.5,
+            "stepMusicPitch": 0.1,
+            "minBass": -12.0,
+            "maxBass": 12.0,
+            "stepBass": 0.1,
+            "minMid": -12.0,
+            "maxMid": 12.0,
+            "stepMid": 0.1,
+            "minMidFreq": 20,
+            "maxMidFreq": 20000,
+            "stepMidFreq": 1,
+            "minTreble": -12.0,
+            "maxTreble": 12.0,
+            "stepTreble": 0.1
         },
         "mic": {
             "micAEq": {
@@ -433,7 +507,16 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                     ],
                     "lowPassTypeList": [
                         "LowPass"
-                    ]
+                    ],
+                    "minFreq": 20,
+                    "maxFreq": 20000,
+                    "stepFreq": 1,
+                    "minGain": -18.0,
+                    "maxGain": 12.0,
+                    "stepGain": 0.1,
+                    "minQ": 0.1,
+                    "maxQ": 25.0,
+                    "stepQ": 0.1
                 }
             },
             "micBEq": {
@@ -484,7 +567,16 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                     ],
                     "lowPassTypeList": [
                         "LowPass"
-                    ]
+                    ],
+                    "minFreq": 20,
+                    "maxFreq": 20000,
+                    "stepFreq": 1,
+                    "minGain": -18.0,
+                    "maxGain": 12.0,
+                    "stepGain": 0.1,
+                    "minQ": 0.1,
+                    "maxQ": 25.0,
+                    "stepQ": 0.1
                 }
             },
             "micEqJointDebugging": false,
@@ -499,16 +591,40 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "gate": -50.0,
                 "frameTime": 2000,
                 "atkTime": 500,
-                "relTime": 300
+                "relTime": 300,
+                "minGate": -90.0,
+                "maxGate": -50.0,
+                "stepGate": 0.1,
+                "minFrameTime": 1,
+                "maxFrameTime": 5000,
+                "stepFrameTime": 1,
+                "minAtkTime": 1,
+                "maxAtkTime": 3000,
+                "stepAtkTime": 1,
+                "minRelTime": 1,
+                "maxRelTime": 3000,
+                "stepRelTime": 1
             },
             "compressor": {
                 "threshold": -1.0,
                 "ratio": 10,
                 "attack": 50,
                 "release": 200,
-                "bypass": false
+                "bypass": false,
+                "minThreshold": -60,
+                "maxThreshold": 0,
+                "stepThreshold": 0.1,
+                "minRatio": 2,
+                "maxRatio": 100,
+                "stepRatio": 1,
+                "minAttack": 0,
+                "maxAttack": 500,
+                "stepAttack": 1,
+                "minRelease": 50,
+                "maxRelease": 3000,
+                "stepRelease": 1
             },
-            "fbxModeList": [
+            "fbxModeList":[
                 "Off",
                 "Level1",
                 "Level2",
@@ -516,7 +632,25 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "Level4",
                 "Level5",
                 "Level6"
-            ]
+            ],
+            "minMicAVolume": 0,
+            "maxMicAVolume": 100,
+            "stepMicAVolume": 1,
+            "minMicBVolume": 0,
+            "maxMicBVolume": 100,
+            "stepMicBVolume": 1,
+            "minBass": -12.0,
+            "maxBass": 12.0,
+            "stepBass": 0.1,
+            "minMid": -12.0,
+            "maxMid": 12.0,
+            "stepMid": 0.1,
+            "minMidFreq": 20,
+            "maxMidFreq": 20000,
+            "stepMidFreq": 1,
+            "minTreble": -12.0,
+            "maxTreble": 12.0,
+            "stepTreble": 0.1
         },
         "reverb": {
             "eq": {
@@ -566,14 +700,35 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 ],
                 "lowPassTypeList": [
                     "LowPass"
-                ]
+                ],
+                "minFreq": 20,
+                "maxFreq": 20000,
+                "stepFreq": 1,
+                "minGain": -18.0,
+                "maxGain": 12.0,
+                "stepGain": 0.1,
+                "minQ": 0.1,
+                "maxQ": 25.0,
+                "stepQ": 0.1
             },
             "reverbLevel": 100,
             "micDirectLevel": 100,
             "reverbPredelay": 20,
             "reverbDecay": 2625,
             "reverbLevelPhaseInversion":false,
-            "micDirectLevelPhaseInversion":false
+            "micDirectLevelPhaseInversion":false,
+            "minReverbLevel": 0,
+            "maxReverbLevel": 100,
+            "stepReverbLevel": 1,
+            "minMicDirectLevel": 0,
+            "maxMicDirectLevel": 100,
+            "stepMicDirectLevel": 1,
+            "minReverbPredelay": 0,
+            "maxReverbPredelay": 200,
+            "stepReverbPredelay": 1,
+            "minReverbDecay": 0,
+            "maxReverbDecay": 5000,
+            "stepReverbDecay": 1
         },
         "echo": {
             "eq": {
@@ -623,7 +778,16 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 ],
                 "lowPassTypeList": [
                     "LowPass"
-                ]
+                ],
+                "minFreq": 20,
+                "maxFreq": 20000,
+                "stepFreq": 1,
+                "minGain": -18.0,
+                "maxGain": 12.0,
+                "stepGain": 0.1,
+                "minQ": 0.1,
+                "maxQ": 25.0,
+                "stepQ": 0.1
             },
             "echoLevel": 100,
             "micDirectLevel": 100,
@@ -633,7 +797,28 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
             "echoRightPredelay": 0,
             "echoRightDelay": 0,
             "echoLevelPhaseInversion": false,
-            "micDirectLevelPhaseInversion": false
+            "micDirectLevelPhaseInversion": false,
+            "minEchoLevel": 0,
+            "maxEchoLevel": 100,
+            "stepEchoLevel": 1,
+            "minMicDirectLevel": 0,
+            "maxMicDirectLevel": 100,
+            "stepMicDirectLevel": 1,
+            "minEchoPredelay": 0,
+            "maxEchoPredelay": 250,
+            "stepEchoPredelay": 1,
+            "minEchoDelayTime": 0,
+            "maxEchoDelayTime": 500,
+            "stepEchoDelayTime": 1,
+            "minEchoRepeat": 0,
+            "maxEchoRepeat": 90,
+            "stepEchoRepeat": 1,
+            "minEchoRightPredelay": 0,
+            "maxEchoRightPredelay": 50,
+            "stepEchoRightPredelay": 1,
+            "minEchoRightDelay": -50,
+            "maxEchoRightDelay": 50,
+            "stepEchoRightDelay": 1
         },
         "mainOutput": {
             "eq": {
@@ -683,7 +868,16 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 ],
                 "lowPassTypeList": [
                     "LowPass"
-                ]
+                ],
+                "minFreq": 20,
+                "maxFreq": 20000,
+                "stepFreq": 1,
+                "minGain": -18.0,
+                "maxGain": 12.0,
+                "stepGain": 0.1,
+                "minQ": 0.1,
+                "maxQ": 25.0,
+                "stepQ": 0.1
             },
             "output": {
                 "leftChannelVolume": 0.0,
@@ -693,7 +887,19 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "leftMute": false,
                 "rightMute": false,
                 "leftChannelVolumePhaseInversion": false,
-                "rightChannelVolumePhaseInversion": false
+                "rightChannelVolumePhaseInversion": false,
+                "minLeftChannelVolume": -70.0,
+                "maxLeftChannelVolume": 12.0,
+                "stepLeftChannelVolume": 0.1,
+                "minRightChannelVolume": -70.0,
+                "maxRightChannelVolume": 12.0,
+                "stepRightChannelVolume": 0.1,
+                "minLeftDelay": 0.0,
+                "maxLeftDelay": 50.0,
+                "stepLeftDelay": 0.1,
+                "minRightDelay": 0.0,
+                "maxRightDelay": 50.0,
+                "stepRightDelay": 0.1
             },
             "mixer": {
                 "micDirectLevel": 100,
@@ -703,14 +909,38 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "micDirectLevelPhaseInversion": false,
                 "musicLevelPhaseInversion": false,
                 "reverbLevelPhaseInversion": false,
-                "echoLevelPhaseInversion": false
+                "echoLevelPhaseInversion": false,
+                "minMicDirectLevel": 0,
+                "maxMicDirectLevel": 100,
+                "stepMicDirectLevel": 1,
+                "minMusicLevel": 0,
+                "maxMusicLevel": 100,
+                "stepMusicLevel": 1,
+                "minReverbLevel": 0,
+                "maxReverbLevel": 100,
+                "stepReverbLevel": 1,
+                "minEchoLevel": 0,
+                "maxEchoLevel": 100,
+                "stepEchoLevel": 1
             },
             "compressor": {
                 "threshold": -1.0,
                 "ratio": 10,
                 "attack": 50,
                 "release": 200,
-                "bypass": false
+                "bypass": false,
+                "minThreshold": -60,
+                "maxThreshold": 0,
+                "stepThreshold": 0.1,
+                "minRatio": 2,
+                "maxRatio": 100,
+                "stepRatio": 1,
+                "minAttack": 0,
+                "maxAttack": 500,
+                "stepAttack": 1,
+                "minRelease": 50,
+                "maxRelease": 3000,
+                "stepRelease": 1
             }
         },
         "subOutput": {
@@ -761,13 +991,28 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 ],
                 "lowPassTypeList": [
                     "LowPass"
-                ]
+                ],
+                "minFreq": 20,
+                "maxFreq": 20000,
+                "stepFreq": 1,
+                "minGain": -18.0,
+                "maxGain": 12.0,
+                "stepGain": 0.1,
+                "minQ": 0.1,
+                "maxQ": 25.0,
+                "stepQ": 0.1
             },
             "output": {
                 "volume": 0.0,
                 "delay": 0.0,
                 "mute": false,
-                "volumePhaseInversion":false
+                "volumePhaseInversion":false,
+                "minVolume": -70.0,
+                "maxVolume": 24.0,
+                "stepVolume": 0.1,
+                "minDelay": 0.0,
+                "maxDelay": 50.0,
+                "stepDelay": 0.1
             },
             "mixer": {
                 "micDirectLevel": 100,
@@ -777,14 +1022,38 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "micDirectLevelPhaseInversion": false,
                 "musicLevelPhaseInversion": false,
                 "reverbLevelPhaseInversion": false,
-                "echoLevelPhaseInversion": false
+                "echoLevelPhaseInversion": false,
+                "minMicDirectLevel": 0,
+                "maxMicDirectLevel": 100,
+                "stepMicDirectLevel": 1,
+                "minMusicLevel": 0,
+                "maxMusicLevel": 100,
+                "stepMusicLevel": 1,
+                "minReverbLevel": 0,
+                "maxReverbLevel": 100,
+                "stepReverbLevel": 1,
+                "minEchoLevel": 0,
+                "maxEchoLevel": 100,
+                "stepEchoLevel": 1
             },
             "compressor": {
                 "threshold": -1.0,
                 "ratio": 10,
                 "attack": 50,
                 "release": 200,
-                "bypass": false
+                "bypass": false,
+                "minThreshold": -60,
+                "maxThreshold": 0,
+                "stepThreshold": 0.1,
+                "minRatio": 2,
+                "maxRatio": 100,
+                "stepRatio": 1,
+                "minAttack": 0,
+                "maxAttack": 500,
+                "stepAttack": 1,
+                "minRelease": 50,
+                "maxRelease": 3000,
+                "stepRelease": 1
             }
         },
         "center": {
@@ -835,13 +1104,28 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 ],
                 "lowPassTypeList": [
                     "LowPass"
-                ]
+                ],
+                "minFreq": 20,
+                "maxFreq": 20000,
+                "stepFreq": 1,
+                "minGain": -18.0,
+                "maxGain": 12.0,
+                "stepGain": 0.1,
+                "minQ": 0.1,
+                "maxQ": 25.0,
+                "stepQ": 0.1
             },
             "output": {
                 "volume": 0.0,
                 "delay": 0.0,
                 "mute": false,
-                "volumePhaseInversion":false
+                "volumePhaseInversion":false,
+                "minVolume": -70.0,
+                "maxVolume": 12.0,
+                "stepVolume": 0.1,
+                "minDelay": 0.0,
+                "maxDelay": 50.0,
+                "stepDelay": 0.1
             },
             "mixer": {
                 "micDirectLevel": 100,
@@ -851,14 +1135,38 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "micDirectLevelPhaseInversion": false,
                 "musicLevelPhaseInversion": false,
                 "reverbLevelPhaseInversion": false,
-                "echoLevelPhaseInversion": false
+                "echoLevelPhaseInversion": false,
+                "minMicDirectLevel": 0,
+                "maxMicDirectLevel": 100,
+                "stepMicDirectLevel": 1,
+                "minMusicLevel": 0,
+                "maxMusicLevel": 100,
+                "stepMusicLevel": 1,
+                "minReverbLevel": 0,
+                "maxReverbLevel": 100,
+                "stepReverbLevel": 1,
+                "minEchoLevel": 0,
+                "maxEchoLevel": 100,
+                "stepEchoLevel": 1
             },
             "compressor": {
                 "threshold": -1.0,
                 "ratio": 10,
                 "attack": 50,
                 "release": 200,
-                "bypass": false
+                "bypass": false,
+                "minThreshold": -60,
+                "maxThreshold": 0,
+                "stepThreshold": 0.1,
+                "minRatio": 2,
+                "maxRatio": 100,
+                "stepRatio": 1,
+                "minAttack": 0,
+                "maxAttack": 500,
+                "stepAttack": 1,
+                "minRelease": 50,
+                "maxRelease": 3000,
+                "stepRelease": 1
             }
         },
         "surround": {
@@ -909,7 +1217,16 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 ],
                 "lowPassTypeList": [
                     "LowPass"
-                ]
+                ],
+                "minFreq": 20,
+                "maxFreq": 20000,
+                "stepFreq": 1,
+                "minGain": -18.0,
+                "maxGain": 12.0,
+                "stepGain": 0.1,
+                "minQ": 0.1,
+                "maxQ": 25.0,
+                "stepQ": 0.1
             },
             "output": {
                 "leftChannelVolume": 0.0,
@@ -919,7 +1236,19 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "leftMute": false,
                 "rightMute": false,
                 "leftChannelVolumePhaseInversion": false,
-                "rightChannelVolumePhaseInversion": false
+                "rightChannelVolumePhaseInversion": false,
+                "minLeftChannelVolume": -70.0,
+                "maxLeftChannelVolume": 12.0,
+                "stepLeftChannelVolume": 0.1,
+                "minRightChannelVolume": -70.0,
+                "maxRightChannelVolume": 12.0,
+                "stepRightChannelVolume": 0.1,
+                "minLeftDelay": 0.0,
+                "maxLeftDelay": 50.0,
+                "stepLeftDelay": 0.1,
+                "minRightDelay": 0.0,
+                "maxRightDelay": 50.0,
+                "stepRightDelay": 0.1
             },
             "mixer": {
                 "micDirectLevel": 100,
@@ -929,19 +1258,42 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "micDirectLevelPhaseInversion": false,
                 "musicLevelPhaseInversion": false,
                 "reverbLevelPhaseInversion": false,
-                "echoLevelPhaseInversion": false
+                "echoLevelPhaseInversion": false,
+                "minMicDirectLevel": 0,
+                "maxMicDirectLevel": 100,
+                "stepMicDirectLevel": 1,
+                "minMusicLevel": 0,
+                "maxMusicLevel": 100,
+                "stepMusicLevel": 1,
+                "minReverbLevel": 0,
+                "maxReverbLevel": 100,
+                "stepReverbLevel": 1,
+                "minEchoLevel": 0,
+                "maxEchoLevel": 100,
+                "stepEchoLevel": 1
             },
             "compressor": {
                 "threshold": -1.0,
                 "ratio": 10,
                 "attack": 50,
                 "release": 200,
-                "bypass": false
+                "bypass": false,
+                "minThreshold":-60,
+                "maxThreshold":0,
+                "stepThreshold": 0.1,
+                "minRatio":2,
+                "maxRatio":100,
+                "stepRatio":1,
+                "minAttack":0,
+                "maxAttack":500,
+                "stepAttack":1,
+                "minRelease": 50,
+                "maxRelease": 3000,
+                "stepRelease": 1
             }
         }
     }
 }
-
 ```
 
 ### 6.3 设置 EQ 参数（SetEq）0x0002
@@ -1028,9 +1380,9 @@ payload：protobuf `webhmi.SetSubOutputRequest`
 
 payload：protobuf `webhmi.SetSubOutputRequest`
 
-### 6.11 设置 SubCenter 参数（SetCenter）0x000a
+### 6.11 设置 Center 参数（SetCenter）0x000a
 
-#### 6.11.1 SetCenterRequest（上位机→设备，msg_id=SetSubOutput 0x000a，RESPONSE=0）
+#### 6.11.1 SetCenterRequest（上位机→设备，msg_id=SetCenter 0x000a，RESPONSE=0）
 
 payload：protobuf `webhmi.SetCenterRequest`
 
