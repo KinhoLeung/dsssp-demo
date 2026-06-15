@@ -26,7 +26,7 @@ export type PanelDef = {
   key: PanelKey
   label: string
   target: webhmi.EqTarget
-  getEq: (db: webhmi.IGetDbResponse | null) => webhmi.IEq | null
+  getEq: (db: webhmi.IDeviceConfig | null) => webhmi.IEq | null
 }
 
 export type PanelState = {

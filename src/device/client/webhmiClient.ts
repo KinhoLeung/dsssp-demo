@@ -143,7 +143,7 @@ export class WebhmiClient {
     }
   }
 
-  async getDb(options: { timeoutMs?: number } = {}): Promise<webhmi.GetDbResponse> {
+  async getDb(options: { timeoutMs?: number } = {}): Promise<webhmi.IDeviceConfig> {
     const mergedDb: webhmi.IDeviceDb = {}
     let deviceId = ''
     let firmwareVersion = ''
@@ -173,28 +173,26 @@ export class WebhmiClient {
       if (secResponse.deviceId) deviceId = secResponse.deviceId
       if (secResponse.firmwareVersion) firmwareVersion = secResponse.firmwareVersion
 
-      if (secResponse.db) {
-        if (sec === this.pb.DbSection.SEC_SYSTEM && secResponse.db.system) mergedDb.system = secResponse.db.system
-        else if (sec === this.pb.DbSection.SEC_MUSIC && secResponse.db.music) mergedDb.music = secResponse.db.music
-        else if (sec === this.pb.DbSection.SEC_MIC && secResponse.db.mic) mergedDb.mic = secResponse.db.mic
-        else if (sec === this.pb.DbSection.SEC_REVERB && secResponse.db.reverb) mergedDb.reverb = secResponse.db.reverb
-        else if (sec === this.pb.DbSection.SEC_ECHO && secResponse.db.echo) mergedDb.echo = secResponse.db.echo
-        else if (sec === this.pb.DbSection.SEC_MAIN_OUTPUT && secResponse.db.mainOutput) mergedDb.mainOutput = secResponse.db.mainOutput
-        else if (sec === this.pb.DbSection.SEC_SUB_OUTPUT && secResponse.db.subOutput) mergedDb.subOutput = secResponse.db.subOutput
-        else if (sec === this.pb.DbSection.SEC_CENTER && secResponse.db.center) mergedDb.center = secResponse.db.center
-        else if (sec === this.pb.DbSection.SEC_SURROUND && secResponse.db.surround) mergedDb.surround = secResponse.db.surround
-      }
+      if (sec === this.pb.DbSection.SEC_SYSTEM && secResponse.system) mergedDb.system = secResponse.system
+      else if (sec === this.pb.DbSection.SEC_MUSIC && secResponse.music) mergedDb.music = secResponse.music
+      else if (sec === this.pb.DbSection.SEC_MIC && secResponse.mic) mergedDb.mic = secResponse.mic
+      else if (sec === this.pb.DbSection.SEC_REVERB && secResponse.reverb) mergedDb.reverb = secResponse.reverb
+      else if (sec === this.pb.DbSection.SEC_ECHO && secResponse.echo) mergedDb.echo = secResponse.echo
+      else if (sec === this.pb.DbSection.SEC_MAIN_OUTPUT && secResponse.mainOutput) mergedDb.mainOutput = secResponse.mainOutput
+      else if (sec === this.pb.DbSection.SEC_SUB_OUTPUT && secResponse.subOutput) mergedDb.subOutput = secResponse.subOutput
+      else if (sec === this.pb.DbSection.SEC_CENTER && secResponse.center) mergedDb.center = secResponse.center
+      else if (sec === this.pb.DbSection.SEC_SURROUND && secResponse.surround) mergedDb.surround = secResponse.surround
     }
 
-    return this.pb.GetDbResponse.create({
+    return this.pb.DeviceConfig.create({
       deviceId,
       firmwareVersion,
       db: mergedDb,
     })
   }
 
-  getDbToObject(message: webhmi.GetDbResponse, options: { enums?: unknown; longs?: unknown } = {}) {
-    return this.pb.GetDbResponse.toObject(message, {
+  getDbToObject(message: webhmi.IDeviceConfig, options: { enums?: unknown; longs?: unknown } = {}) {
+    const obj = this.pb.DeviceConfig.toObject(message as any, {
       enums: options.enums ?? String,
       longs: options.longs ?? String,
       defaults: false,
@@ -202,6 +200,7 @@ export class WebhmiClient {
       objects: true,
       oneofs: true,
     })
+    return this.cleanupLogObject(obj)
   }
 
   private cleanupLogObject(obj: any): any {

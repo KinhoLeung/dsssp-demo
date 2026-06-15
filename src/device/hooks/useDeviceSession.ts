@@ -17,7 +17,7 @@ export type DeviceSessionState = {
   error: string
   authOk: boolean | null
   authError: string
-  db: webhmi.IGetDbResponse | null
+  db: webhmi.IDeviceConfig | null
   dbJson: string
   dbFetchId: number
   dirty: boolean
@@ -75,7 +75,7 @@ export function useDeviceSession(
 
   // Setup client listeners when connected
   const setConnectedClient = useCallback(
-    (nextClient: WebhmiClient, transport: 'hid' | 'ble') => {
+    (nextClient: WebhmiClient, _transport: 'hid' | 'ble') => {
       const pb = getWebhmiNamespace()
 
       const unsub = nextClient.onEvent(({ msgId, payload }) => {

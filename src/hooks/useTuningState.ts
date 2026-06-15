@@ -204,7 +204,7 @@ export function useTuningState(isDemoMode: boolean) {
 
 
   // Offline State
-  const [dbResponse, setDbResponse] = useState<webhmi.IGetDbResponse>(INITIAL_DATA as unknown as webhmi.IGetDbResponse)
+  const [dbResponse, setDbResponse] = useState<webhmi.IDeviceConfig>(INITIAL_DATA as unknown as webhmi.IDeviceConfig)
   const [dbFetchId, setDbFetchId] = useState(0)
 
   const mergeDb = useCallback((patch: any, path: string[]) => {
@@ -354,7 +354,7 @@ export function useTuningState(isDemoMode: boolean) {
           }
         })
       },
-      applyImportData: (data: webhmi.IGetDbResponse) => {
+      applyImportData: (data: webhmi.IDeviceConfig) => {
         if (!data.db) return
 
         setDbResponse((prev: any) => {
@@ -382,7 +382,7 @@ export function useTuningState(isDemoMode: boolean) {
   )
 
   const applyImportDataOnline = useCallback(
-    (data: webhmi.IGetDbResponse) => {
+    (data: webhmi.IDeviceConfig) => {
       if (!data.db || !onlineSession) return
 
       // Update basic sections

@@ -60,7 +60,7 @@ enum DbSection {
   SEC_SURROUND = 8;
 }
 
-// ======== Full DB schema (GetDbResponse.db) ========
+// ======== Full DB schema (GetDbResponse payload) ========
 
 message EqPoint {
   optional uint32 index = 1;
@@ -448,8 +448,25 @@ message GetDbRequest {
 message GetDbResponse {
   optional string deviceId = 1;
   optional string firmwareVersion = 2;
+  optional DbSection section = 3;
+
+  oneof payload {
+    SystemDb system = 4;
+    MusicDb music = 5;
+    MicDb mic = 6;
+    ReverbDb reverb = 7;
+    EchoDb echo = 8;
+    MainOutputDb mainOutput = 9;
+    SubOutputDb subOutput = 10;
+    CenterDb center = 11;
+    SurroundDb surround = 12;
+  }
+}
+
+message DeviceConfig {
+  optional string deviceId = 1;
+  optional string firmwareVersion = 2;
   optional DeviceDb db = 3;
-  optional DbSection section = 4;
 }
 
 // ======== Patch requests (Set*) ========

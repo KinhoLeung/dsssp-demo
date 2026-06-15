@@ -42,10 +42,29 @@ const clamp = (value: number, min?: number, max?: number) => {
   return value
 }
 
+const MAX_STEP_PRECISION = 6
+
 const getStepPrecision = (step: number) => {
-  const stepString = step.toString()
-  const parts = stepString.split(".")
-  return parts[1]?.length ?? 0
+  if (!Number.isFinite(step) || step <= 0) return 0
+
+  const absStep = Math.abs(step)
+  const tolerance = Math.max(Number.EPSILON * 100, absStep * 1e-6)
+
+  for (let precision = 0; precision <= MAX_STEP_PRECISION; precision += 1) {
+    const rounded = Number(absStep.toFixed(precision))
+    if (Math.abs(rounded - absStep) <= tolerance) {
+      return precision
+    }
+  }
+
+  return MAX_STEP_PRECISION
+}
+
+const normalizeStep = (step: number) => {
+  if (!Number.isFinite(step) || step <= 0) return 1
+  const precision = getStepPrecision(step)
+  const normalized = Number(step.toFixed(precision))
+  return normalized > 0 ? normalized : step
 }
 
 const normalizeValue = (
@@ -54,11 +73,12 @@ const normalizeValue = (
   min?: number,
   max?: number
 ) => {
+  const safeStep = normalizeStep(step)
   const clamped = clamp(value, min, max)
   const stepBase = min ?? 0
-  const steps = Math.round((clamped - stepBase) / step)
-  const snapped = stepBase + steps * step
-  const precision = getStepPrecision(step)
+  const steps = Math.round((clamped - stepBase) / safeStep)
+  const snapped = stepBase + steps * safeStep
+  const precision = getStepPrecision(safeStep)
   const factor = Math.pow(10, precision)
   return Math.round(snapped * factor) / factor
 }
@@ -72,7 +92,8 @@ const parseNumber = (value: string) => {
 const formatNumber = (value?: number, step?: number) => {
   if (value === undefined || Number.isNaN(value)) return ""
   if (step !== undefined) {
-    const precision = getStepPrecision(step)
+    const safeStep = normalizeStep(step)
+    const precision = getStepPrecision(safeStep)
     const factor = Math.pow(10, precision)
     const rounded = Math.round(value * factor) / factor
     return String(rounded)
@@ -171,11 +192,12 @@ const NumberField = React.forwardRef<HTMLDivElement, NumberFieldProps>(
       (direction: 1 | -1) => {
         if (disabled || readOnly) return
         const parsed = parseNumber(inputValue)
+        const safeStep = normalizeStep(step)
         const base =
           parsed ??
           currentValue ??
           (min !== undefined ? min : 0)
-        const nextValue = base + step * direction
+        const nextValue = base + safeStep * direction
         updateValue(nextValue)
       },
       [currentValue, disabled, inputValue, min, readOnly, step, updateValue]
@@ -344,7 +366,7 @@ const NumberFieldInput = React.forwardRef<HTMLInputElement, NumberFieldInputProp
         inputMode={inputMode ?? "decimal"}
         min={context.min}
         max={context.max}
-        step={context.step}
+        step={normalizeStep(context.step)}
         required={context.required}
         readOnly={context.readOnly}
         aria-invalid={ariaInvalid}

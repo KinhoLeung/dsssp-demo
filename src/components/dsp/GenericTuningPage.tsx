@@ -98,7 +98,7 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
       delete (cleanDb.db as any).system
     }
 
-    const buffer = webhmi.GetDbResponse.encode(cleanDb as webhmi.IGetDbResponse).finish()
+    const buffer = webhmi.DeviceConfig.encode(cleanDb as webhmi.IDeviceConfig).finish()
     const blob = new Blob([buffer as any], { type: 'application/octet-stream' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -120,7 +120,7 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
   }, [state.db])
 
   const [isImportConfirmOpen, setIsImportConfirmOpen] = useState(false)
-  const [pendingImportData, setPendingImportData] = useState<webhmi.IGetDbResponse | null>(null)
+  const [pendingImportData, setPendingImportData] = useState<webhmi.IDeviceConfig | null>(null)
   const [importValidation, setImportValidation] = useState<{
     type: 'error' | 'warning'
     message: string
@@ -134,7 +134,7 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
 
       try {
         const buffer = await file.arrayBuffer()
-        const data = webhmi.GetDbResponse.decode(new Uint8Array(buffer))
+        const data = webhmi.DeviceConfig.decode(new Uint8Array(buffer))
         if (!data.db) {
           throw new Error(
             t(`${ns}.import.invalidConfigMissingDb`, {

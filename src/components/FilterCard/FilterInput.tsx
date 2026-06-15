@@ -2,6 +2,8 @@ import clsx from 'clsx'
 import { useEffect, useRef, useState } from 'react'
 import type React from 'react'
 
+import { normalizeStep, snapToStep } from './numberUtils'
+
 const FilterInput = ({
   value,
   min = -Infinity,
@@ -36,10 +38,10 @@ const FilterInput = ({
     disabled,
     onChange
   })
-  const [inputValue, setInputValue] = useState<string>(value.toFixed(precision))
+  const [inputValue, setInputValue] = useState<string>(snapToStep(value, step ?? Math.pow(10, -precision), min, max).toFixed(precision))
   const resolvedStep =
     typeof step === 'number'
-      ? step
+      ? normalizeStep(step)
       : precision === 0
         ? 1
         : Math.pow(10, -precision)
@@ -68,11 +70,8 @@ const FilterInput = ({
       if (latest.disabled) return
       event.preventDefault()
       const direction = event.deltaY < 0 ? 1 : -1
-      const next = Math.min(
-        Math.max(latest.value + direction * resolvedStep, latest.min),
-        latest.max
-      )
-      const roundedNext = Number(next.toFixed(latest.precision))
+      const next = latest.value + direction * resolvedStep
+      const roundedNext = snapToStep(next, resolvedStep, latest.min, latest.max)
       setInputValue(roundedNext.toFixed(latest.precision))
       oldValue.current = roundedNext
       latest.onChange?.(roundedNext)
@@ -84,7 +83,7 @@ const FilterInput = ({
   const validateInput = () => {
     const num = Number(inputValue)
     if (!isNaN(num)) {
-      const sanitized = Math.min(Math.max(Number(num), min), max)
+      const sanitized = snapToStep(num, resolvedStep, min, max)
       if (sanitized !== oldValue.current) {
         setInputValue(sanitized.toFixed(precision))
         onChange?.(sanitized)
@@ -107,8 +106,8 @@ const FilterInput = ({
   }
 
   useEffect(() => {
-    setInputValue(value.toFixed(precision))
-  }, [value])
+    setInputValue(snapToStep(value, resolvedStep, min, max).toFixed(precision))
+  }, [max, min, precision, resolvedStep, value])
 
   return (
     <div

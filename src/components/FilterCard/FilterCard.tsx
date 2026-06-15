@@ -15,6 +15,7 @@ import type { EqRangeConfig } from '../../configs/parameterRanges'
 import scale from '../../configs/scale'
 
 import { FilterInput, FilterSelect, SliderInput } from '.'
+import { getStepPrecision } from './numberUtils'
 import { generateNoise } from './utils'
 
 const FilterCard = ({
@@ -44,14 +45,9 @@ const FilterCard = ({
     q: { min: scale.minQ, max: scale.maxQ, step: Math.pow(10, -(scale.qPrecision ?? 1)) }
   }
   const resolvedEqRange = eqRange ?? fallbackEqRange
-  const stepPrecision = (step: number, fallbackPrecision: number) => {
-    if (!Number.isFinite(step) || step <= 0) return fallbackPrecision
-    const [, decimals = ''] = String(step).split('.')
-    return decimals.length
-  }
-  const resolvedFreqPrecision = stepPrecision(resolvedEqRange.freq.step, 0)
-  const resolvedGainPrecision = stepPrecision(resolvedEqRange.gain.step, scale.gainPrecision ?? 1)
-  const resolvedQPrecision = stepPrecision(resolvedEqRange.q.step, scale.qPrecision ?? 1)
+  const resolvedFreqPrecision = getStepPrecision(resolvedEqRange.freq.step, 0)
+  const resolvedGainPrecision = getStepPrecision(resolvedEqRange.gain.step, scale.gainPrecision ?? 1)
+  const resolvedQPrecision = getStepPrecision(resolvedEqRange.q.step, scale.qPrecision ?? 1)
   const [noiseDataUrl, setNoiseDataUrl] = useState<string>('')
   // eslint-disable-next-line no-param-reassign
   if (disabled) filter = { type: 'BYPASS', freq: 0, gain: 0, q: 1 }

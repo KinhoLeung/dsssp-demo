@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { AbstractlySlider } from '../AbstractlySlider'
 
 import { FilterInput } from '.'
+import { normalizeStep, snapToStep } from './numberUtils'
 
 const SliderInput = ({
   value,
@@ -62,8 +63,11 @@ const SliderInput = ({
 
   const sliderMin = log ? 0 : min
   const sliderMax = log ? 100 : max
-  const sliderValue = log ? Number(logToLinear(value).toFixed(precision)) : value
-  const sliderStep = step
+  const resolvedStep = normalizeStep(step)
+  const sliderValue = log
+    ? snapToStep(logToLinear(value), resolvedStep, sliderMin, sliderMax)
+    : snapToStep(value, resolvedStep, min, max)
+  const sliderStep = resolvedStep
 
   const commitEndIfChanged = () => {
     if (!dragging.current) return
@@ -93,11 +97,9 @@ const SliderInput = ({
       if (latest.disabled) return
       event.preventDefault()
       const direction = event.deltaY < 0 ? 1 : -1
-      const next = Math.min(
-        Math.max(latest.value + direction * latest.step, latest.min),
-        latest.max
-      )
-      const roundedNext = Number(next.toFixed(latest.precision))
+      const resolvedLatestStep = normalizeStep(latest.step)
+      const next = latest.value + direction * resolvedLatestStep
+      const roundedNext = snapToStep(next, resolvedLatestStep, latest.min, latest.max)
       latest.onChange(roundedNext, true)
     }
     element.addEventListener('wheel', handleWheel, { passive: false })
@@ -147,8 +149,8 @@ const SliderInput = ({
             aria-label={label ?? 'Slider'}
             onChange={(nextSliderValue) => {
               const nextValue = log
-                ? Number(linearToLog(nextSliderValue).toFixed(precision))
-                : nextSliderValue
+                ? snapToStep(linearToLog(nextSliderValue), resolvedStep, min, max)
+                : snapToStep(nextSliderValue, resolvedStep, min, max)
               lastValue.current = nextValue
               onChange(nextValue, false)
             }}

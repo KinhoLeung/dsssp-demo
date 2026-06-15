@@ -48,7 +48,7 @@ export const applySectionPatch = <T extends object>(section: T | null | undefine
   return mergeDefinedObjects(section as unknown as Record<string, unknown>, patch as Record<string, unknown>) as unknown as T
 }
 
-export const getEqRefByTarget = (db: webhmi.IGetDbResponse, target: webhmi.EqTarget): webhmi.IEq | null => {
+export const getEqRefByTarget = (db: webhmi.IDeviceConfig, target: webhmi.EqTarget): webhmi.IEq | null => {
   const d = db.db
   if (!d) return null
   switch (target) {
@@ -75,7 +75,7 @@ export const getEqRefByTarget = (db: webhmi.IGetDbResponse, target: webhmi.EqTar
   }
 }
 
-export const applyEqBypassPatch = (db: webhmi.IGetDbResponse, target: webhmi.EqTarget, bypass: boolean): webhmi.IGetDbResponse => {
+export const applyEqBypassPatch = (db: webhmi.IDeviceConfig, target: webhmi.EqTarget, bypass: boolean): webhmi.IDeviceConfig => {
   const eq = getEqRefByTarget(db, target)
   if (!eq) return db
   eq.bypass = bypass
@@ -83,7 +83,7 @@ export const applyEqBypassPatch = (db: webhmi.IGetDbResponse, target: webhmi.EqT
 }
 
 export const getEqPointRefByTargetAndIndex = (
-  db: webhmi.IGetDbResponse,
+  db: webhmi.IDeviceConfig,
   target: webhmi.EqTarget,
   index: number,
 ): webhmi.IEqPoint | null => {
@@ -93,7 +93,7 @@ export const getEqPointRefByTargetAndIndex = (
   return points.find((p) => p?.index === index) ?? null
 }
 
-export const applyEqPointPatch = (db: webhmi.IGetDbResponse, target: webhmi.EqTarget, patch: webhmi.IEqPointPatch): webhmi.IGetDbResponse => {
+export const applyEqPointPatch = (db: webhmi.IDeviceConfig, target: webhmi.EqTarget, patch: webhmi.IEqPointPatch): webhmi.IDeviceConfig => {
   const eq = getEqRefByTarget(db, target)
   if (!eq) return db
   if (!Array.isArray(eq.point)) eq.point = []
@@ -108,7 +108,7 @@ export const applyEqPointPatch = (db: webhmi.IGetDbResponse, target: webhmi.EqTa
   return db
 }
 
-export const applyEqPointDefaults = (db: webhmi.IGetDbResponse, target: webhmi.EqTarget, indices?: number[]): webhmi.IGetDbResponse => {
+export const applyEqPointDefaults = (db: webhmi.IDeviceConfig, target: webhmi.EqTarget, indices?: number[]): webhmi.IDeviceConfig => {
   const eq = getEqRefByTarget(db, target)
   if (!eq?.point?.length) return db
 
@@ -133,7 +133,7 @@ export const nearlyEqual = (a: number, b: number, eps = 1e-6) => Math.abs(a - b)
 
 export const buildEqPatchesFromPending = (
   pendingEq: Map<number, PendingEqTarget>,
-  baseDb: webhmi.IGetDbResponse | null,
+  baseDb: webhmi.IDeviceConfig | null,
 ): webhmi.IEqPatch[] => {
   const out: webhmi.IEqPatch[] = []
 

@@ -32,7 +32,7 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
   const USER_THROTTLE_MS = 200
 
   const pendingRef = useRef<PendingPatches>({ eq: new Map() })
-  const baseDbRef = useRef<webhmi.IGetDbResponse | null>(null)
+  const baseDbRef = useRef<webhmi.IDeviceConfig | null>(null)
   const flushTimerRef = useRef<number | null>(null)
   const userBurstStartAtRef = useRef<number | null>(null)
   const userLastChangeAtRef = useRef<number | null>(null)
@@ -41,7 +41,7 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
   const flushRetryDelayRef = useRef<number>(0)
   const flushRequestedRef = useRef(false)
 
-  const [db, setDb] = useState<webhmi.IGetDbResponse | null>(null)
+  const [db, setDb] = useState<webhmi.IDeviceConfig | null>(null)
   const [dbJson, setDbJson] = useState<string>('')
   const [dbFetchId, setDbFetchId] = useState<number>(0)
   const [dirty, setDirty] = useState(false)
@@ -107,7 +107,7 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
     setFlushError('')
   }, [])
 
-  const updateDbDraft = useCallback((updater: (draft: webhmi.IGetDbResponse) => webhmi.IGetDbResponse) => {
+  const updateDbDraft = useCallback((updater: (draft: webhmi.IDeviceConfig) => webhmi.IDeviceConfig) => {
     setDb((currentDb) => {
       if (!currentDb) return null
       const nextDb = updater(cloneObject(currentDb))
@@ -124,7 +124,7 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
     try {
       console.info('[useTuningQueue] Requesting database (GetDb)...')
       const message = await client.getDb()
-      const fetchedDb = client.getDbToObject(message, { enums: Number }) as unknown as webhmi.IGetDbResponse
+      const fetchedDb = client.getDbToObject(message, { enums: Number }) as unknown as webhmi.IDeviceConfig
       const dbForPrint = client.getDbToObject(message, { enums: String, longs: String })
       const pretty = JSON.stringify(dbForPrint, null, 2)
 
@@ -143,8 +143,8 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
   }, [resetPending])
 
   const commitDeviceDbSnapshot = useCallback((client: WebhmiClient, deviceDb: webhmi.IDeviceDb) => {
-    const nextDb: webhmi.IGetDbResponse = {
-      ...(cloneObject(baseDbRef.current ?? {}) as webhmi.IGetDbResponse),
+    const nextDb: webhmi.IDeviceConfig = {
+      ...(cloneObject(baseDbRef.current ?? {}) as webhmi.IDeviceConfig),
       db: cloneObject(deviceDb),
     }
     const dbForPrint = client.getDbToObject(nextDb as any, { enums: String, longs: String })
