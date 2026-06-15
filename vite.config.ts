@@ -128,7 +128,45 @@ export default defineConfig(({ mode }) => {
         },
       },
       sourcemap: false,
-      rollupOptions: {}
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            const normalizedId = id.replace(/\\/g, '/')
+
+            if (
+              normalizedId.includes('/node_modules/react/') ||
+              normalizedId.includes('/node_modules/react-dom/') ||
+              normalizedId.includes('/node_modules/react-router/') ||
+              normalizedId.includes('/node_modules/react-router-dom/')
+            ) {
+              return 'vendor-react'
+            }
+
+            if (normalizedId.includes('/node_modules/dsssp/')) {
+              return 'vendor-dsssp'
+            }
+
+            if (normalizedId.includes('/src/device/proto/')) {
+              return 'vendor-proto'
+            }
+
+            if (
+              normalizedId.includes('/node_modules/react-markdown/') ||
+              normalizedId.includes('/node_modules/remark-gfm/') ||
+              normalizedId.includes('/node_modules/rehype-slug/')
+            ) {
+              return 'vendor-docs'
+            }
+
+            if (
+              normalizedId.includes('/node_modules/motion/') ||
+              normalizedId.includes('/node_modules/framer-motion/')
+            ) {
+              return 'vendor-motion'
+            }
+          },
+        },
+      }
     }
   }
 })

@@ -27,8 +27,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar'
 
-// Load markdown files (supports localized subfolders like ../docs/zh/*.md)
-const markdownFiles = import.meta.glob('../docs/**/*.md', { query: '?raw', import: 'default', eager: true })
+const markdownFiles = import.meta.glob('../docs/**/*.md', { query: '?raw', import: 'default' })
 
 interface DocsSidebarProps extends React.ComponentProps<typeof Sidebar> {
   activeSlug: string
@@ -104,33 +103,70 @@ const extractHeadings = (markdown: string) => {
 
 export default function Docs() {
   const { t, i18n } = useTranslation()
-  const [activeSlug, setActiveSlug] = React.useState("user-guide")
-  const [activeId, setActiveId] = React.useState<string>("")
+  const [activeSlug, setActiveSlug] = React.useState('user-guide')
+  const [activeId, setActiveId] = React.useState<string>('')
+  const [content, setContent] = React.useState('')
+  const [isLoading, setIsLoading] = React.useState(true)
 
   const navMain = React.useMemo(
     () => [
       {
-        title: t("docs.groups.gettingStarted"),
+        title: t('docs.groups.gettingStarted'),
         items: [
-          { title: t("docs.items.userGuide"), slug: "user-guide" },
-          { title: t("docs.items.supportedDevices"), slug: "supported-devices" },
+          { title: t('docs.items.userGuide'), slug: 'user-guide' },
+          { title: t('docs.items.supportedDevices'), slug: 'supported-devices' },
         ],
       },
       {
-        title: t("docs.groups.resources"),
-        items: [{ title: t("docs.items.faq"), slug: "faq" }],
+        title: t('docs.groups.resources'),
+        items: [{ title: t('docs.items.faq'), slug: 'faq' }],
       },
     ],
     [t]
   )
 
-  const content = React.useMemo(() => {
-    const isZh = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('zh')
-    const localizedPath = isZh ? `../docs/zh/${activeSlug}.md` : `../docs/${activeSlug}.md`
-    const fallbackPath = `../docs/${activeSlug}.md`
-    const localized = markdownFiles[localizedPath] as string | undefined
-    const fallback = markdownFiles[fallbackPath] as string | undefined
-    return localized || fallback || `# ${t('uiText.error')}\n\n${t('docs.errors.notFound', { slug: activeSlug })}`
+  React.useEffect(() => {
+    let cancelled = false
+
+    const loadContent = async () => {
+      setIsLoading(true)
+
+      try {
+        const isZh = (i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('zh')
+        const localizedPath = isZh ? `../docs/zh/${activeSlug}.md` : `../docs/${activeSlug}.md`
+        const fallbackPath = `../docs/${activeSlug}.md`
+        const candidates = localizedPath === fallbackPath ? [fallbackPath] : [localizedPath, fallbackPath]
+
+        for (const path of candidates) {
+          const loader = markdownFiles[path] as (() => Promise<string>) | undefined
+          if (!loader) continue
+
+          const nextContent = await loader()
+          if (!cancelled) {
+            setContent(nextContent)
+            setIsLoading(false)
+          }
+          return
+        }
+
+        if (!cancelled) {
+          setContent(`# ${t('uiText.error')}\n\n${t('docs.errors.notFound', { slug: activeSlug })}`)
+          setIsLoading(false)
+        }
+      } catch (error) {
+        console.error('Failed to load docs content', error)
+        if (!cancelled) {
+          setContent(`# ${t('uiText.error')}\n\n${t('docs.errors.notFound', { slug: activeSlug })}`)
+          setIsLoading(false)
+        }
+      }
+    }
+
+    void loadContent()
+
+    return () => {
+      cancelled = true
+    }
   }, [activeSlug, i18n.language, i18n.resolvedLanguage, t])
 
   const headings = React.useMemo(() => extractHeadings(content), [content])
@@ -140,7 +176,8 @@ export default function Docs() {
     if (headings.length > 0) {
       setActiveId(headings[0].id)
     }
-  }, [headings])  // Ported scroll highlight logic from TOC.astro
+  }, [headings])
+
   React.useEffect(() => {
     const handleScroll = () => {
       if (headings.length === 0) return
@@ -191,7 +228,7 @@ export default function Docs() {
         return group.title
       }
     }
-    return t("docs.title")
+    return t('docs.title')
   }, [activeSlug, navMain, t])
 
   return (
@@ -225,26 +262,32 @@ export default function Docs() {
               className="flex-1 p-6 min-w-0"
             >
               <div className="prose prose-slate dark:prose-invert max-w-3xl mx-auto w-full">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSlug]}>
-                  {content}
-                </ReactMarkdown>
+                {isLoading && !content ? (
+                  <p className="text-sm text-muted-foreground">{t('uiText.loading', { defaultValue: 'Loading...' })}</p>
+                ) : (
+                  <div className={cn(isLoading && 'opacity-60 transition-opacity')}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSlug]}>
+                      {content}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Table of Contents - Fixed Right Column */}
             <div className="hidden xl:block w-72 shrink-0 p-6 sticky top-0 self-start h-fit">
               <div className="text-sm">
-                <h4 className="font-medium mb-4 text-foreground/90">{t("docs.onThisPage")}</h4>
+                <h4 className="font-medium mb-4 text-foreground/90">{t('docs.onThisPage')}</h4>
                 <ul className="space-y-2">
                   {headings.map((heading) => (
                     <li key={heading.id}>
                       <a
                         href={`#${heading.id}`}
                         className={cn(
-                          "block border-l-2 py-1 pr-2 transition-all hover:text-foreground line-clamp-1",
+                          'block border-l-2 py-1 pr-2 transition-all hover:text-foreground line-clamp-1',
                           activeId === heading.id
-                            ? "border-primary font-medium text-foreground"
-                            : "border-transparent text-muted-foreground"
+                            ? 'border-primary font-medium text-foreground'
+                            : 'border-transparent text-muted-foreground'
                         )}
                         style={{ paddingLeft: (heading.level - 2) * 16 + 12 }}
                         onClick={(e) => {
