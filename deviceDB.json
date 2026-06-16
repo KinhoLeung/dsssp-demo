@@ -48,7 +48,9 @@
             "stepMicVolume": 1,
             "minEffectVolume": 0,
             "maxEffectVolume": 80,
-            "stepEffectVolume": 1
+            "stepEffectVolume": 1,
+            "controlMode": "OUTPUT_CONTROL_MANUAL",
+            "sceneMode": "OUTPUT_SCENE_SING"
         },
         "music": {
             "eq": {

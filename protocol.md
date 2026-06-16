@@ -318,6 +318,8 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
 
 范围/步进字段采用 `minXxx` / `maxXxx` / `stepXxx` 命名，由设备端随对应 section 的 `GetDbResponse.payload` 下发，用于约束 Web 上位机控件。上位机在 Set* 请求中只提交实际参数值，不提交这些 UI 元数据。
 
+全局输出模式由 `SystemDb.controlMode` 和 `SystemDb.sceneMode` 表示：`controlMode` 可取 `OUTPUT_CONTROL_AUTO` / `OUTPUT_CONTROL_MANUAL`，`sceneMode` 可取 `OUTPUT_SCENE_SING` / `OUTPUT_SCENE_DANCE`。默认值为 `OUTPUT_CONTROL_MANUAL` 和 `OUTPUT_SCENE_SING`。当 `controlMode` 为 `OUTPUT_CONTROL_AUTO` 时，上位机应禁止用户直接调整主输出、超低音输出、中置输出、环绕输出的 EQ 与 Mixer 参数。
+
 ```json
 {
     "deviceId": "device demo",
@@ -369,7 +371,9 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
             "stepMicVolume": 1,
             "minEffectVolume": 0,
             "maxEffectVolume": 80,
-            "stepEffectVolume": 1
+            "stepEffectVolume": 1,
+            "controlMode": "OUTPUT_CONTROL_MANUAL",
+            "sceneMode": "OUTPUT_SCENE_SING"
         },
         "music": {
             "eq": {
@@ -1343,6 +1347,8 @@ payload：protobuf `webhmi.SetEqRequest`
 #### 6.4.1 SetSystemRequest（上位机→设备，msg_id=SetSystem 0x0003，RESPONSE=1）
 
 payload：protobuf `webhmi.SetSystemRequest`
+
+`SetSystemRequest.controlMode` 用于切换自动/手动输出控制模式，`SetSystemRequest.sceneMode` 用于切换唱歌/热舞场景模式。两者均为 patch 字段，只在需要变更时携带。
 
 #### 6.4.2 SetSystemResponse（设备→上位机，msg_id=SetSystem 0x0003，RESPONSE=1）
 

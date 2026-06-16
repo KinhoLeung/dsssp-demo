@@ -68,7 +68,7 @@ const INITIAL_DATA = {
       musicVolume: 60,
       micVolume: 60,
       effectVolume: 60,
-      controlMode: webhmi.OutputControlMode.OUTPUT_CONTROL_AUTO,
+      controlMode: webhmi.OutputControlMode.OUTPUT_CONTROL_MANUAL,
       sceneMode: webhmi.OutputSceneMode.OUTPUT_SCENE_SING,
     },
     music: {
