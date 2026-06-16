@@ -109,19 +109,21 @@ message Eq {
 
 message NoiseGate {
   optional float gate = 1;
-  optional uint32 frameTime = 2;
-  optional uint32 atkTime = 3;
-  optional uint32 relTime = 4;
+  optional float minGate = 2;
+  optional float maxGate = 3;
+  optional float stepGate = 4;
 
-  optional float minGate = 5;
-  optional float maxGate = 6;
-  optional float stepGate = 7;
-  optional uint32 minFrameTime = 8;
-  optional uint32 maxFrameTime = 9;
-  optional uint32 stepFrameTime = 10;
-  optional uint32 minAtkTime = 11;
-  optional uint32 maxAtkTime = 12;
-  optional uint32 stepAtkTime = 13;
+  optional uint32 frameTime = 5;
+  optional uint32 minFrameTime = 6;
+  optional uint32 maxFrameTime = 7;
+  optional uint32 stepFrameTime = 8;
+
+  optional uint32 atkTime = 9;
+  optional uint32 minAtkTime = 10;
+  optional uint32 maxAtkTime = 11;
+  optional uint32 stepAtkTime = 12;
+
+  optional uint32 relTime = 13;
   optional uint32 minRelTime = 14;
   optional uint32 maxRelTime = 15;
   optional uint32 stepRelTime = 16;
@@ -129,23 +131,26 @@ message NoiseGate {
 
 message Compressor {
   optional float threshold = 1;
-  optional uint32 ratio = 2;
-  optional uint32 attack = 3;
-  optional uint32 release = 4;
-  optional bool bypass = 5;
+  optional float minThreshold = 2;
+  optional float maxThreshold = 3;
+  optional float stepThreshold = 4;
 
-  optional float minThreshold = 6;
-  optional float maxThreshold = 7;
-  optional float stepThreshold = 8;
-  optional uint32 minRatio = 9;
-  optional uint32 maxRatio = 10;
-  optional uint32 stepRatio = 11;
-  optional uint32 minAttack = 12;
-  optional uint32 maxAttack = 13;
-  optional uint32 stepAttack = 14;
-  optional uint32 minRelease = 15;
-  optional uint32 maxRelease = 16;
-  optional uint32 stepRelease = 17;
+  optional uint32 ratio = 5;
+  optional uint32 minRatio = 6;
+  optional uint32 maxRatio = 7;
+  optional uint32 stepRatio = 8;
+
+  optional uint32 attack = 9;
+  optional uint32 minAttack = 10;
+  optional uint32 maxAttack = 11;
+  optional uint32 stepAttack = 12;
+
+  optional uint32 release = 13;
+  optional uint32 minRelease = 14;
+  optional uint32 maxRelease = 15;
+  optional uint32 stepRelease = 16;
+
+  optional bool bypass = 17;
 }
 
 message SystemDb {
@@ -153,105 +158,117 @@ message SystemDb {
   optional bool panelLock = 2;
   optional bool mute = 3;
 
-  optional uint32 musicMaxVolume = 4;
-  optional uint32 micMaxVolume = 5;
-  optional uint32 effectMaxVolume = 6;
+  optional uint32 musicVolume = 4;
+  optional uint32 minMusicVolume = 5;
+  optional uint32 maxMusicVolume = 6;
+  optional uint32 stepMusicVolume = 7;
 
-  optional uint32 musicDefaultVolume = 7;
-  optional uint32 micDefaultVolume = 8;
-  optional uint32 effectDefaultVolume = 9;
+  optional uint32 micVolume = 8;
+  optional uint32 minMicVolume = 9;
+  optional uint32 maxMicVolume = 10;
+  optional uint32 stepMicVolume = 11;
 
-  optional bool useDefaultVolume = 10;
+  optional uint32 effectVolume = 12;
+  optional uint32 minEffectVolume = 13;
+  optional uint32 maxEffectVolume = 14;
+  optional uint32 stepEffectVolume = 15;
 
-  repeated string modeList = 11;
-  optional uint32 currentModeIndex = 12;
+  repeated string modeList = 16;
+  optional uint32 currentModeIndex = 17;
 
-  optional uint32 musicVolume = 13;
-  optional uint32 micVolume = 14;
-  optional uint32 effectVolume = 15;
+  optional OutputControlMode controlMode = 18;
+  optional OutputSceneMode sceneMode = 19;
 
-  optional uint32 minMusicMaxVolume = 16;
-  optional uint32 maxMusicMaxVolume = 17;
-  optional uint32 stepMusicMaxVolume = 18;
-  optional uint32 minMicMaxVolume = 19;
-  optional uint32 maxMicMaxVolume = 20;
-  optional uint32 stepMicMaxVolume = 21;
-  optional uint32 minEffectMaxVolume = 22;
-  optional uint32 maxEffectMaxVolume = 23;
-  optional uint32 stepEffectMaxVolume = 24;
-  optional uint32 minMusicDefaultVolume = 25;
-  optional uint32 maxMusicDefaultVolume = 26;
-  optional uint32 stepMusicDefaultVolume = 27;
-  optional uint32 minMicDefaultVolume = 28;
-  optional uint32 maxMicDefaultVolume = 29;
-  optional uint32 stepMicDefaultVolume = 30;
-  optional uint32 minEffectDefaultVolume = 31;
-  optional uint32 maxEffectDefaultVolume = 32;
-  optional uint32 stepEffectDefaultVolume = 33;
-  optional uint32 minMusicVolume = 34;
-  optional uint32 maxMusicVolume = 35;
-  optional uint32 stepMusicVolume = 36;
-  optional uint32 minMicVolume = 37;
-  optional uint32 maxMicVolume = 38;
-  optional uint32 stepMicVolume = 39;
-  optional uint32 minEffectVolume = 40;
-  optional uint32 maxEffectVolume = 41;
-  optional uint32 stepEffectVolume = 42;
+  optional int32 micDetectionThreshold = 20;
+  optional int32 minMicDetectionThreshold = 21;
+  optional int32 maxMicDetectionThreshold = 22;
+  optional uint32 stepMicDetectionThreshold = 23;
 
-  optional OutputControlMode controlMode = 43;
-  optional OutputSceneMode sceneMode = 44;
+  optional uint32 micDetectionTime = 24;
+  optional uint32 minMicDetectionTime = 25;
+  optional uint32 maxMicDetectionTime = 26;
+  optional uint32 stepMicDetectionTime = 27;
 
-  optional int32 micDetectionThreshold = 45;
-  optional int32 minMicDetectionThreshold = 46;
-  optional int32 maxMicDetectionThreshold = 47;
-  optional uint32 stepMicDetectionThreshold = 48;
-  optional uint32 micDetectionTime = 49;
-  optional uint32 minMicDetectionTime = 50;
-  optional uint32 maxMicDetectionTime = 51;
-  optional uint32 stepMicDetectionTime = 52;
+  optional bool useDefaultVolume = 28;
+
+  optional uint32 musicDefaultVolume = 29;
+  optional uint32 minMusicDefaultVolume = 30;
+  optional uint32 maxMusicDefaultVolume = 31;
+  optional uint32 stepMusicDefaultVolume = 32;
+
+  optional uint32 micDefaultVolume = 33;
+  optional uint32 minMicDefaultVolume = 34;
+  optional uint32 maxMicDefaultVolume = 35;
+  optional uint32 stepMicDefaultVolume = 36;
+
+  optional uint32 effectDefaultVolume = 37;
+  optional uint32 minEffectDefaultVolume = 38;
+  optional uint32 maxEffectDefaultVolume = 39;
+  optional uint32 stepEffectDefaultVolume = 40;
+
+  optional uint32 musicMaxVolume = 41;
+  optional uint32 minMusicMaxVolume = 42;
+  optional uint32 maxMusicMaxVolume = 43;
+  optional uint32 stepMusicMaxVolume = 44;
+
+  optional uint32 micMaxVolume = 45;
+  optional uint32 minMicMaxVolume = 46;
+  optional uint32 maxMicMaxVolume = 47;
+  optional uint32 stepMicMaxVolume = 48;
+
+  optional uint32 effectMaxVolume = 49;
+  optional uint32 minEffectMaxVolume = 50;
+  optional uint32 maxEffectMaxVolume = 51;
+  optional uint32 stepEffectMaxVolume = 52;
 }
 
 message MusicDb {
   optional Eq eq = 1;
 
-  optional int32 inputGain = 2;
-  optional int32 btGain = 3;
-  optional int32 udiskGain = 4;
-  optional float musicPitch = 5;
-  optional InputSelect inputSelect = 6;
+  optional InputSelect inputSelect = 2;
+  repeated InputSelect inputSelectList = 3;
 
-  optional float bass = 7;
-  optional float mid = 8;
-  optional uint32 midFreq = 9; // Hz
-  optional float treble = 10;
+  optional int32 inputGain = 4;
+  optional int32 minInputGain = 5;
+  optional int32 maxInputGain = 6;
+  optional uint32 stepInputGain = 7;
 
-  optional NoiseGate noise = 11;
-  repeated InputSelect inputSelectList = 12;
+  optional int32 btGain = 8;
+  optional int32 minBtGain = 9;
+  optional int32 maxBtGain = 10;
+  optional uint32 stepBtGain = 11;
 
-  optional int32 minInputGain = 13;
-  optional int32 maxInputGain = 14;
-  optional uint32 stepInputGain = 15;
-  optional int32 minBtGain = 16;
-  optional int32 maxBtGain = 17;
-  optional uint32 stepBtGain = 18;
-  optional int32 minUdiskGain = 19;
-  optional int32 maxUdiskGain = 20;
-  optional uint32 stepUdiskGain = 21;
-  optional float minMusicPitch = 22;
-  optional float maxMusicPitch = 23;
-  optional float stepMusicPitch = 24;
-  optional float minBass = 25;
-  optional float maxBass = 26;
-  optional float stepBass = 27;
-  optional float minMid = 28;
-  optional float maxMid = 29;
-  optional float stepMid = 30;
-  optional uint32 minMidFreq = 31; // Hz
-  optional uint32 maxMidFreq = 32; // Hz
-  optional uint32 stepMidFreq = 33; // Hz
-  optional float minTreble = 34;
-  optional float maxTreble = 35;
-  optional float stepTreble = 36;
+  optional int32 udiskGain = 12;
+  optional int32 minUdiskGain = 13;
+  optional int32 maxUdiskGain = 14;
+  optional uint32 stepUdiskGain = 15;
+
+  optional float musicPitch = 16;
+  optional float minMusicPitch = 17;
+  optional float maxMusicPitch = 18;
+  optional float stepMusicPitch = 19;
+
+  optional float bass = 20;
+  optional float minBass = 21;
+  optional float maxBass = 22;
+  optional float stepBass = 23;
+
+  optional float mid = 24;
+  optional float minMid = 25;
+  optional float maxMid = 26;
+  optional float stepMid = 27;
+
+  optional uint32 midFreq = 28; // Hz
+  optional uint32 minMidFreq = 29; // Hz
+  optional uint32 maxMidFreq = 30; // Hz
+  optional uint32 stepMidFreq = 31; // Hz
+
+  optional float treble = 32;
+  optional float minTreble = 33;
+  optional float maxTreble = 34;
+  optional float stepTreble = 35;
+
+  optional NoiseGate noise = 36;
 }
 
 message MicEqDb {
@@ -263,59 +280,64 @@ message MicDb {
   optional MicEqDb micBEq = 2;
   optional bool micEqJointDebugging = 3;
 
-  optional uint32 micAVolume = 4;
-  optional uint32 micBVolume = 5;
-  optional FbxMode micFBX = 6;
+  optional FbxMode micFBX = 4;
+  repeated FbxMode fbxModeList = 5;
 
-  optional float bass = 7;
-  optional float mid = 8;
-  optional uint32 midFreq = 9; // Hz
-  optional float treble = 10;
+  optional uint32 micAVolume = 6;
+  optional uint32 minMicAVolume = 7;
+  optional uint32 maxMicAVolume = 8;
+  optional uint32 stepMicAVolume = 9;
 
-  optional NoiseGate noise = 11;
-  optional Compressor compressor = 12;
-  repeated FbxMode fbxModeList = 13;
+  optional uint32 micBVolume = 10;
+  optional uint32 minMicBVolume = 11;
+  optional uint32 maxMicBVolume = 12;
+  optional uint32 stepMicBVolume = 13;
 
-  optional uint32 minMicAVolume = 14;
-  optional uint32 maxMicAVolume = 15;
-  optional uint32 stepMicAVolume = 16;
-  optional uint32 minMicBVolume = 17;
-  optional uint32 maxMicBVolume = 18;
-  optional uint32 stepMicBVolume = 19;
-  optional float minBass = 20;
-  optional float maxBass = 21;
-  optional float stepBass = 22;
-  optional float minMid = 23;
-  optional float maxMid = 24;
-  optional float stepMid = 25;
-  optional uint32 minMidFreq = 26; // Hz
-  optional uint32 maxMidFreq = 27; // Hz
-  optional uint32 stepMidFreq = 28; // Hz
-  optional float minTreble = 29;
-  optional float maxTreble = 30;
-  optional float stepTreble = 31;
+  optional float bass = 14;
+  optional float minBass = 15;
+  optional float maxBass = 16;
+  optional float stepBass = 17;
+
+  optional float mid = 18;
+  optional float minMid = 19;
+  optional float maxMid = 20;
+  optional float stepMid = 21;
+
+  optional uint32 midFreq = 22; // Hz
+  optional uint32 minMidFreq = 23; // Hz
+  optional uint32 maxMidFreq = 24; // Hz
+  optional uint32 stepMidFreq = 25; // Hz
+
+  optional float treble = 26;
+  optional float minTreble = 27;
+  optional float maxTreble = 28;
+  optional float stepTreble = 29;
+
+  optional NoiseGate noise = 30;
+  optional Compressor compressor = 31;
 }
 
 message ReverbDb {
   optional Eq eq = 1;
 
   optional uint32 reverbLevel = 2;
-  optional uint32 micDirectLevel = 3;
-  optional uint32 reverbPredelay = 4;
-  optional uint32 reverbDecay = 5;
+  optional bool reverbLevelPhaseInversion = 3;
+  optional uint32 minReverbLevel = 4;
+  optional uint32 maxReverbLevel = 5;
+  optional uint32 stepReverbLevel = 6;
 
-  optional bool reverbLevelPhaseInversion = 6;
-  optional bool micDirectLevelPhaseInversion = 7;
+  optional uint32 micDirectLevel = 7;
+  optional bool micDirectLevelPhaseInversion = 8;
+  optional uint32 minMicDirectLevel = 9;
+  optional uint32 maxMicDirectLevel = 10;
+  optional uint32 stepMicDirectLevel = 11;
 
-  optional uint32 minReverbLevel = 8;
-  optional uint32 maxReverbLevel = 9;
-  optional uint32 stepReverbLevel = 10;
-  optional uint32 minMicDirectLevel = 11;
-  optional uint32 maxMicDirectLevel = 12;
-  optional uint32 stepMicDirectLevel = 13;
-  optional uint32 minReverbPredelay = 14;
-  optional uint32 maxReverbPredelay = 15;
-  optional uint32 stepReverbPredelay = 16;
+  optional uint32 reverbPredelay = 12;
+  optional uint32 minReverbPredelay = 13;
+  optional uint32 maxReverbPredelay = 14;
+  optional uint32 stepReverbPredelay = 15;
+
+  optional uint32 reverbDecay = 16;
   optional uint32 minReverbDecay = 17;
   optional uint32 maxReverbDecay = 18;
   optional uint32 stepReverbDecay = 19;
@@ -325,34 +347,38 @@ message EchoDb {
   optional Eq eq = 1;
 
   optional uint32 echoLevel = 2;
-  optional uint32 micDirectLevel = 3;
-  optional uint32 echoPredelay = 4;
-  optional uint32 echoDelayTime = 5;
-  optional uint32 echoRepeat = 6;
-  optional uint32 echoRightPredelay = 7;
-  optional int32 echoRightDelay = 8;
+  optional bool echoLevelPhaseInversion = 3;
+  optional uint32 minEchoLevel = 4;
+  optional uint32 maxEchoLevel = 5;
+  optional uint32 stepEchoLevel = 6;
 
-  optional bool echoLevelPhaseInversion = 9;
-  optional bool micDirectLevelPhaseInversion = 10;
+  optional uint32 micDirectLevel = 7;
+  optional bool micDirectLevelPhaseInversion = 8;
+  optional uint32 minMicDirectLevel = 9;
+  optional uint32 maxMicDirectLevel = 10;
+  optional uint32 stepMicDirectLevel = 11;
 
-  optional uint32 minEchoLevel = 11;
-  optional uint32 maxEchoLevel = 12;
-  optional uint32 stepEchoLevel = 13;
-  optional uint32 minMicDirectLevel = 14;
-  optional uint32 maxMicDirectLevel = 15;
-  optional uint32 stepMicDirectLevel = 16;
-  optional uint32 minEchoPredelay = 17;
-  optional uint32 maxEchoPredelay = 18;
-  optional uint32 stepEchoPredelay = 19;
-  optional uint32 minEchoDelayTime = 20;
-  optional uint32 maxEchoDelayTime = 21;
-  optional uint32 stepEchoDelayTime = 22;
-  optional uint32 minEchoRepeat = 23;
-  optional uint32 maxEchoRepeat = 24;
-  optional uint32 stepEchoRepeat = 25;
-  optional uint32 minEchoRightPredelay = 26;
-  optional uint32 maxEchoRightPredelay = 27;
-  optional uint32 stepEchoRightPredelay = 28;
+  optional uint32 echoPredelay = 12;
+  optional uint32 minEchoPredelay = 13;
+  optional uint32 maxEchoPredelay = 14;
+  optional uint32 stepEchoPredelay = 15;
+
+  optional uint32 echoDelayTime = 16;
+  optional uint32 minEchoDelayTime = 17;
+  optional uint32 maxEchoDelayTime = 18;
+  optional uint32 stepEchoDelayTime = 19;
+
+  optional uint32 echoRepeat = 20;
+  optional uint32 minEchoRepeat = 21;
+  optional uint32 maxEchoRepeat = 22;
+  optional uint32 stepEchoRepeat = 23;
+
+  optional uint32 echoRightPredelay = 24;
+  optional uint32 minEchoRightPredelay = 25;
+  optional uint32 maxEchoRightPredelay = 26;
+  optional uint32 stepEchoRightPredelay = 27;
+
+  optional int32 echoRightDelay = 28;
   optional int32 minEchoRightDelay = 29;
   optional int32 maxEchoRightDelay = 30;
   optional uint32 stepEchoRightDelay = 31;
@@ -360,64 +386,67 @@ message EchoDb {
 
 message StereoOutput {
   optional float leftChannelVolume = 1;
-  optional float rightChannelVolume = 2;
-  optional float leftDelay = 3;
-  optional float rightDelay = 4;
-  optional bool leftMute = 5;
-  optional bool rightMute = 6;
+  optional bool leftChannelVolumePhaseInversion = 2;
+  optional float minLeftChannelVolume = 3;
+  optional float maxLeftChannelVolume = 4;
+  optional float stepLeftChannelVolume = 5;
 
-  optional bool leftChannelVolumePhaseInversion = 7;
-  optional bool rightChannelVolumePhaseInversion = 8;
+  optional float rightChannelVolume = 6;
+  optional bool rightChannelVolumePhaseInversion = 7;
+  optional float minRightChannelVolume = 8;
+  optional float maxRightChannelVolume = 9;
+  optional float stepRightChannelVolume = 10;
 
-  optional float minLeftChannelVolume = 9;
-  optional float maxLeftChannelVolume = 10;
-  optional float stepLeftChannelVolume = 11;
-  optional float minRightChannelVolume = 12;
-  optional float maxRightChannelVolume = 13;
-  optional float stepRightChannelVolume = 14;
-  optional float minLeftDelay = 15;
-  optional float maxLeftDelay = 16;
-  optional float stepLeftDelay = 17;
-  optional float minRightDelay = 18;
-  optional float maxRightDelay = 19;
-  optional float stepRightDelay = 20;
+  optional float leftDelay = 11;
+  optional float minLeftDelay = 12;
+  optional float maxLeftDelay = 13;
+  optional float stepLeftDelay = 14;
+
+  optional float rightDelay = 15;
+  optional float minRightDelay = 16;
+  optional float maxRightDelay = 17;
+  optional float stepRightDelay = 18;
+
+  optional bool leftMute = 19;
+  optional bool rightMute = 20;
 }
 
 message MonoOutput {
   optional float volume = 1;
-  optional float delay = 2;
-  optional bool mute = 3;
+  optional bool volumePhaseInversion = 2;
+  optional float minVolume = 3;
+  optional float maxVolume = 4;
+  optional float stepVolume = 5;
 
-  optional bool volumePhaseInversion = 4;
+  optional float delay = 6;
+  optional float minDelay = 7;
+  optional float maxDelay = 8;
+  optional float stepDelay = 9;
 
-  optional float minVolume = 5;
-  optional float maxVolume = 6;
-  optional float stepVolume = 7;
-  optional float minDelay = 8;
-  optional float maxDelay = 9;
-  optional float stepDelay = 10;
+  optional bool mute = 10;
 }
 
 message Mixer {
   optional uint32 micDirectLevel = 1;
-  optional uint32 musicLevel = 2;
-  optional uint32 reverbLevel = 3;
-  optional uint32 echoLevel = 4;
+  optional bool micDirectLevelPhaseInversion = 2;
+  optional uint32 minMicDirectLevel = 3;
+  optional uint32 maxMicDirectLevel = 4;
+  optional uint32 stepMicDirectLevel = 5;
 
-  optional bool micDirectLevelPhaseInversion = 5;
-  optional bool musicLevelPhaseInversion = 6;
-  optional bool reverbLevelPhaseInversion = 7;
-  optional bool echoLevelPhaseInversion = 8;
+  optional uint32 musicLevel = 6;
+  optional bool musicLevelPhaseInversion = 7;
+  optional uint32 minMusicLevel = 8;
+  optional uint32 maxMusicLevel = 9;
+  optional uint32 stepMusicLevel = 10;
 
-  optional uint32 minMicDirectLevel = 9;
-  optional uint32 maxMicDirectLevel = 10;
-  optional uint32 stepMicDirectLevel = 11;
-  optional uint32 minMusicLevel = 12;
-  optional uint32 maxMusicLevel = 13;
-  optional uint32 stepMusicLevel = 14;
-  optional uint32 minReverbLevel = 15;
-  optional uint32 maxReverbLevel = 16;
-  optional uint32 stepReverbLevel = 17;
+  optional uint32 reverbLevel = 11;
+  optional bool reverbLevelPhaseInversion = 12;
+  optional uint32 minReverbLevel = 13;
+  optional uint32 maxReverbLevel = 14;
+  optional uint32 stepReverbLevel = 15;
+
+  optional uint32 echoLevel = 16;
+  optional bool echoLevelPhaseInversion = 17;
   optional uint32 minEchoLevel = 18;
   optional uint32 maxEchoLevel = 19;
   optional uint32 stepEchoLevel = 20;
@@ -425,38 +454,38 @@ message Mixer {
 
 message MainOutputDb {
   optional Eq singEq = 1;
-  optional StereoOutput output = 2;
-  optional Mixer singMixer = 3;
-  optional Compressor compressor = 4;
-  optional Eq danceEq = 5;
-  optional Mixer danceMixer = 6;
+  optional Mixer singMixer = 2;
+  optional Eq danceEq = 3;
+  optional Mixer danceMixer = 4;
+  optional StereoOutput output = 5;
+  optional Compressor compressor = 6;
 }
 
 message SubOutputDb {
   optional Eq singEq = 1;
-  optional MonoOutput output = 2;
-  optional Mixer singMixer = 3;
-  optional Compressor compressor = 4;
-  optional Eq danceEq = 5;
-  optional Mixer danceMixer = 6;
+  optional Mixer singMixer = 2;
+  optional Eq danceEq = 3;
+  optional Mixer danceMixer = 4;
+  optional MonoOutput output = 5;
+  optional Compressor compressor = 6;
 }
 
 message CenterDb {
   optional Eq singEq = 1;
-  optional MonoOutput output = 2;
-  optional Mixer singMixer = 3;
-  optional Compressor compressor = 4;
-  optional Eq danceEq = 5;
-  optional Mixer danceMixer = 6;
+  optional Mixer singMixer = 2;
+  optional Eq danceEq = 3;
+  optional Mixer danceMixer = 4;
+  optional MonoOutput output = 5;
+  optional Compressor compressor = 6;
 }
 
 message SurroundDb {
   optional Eq singEq = 1;
-  optional StereoOutput output = 2;
-  optional Mixer singMixer = 3;
-  optional Compressor compressor = 4;
-  optional Eq danceEq = 5;
-  optional Mixer danceMixer = 6;
+  optional Mixer singMixer = 2;
+  optional Eq danceEq = 3;
+  optional Mixer danceMixer = 4;
+  optional StereoOutput output = 5;
+  optional Compressor compressor = 6;
 }
 
 message DeviceDb {
@@ -572,26 +601,28 @@ message SetSystemRequest {
   optional bool panelLock = 2;
   optional bool mute = 3;
 
-  optional uint32 musicMaxVolume = 4;
-  optional uint32 micMaxVolume = 5;
-  optional uint32 effectMaxVolume = 6;
+  optional uint32 musicVolume = 4;
+  optional uint32 micVolume = 5;
+  optional uint32 effectVolume = 6;
 
-  optional uint32 musicDefaultVolume = 7;
-  optional uint32 micDefaultVolume = 8;
-  optional uint32 effectDefaultVolume = 9;
+  repeated string modeList = 7;
+  optional uint32 currentModeIndex = 8;
 
-  optional bool useDefaultVolume = 10;
-  optional uint32 currentModeIndex = 11;
+  optional OutputControlMode controlMode = 9;
+  optional OutputSceneMode sceneMode = 10;
 
-  optional uint32 musicVolume = 12;
-  optional uint32 micVolume = 13;
-  optional uint32 effectVolume = 14;
+  optional int32 micDetectionThreshold = 11;
+  optional uint32 micDetectionTime = 12;
 
-  repeated string modeList = 15;
-  optional OutputControlMode controlMode = 16;
-  optional OutputSceneMode sceneMode = 17;
-  optional int32 micDetectionThreshold = 18;
-  optional uint32 micDetectionTime = 19;
+  optional bool useDefaultVolume = 13;
+
+  optional uint32 musicDefaultVolume = 14;
+  optional uint32 micDefaultVolume = 15;
+  optional uint32 effectDefaultVolume = 16;
+
+  optional uint32 musicMaxVolume = 17;
+  optional uint32 micMaxVolume = 18;
+  optional uint32 effectMaxVolume = 19;
 }
 
 message SetMusicRequest {
@@ -648,32 +679,32 @@ message SetEchoRequest {
 }
 
 message SetMainOutputRequest {
-  optional StereoOutputPatch output = 1;
-  optional MixerPatch singMixer = 2;
-  optional CompressorPatch compressor = 3;
-  optional MixerPatch danceMixer = 4;
+  optional MixerPatch singMixer = 1;
+  optional MixerPatch danceMixer = 2;
+  optional StereoOutputPatch output = 3;
+  optional CompressorPatch compressor = 4;
 }
 
 message SetSubOutputRequest {
-  optional MonoOutputPatch output = 1;
-  optional MixerPatch singMixer = 2;
-  optional CompressorPatch compressor = 3;
-  optional MixerPatch danceMixer = 4;
+  optional MixerPatch singMixer = 1;
+  optional MixerPatch danceMixer = 2;
+  optional MonoOutputPatch output = 3;
+  optional CompressorPatch compressor = 4;
 }
 
 // Protocol.md currently has no dedicated msg_id for these, but the DB contains these sections.
 message SetCenterRequest {
-  optional MonoOutputPatch output = 1;
-  optional MixerPatch singMixer = 2;
-  optional CompressorPatch compressor = 3;
-  optional MixerPatch danceMixer = 4;
+  optional MixerPatch singMixer = 1;
+  optional MixerPatch danceMixer = 2;
+  optional MonoOutputPatch output = 3;
+  optional CompressorPatch compressor = 4;
 }
 
 message SetSurroundRequest {
-  optional StereoOutputPatch output = 1;
-  optional MixerPatch singMixer = 2;
-  optional CompressorPatch compressor = 3;
-  optional MixerPatch danceMixer = 4;
+  optional MixerPatch singMixer = 1;
+  optional MixerPatch danceMixer = 2;
+  optional StereoOutputPatch output = 3;
+  optional CompressorPatch compressor = 4;
 }
 
 message SwitchCurrentModeRequest {
