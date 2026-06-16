@@ -330,6 +330,13 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
   const systemMicMaxVolumeRange = withRangeBounds(systemRanges.micMaxVolume, { min: systemDb?.micDefaultVolume })
   const systemEffectMaxVolumeRange = withRangeBounds(systemRanges.effectMaxVolume, { min: systemDb?.effectDefaultVolume })
   const showDanceModeCard = hasAny(systemDb?.micDetectionThreshold, systemDb?.micDetectionTime)
+  const showSystemDefaultsCard = hasAny(
+    systemDb?.useDefaultVolume,
+    systemDb?.musicDefaultVolume,
+    systemDb?.micDefaultVolume,
+    systemDb?.effectDefaultVolume,
+  )
+  const showSystemLimitsCard = hasAny(systemDb?.musicMaxVolume, systemDb?.micMaxVolume, systemDb?.effectMaxVolume)
   const musicInputSelectValue = useMemo(() => {
     const val = getEnumNumberValue(musicDb?.inputSelect, webhmi.InputSelect)
     return !Number.isNaN(val) ? String(val) : undefined
@@ -1355,95 +1362,113 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                     </ParameterCard>
                   )}
 
-                  <ParameterCard title="Defaults" contentClassName="sm:grid-cols-2">
-                    <ToggleControl
-                      label="Use Default Volume"
-                      pressed={systemDb.useDefaultVolume ?? undefined}
-                      disabled={systemDisabled}
-                      onChange={(pressed) => actions.queueSystem({ useDefaultVolume: pressed })}
-                    />
-                    <NumberControl
-                      label="Music Default"
-                      value={systemDb.musicDefaultVolume ?? undefined}
-                      {...systemMusicDefaultVolumeRange}
-                      disabled={systemDisabled}
-                      onChange={(value) => {
-                        actions.queueSystem({ musicDefaultVolume: clampToRange(Math.round(value), systemMusicDefaultVolumeRange) })
-                      }}
-                    />
-                    <NumberControl
-                      label="Mic Default"
-                      value={systemDb.micDefaultVolume ?? undefined}
-                      {...systemMicDefaultVolumeRange}
-                      disabled={systemDisabled}
-                      onChange={(value) => {
-                        actions.queueSystem({ micDefaultVolume: clampToRange(Math.round(value), systemMicDefaultVolumeRange) })
-                      }}
-                    />
-                    <NumberControl
-                      label="Effect Default"
-                      value={systemDb.effectDefaultVolume ?? undefined}
-                      {...systemEffectDefaultVolumeRange}
-                      disabled={systemDisabled}
-                      onChange={(value) => {
-                        actions.queueSystem({ effectDefaultVolume: clampToRange(Math.round(value), systemEffectDefaultVolumeRange) })
-                      }}
-                    />
-                  </ParameterCard>
+                  {showSystemDefaultsCard && (
+                    <ParameterCard title="Defaults" contentClassName="sm:grid-cols-2">
+                      {hasBoolean(systemDb?.useDefaultVolume) && (
+                        <ToggleControl
+                          label="Use Default Volume"
+                          pressed={systemDb.useDefaultVolume ?? undefined}
+                          disabled={systemDisabled}
+                          onChange={(pressed) => actions.queueSystem({ useDefaultVolume: pressed })}
+                        />
+                      )}
+                      {hasNumber(systemDb?.musicDefaultVolume) && (
+                        <NumberControl
+                          label="Music Default"
+                          value={systemDb.musicDefaultVolume ?? undefined}
+                          {...systemMusicDefaultVolumeRange}
+                          disabled={systemDisabled}
+                          onChange={(value) => {
+                            actions.queueSystem({ musicDefaultVolume: clampToRange(Math.round(value), systemMusicDefaultVolumeRange) })
+                          }}
+                        />
+                      )}
+                      {hasNumber(systemDb?.micDefaultVolume) && (
+                        <NumberControl
+                          label="Mic Default"
+                          value={systemDb.micDefaultVolume ?? undefined}
+                          {...systemMicDefaultVolumeRange}
+                          disabled={systemDisabled}
+                          onChange={(value) => {
+                            actions.queueSystem({ micDefaultVolume: clampToRange(Math.round(value), systemMicDefaultVolumeRange) })
+                          }}
+                        />
+                      )}
+                      {hasNumber(systemDb?.effectDefaultVolume) && (
+                        <NumberControl
+                          label="Effect Default"
+                          value={systemDb.effectDefaultVolume ?? undefined}
+                          {...systemEffectDefaultVolumeRange}
+                          disabled={systemDisabled}
+                          onChange={(value) => {
+                            actions.queueSystem({ effectDefaultVolume: clampToRange(Math.round(value), systemEffectDefaultVolumeRange) })
+                          }}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
 
-                  <ParameterCard title="Limits" contentClassName="sm:grid-cols-2">
-                    <NumberControl
-                      label="Music Max"
-                      value={systemDb.musicMaxVolume ?? undefined}
-                      {...systemMusicMaxVolumeRange}
-                      disabled={systemDisabled}
-                      onChange={(value) => {
-                        const rounded = clampToRange(Math.round(value), systemMusicMaxVolumeRange)
-                        const def = systemDb?.musicDefaultVolume ?? 0
-                        const cur = systemDb?.musicVolume ?? 0
-                        const validMax = Math.max(rounded, def)
-                        const updates: any = { musicMaxVolume: validMax }
-                        if (validMax < cur) {
-                          updates.musicVolume = validMax
-                        }
-                        actions.queueSystem(updates)
-                      }}
-                    />
-                    <NumberControl
-                      label="Mic Max"
-                      value={systemDb.micMaxVolume ?? undefined}
-                      {...systemMicMaxVolumeRange}
-                      disabled={systemDisabled}
-                      onChange={(value) => {
-                        const rounded = clampToRange(Math.round(value), systemMicMaxVolumeRange)
-                        const def = systemDb?.micDefaultVolume ?? 0
-                        const cur = systemDb?.micVolume ?? 0
-                        const validMax = Math.max(rounded, def)
-                        const updates: any = { micMaxVolume: validMax }
-                        if (validMax < cur) {
-                          updates.micVolume = validMax
-                        }
-                        actions.queueSystem(updates)
-                      }}
-                    />
-                    <NumberControl
-                      label="Effect Max"
-                      value={systemDb.effectMaxVolume ?? undefined}
-                      {...systemEffectMaxVolumeRange}
-                      disabled={systemDisabled}
-                      onChange={(value) => {
-                        const rounded = clampToRange(Math.round(value), systemEffectMaxVolumeRange)
-                        const def = systemDb?.effectDefaultVolume ?? 0
-                        const cur = systemDb?.effectVolume ?? 0
-                        const validMax = Math.max(rounded, def)
-                        const updates: any = { effectMaxVolume: validMax }
-                        if (validMax < cur) {
-                          updates.effectVolume = validMax
-                        }
-                        actions.queueSystem(updates)
-                      }}
-                    />
-                  </ParameterCard>
+                  {showSystemLimitsCard && (
+                    <ParameterCard title="Limits" contentClassName="sm:grid-cols-2">
+                      {hasNumber(systemDb?.musicMaxVolume) && (
+                        <NumberControl
+                          label="Music Max"
+                          value={systemDb.musicMaxVolume ?? undefined}
+                          {...systemMusicMaxVolumeRange}
+                          disabled={systemDisabled}
+                          onChange={(value) => {
+                            const rounded = clampToRange(Math.round(value), systemMusicMaxVolumeRange)
+                            const def = systemDb?.musicDefaultVolume ?? 0
+                            const cur = systemDb?.musicVolume ?? 0
+                            const validMax = Math.max(rounded, def)
+                            const updates: any = { musicMaxVolume: validMax }
+                            if (validMax < cur) {
+                              updates.musicVolume = validMax
+                            }
+                            actions.queueSystem(updates)
+                          }}
+                        />
+                      )}
+                      {hasNumber(systemDb?.micMaxVolume) && (
+                        <NumberControl
+                          label="Mic Max"
+                          value={systemDb.micMaxVolume ?? undefined}
+                          {...systemMicMaxVolumeRange}
+                          disabled={systemDisabled}
+                          onChange={(value) => {
+                            const rounded = clampToRange(Math.round(value), systemMicMaxVolumeRange)
+                            const def = systemDb?.micDefaultVolume ?? 0
+                            const cur = systemDb?.micVolume ?? 0
+                            const validMax = Math.max(rounded, def)
+                            const updates: any = { micMaxVolume: validMax }
+                            if (validMax < cur) {
+                              updates.micVolume = validMax
+                            }
+                            actions.queueSystem(updates)
+                          }}
+                        />
+                      )}
+                      {hasNumber(systemDb?.effectMaxVolume) && (
+                        <NumberControl
+                          label="Effect Max"
+                          value={systemDb.effectMaxVolume ?? undefined}
+                          {...systemEffectMaxVolumeRange}
+                          disabled={systemDisabled}
+                          onChange={(value) => {
+                            const rounded = clampToRange(Math.round(value), systemEffectMaxVolumeRange)
+                            const def = systemDb?.effectDefaultVolume ?? 0
+                            const cur = systemDb?.effectVolume ?? 0
+                            const validMax = Math.max(rounded, def)
+                            const updates: any = { effectMaxVolume: validMax }
+                            if (validMax < cur) {
+                              updates.effectVolume = validMax
+                            }
+                            actions.queueSystem(updates)
+                          }}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
                 </div>
               </div>
             </TabsContent>
