@@ -149,7 +149,7 @@ crc16（2 bytes）
 | 0x0008 | SetMainOutput     | 设置 MainOutput 参数（patch） |
 | 0x0009 | SetSubOutput      | 设置 SubOutput 参数（patch）  |
 | 0x000a | SetCenter         | 设置 Center 参数（patch）     |
-| 0x000b | SetSurround       | 设置 Surround 参数（patch）   |
+| 0x000b | SetSurround       | 设置 Surround 参数（patch）  |
 | 0x000c | SwitchCurrentMode | 切换当前模式                  |
 | 0x000d | SaveMode          | 保存当前模式参数              |
 | 0x000e | ResetEq           | 重置EQ参数                    |
@@ -282,17 +282,17 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
 
 `section` 与 `payload` 字段对应关系：
 
-| section | payload 字段 |
-| ------- | ------------ |
-| `SEC_SYSTEM` | `system` |
-| `SEC_MUSIC` | `music` |
-| `SEC_MIC` | `mic` |
-| `SEC_REVERB` | `reverb` |
-| `SEC_ECHO` | `echo` |
+| section             | payload 字段   |
+| ------------------- | -------------- |
+| `SEC_SYSTEM`      | `system`     |
+| `SEC_MUSIC`       | `music`      |
+| `SEC_MIC`         | `mic`        |
+| `SEC_REVERB`      | `reverb`     |
+| `SEC_ECHO`        | `echo`       |
 | `SEC_MAIN_OUTPUT` | `mainOutput` |
-| `SEC_SUB_OUTPUT` | `subOutput` |
-| `SEC_CENTER` | `center` |
-| `SEC_SURROUND` | `surround` |
+| `SEC_SUB_OUTPUT`  | `subOutput`  |
+| `SEC_CENTER`      | `center`     |
+| `SEC_SURROUND`    | `surround`   |
 
 示例：请求 `SEC_MUSIC` 时，设备端响应的逻辑结构如下（实际传输为 protobuf）：
 
@@ -317,8 +317,6 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
 下面 JSON 仅用于说明完整数据库字段含义/结构示例。它对应 Web 上位机导入/导出 `.webhmi` 配置文件时使用的 protobuf `webhmi.DeviceConfig`，不是设备端单次 `GetDbResponse` 的通信格式。
 
 范围/步进字段采用 `minXxx` / `maxXxx` / `stepXxx` 命名，由设备端随对应 section 的 `GetDbResponse.payload` 下发，用于约束 Web 上位机控件。上位机在 Set* 请求中只提交实际参数值，不提交这些 UI 元数据。
-
-全局输出模式由 `SystemDb.controlMode` 和 `SystemDb.sceneMode` 表示：`controlMode` 可取 `OUTPUT_CONTROL_AUTO` / `OUTPUT_CONTROL_MANUAL`，`sceneMode` 可取 `OUTPUT_SCENE_SING` / `OUTPUT_SCENE_DANCE`。默认值为 `OUTPUT_CONTROL_MANUAL` 和 `OUTPUT_SCENE_SING`。当 `controlMode` 为 `OUTPUT_CONTROL_AUTO` 时，上位机应禁止用户直接调整主输出、超低音输出、中置输出、环绕输出的 EQ 与 Mixer 参数。
 
 ```json
 {
@@ -373,7 +371,15 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
             "maxEffectVolume": 80,
             "stepEffectVolume": 1,
             "controlMode": "OUTPUT_CONTROL_MANUAL",
-            "sceneMode": "OUTPUT_SCENE_SING"
+            "sceneMode": "OUTPUT_SCENE_SING",
+            "micDetectionThreshold": -60,
+            "minMicDetectionThreshold": -60,
+            "maxMicDetectionThreshold": 0,
+            "stepMicDetectionThreshold": 1,
+            "micDetectionTime": 5,
+            "minMicDetectionTime": 1,
+            "maxMicDetectionTime": 30,
+            "stepMicDetectionTime": 1
         },
         "music": {
             "eq": {
@@ -1347,8 +1353,6 @@ payload：protobuf `webhmi.SetEqRequest`
 #### 6.4.1 SetSystemRequest（上位机→设备，msg_id=SetSystem 0x0003，RESPONSE=1）
 
 payload：protobuf `webhmi.SetSystemRequest`
-
-`SetSystemRequest.controlMode` 用于切换自动/手动输出控制模式，`SetSystemRequest.sceneMode` 用于切换唱歌/热舞场景模式。两者均为 patch 字段，只在需要变更时携带。
 
 #### 6.4.2 SetSystemResponse（设备→上位机，msg_id=SetSystem 0x0003，RESPONSE=1）
 

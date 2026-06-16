@@ -329,6 +329,7 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
   const systemMusicMaxVolumeRange = withRangeBounds(systemRanges.musicMaxVolume, { min: systemDb?.musicDefaultVolume })
   const systemMicMaxVolumeRange = withRangeBounds(systemRanges.micMaxVolume, { min: systemDb?.micDefaultVolume })
   const systemEffectMaxVolumeRange = withRangeBounds(systemRanges.effectMaxVolume, { min: systemDb?.effectDefaultVolume })
+  const showDanceModeCard = hasAny(systemDb?.micDetectionThreshold, systemDb?.micDetectionTime)
   const musicInputSelectValue = useMemo(() => {
     const val = getEnumNumberValue(musicDb?.inputSelect, webhmi.InputSelect)
     return !Number.isNaN(val) ? String(val) : undefined
@@ -1114,7 +1115,7 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                     {systemModeOptions.length > 0 && (
                       <>
                         <div className="grid gap-1.5 sm:col-span-2">
-                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium px-0.5">
+                          <Label className="text-xs text-muted-foreground">
                             {uiText('Current Mode')}
                           </Label>
                           <Select
@@ -1322,6 +1323,37 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                       />
                     </div>
                   </ParameterCard>
+
+                  {showDanceModeCard && (
+                    <ParameterCard title="Dance Mode" contentClassName="sm:grid-cols-2">
+                      {hasNumber(systemDb?.micDetectionThreshold) && (
+                        <NumberControl
+                          label="Mic Detection Threshold"
+                          value={systemDb.micDetectionThreshold ?? undefined}
+                          {...systemRanges.micDetectionThreshold}
+                          disabled={systemDisabled}
+                          onChange={(value) => {
+                            actions.queueSystem({
+                              micDetectionThreshold: clampToRange(Math.round(value), systemRanges.micDetectionThreshold),
+                            })
+                          }}
+                        />
+                      )}
+                      {hasNumber(systemDb?.micDetectionTime) && (
+                        <NumberControl
+                          label="Mic Detection Time"
+                          value={systemDb.micDetectionTime ?? undefined}
+                          {...systemRanges.micDetectionTime}
+                          disabled={systemDisabled}
+                          onChange={(value) => {
+                            actions.queueSystem({
+                              micDetectionTime: clampToRange(Math.round(value), systemRanges.micDetectionTime),
+                            })
+                          }}
+                        />
+                      )}
+                    </ParameterCard>
+                  )}
 
                   <ParameterCard title="Defaults" contentClassName="sm:grid-cols-2">
                     <ToggleControl

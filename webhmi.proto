@@ -200,6 +200,15 @@ message SystemDb {
 
   optional OutputControlMode controlMode = 43;
   optional OutputSceneMode sceneMode = 44;
+
+  optional int32 micDetectionThreshold = 45;
+  optional int32 minMicDetectionThreshold = 46;
+  optional int32 maxMicDetectionThreshold = 47;
+  optional uint32 stepMicDetectionThreshold = 48;
+  optional uint32 micDetectionTime = 49;
+  optional uint32 minMicDetectionTime = 50;
+  optional uint32 maxMicDetectionTime = 51;
+  optional uint32 stepMicDetectionTime = 52;
 }
 
 message MusicDb {
@@ -581,6 +590,8 @@ message SetSystemRequest {
   repeated string modeList = 15;
   optional OutputControlMode controlMode = 16;
   optional OutputSceneMode sceneMode = 17;
+  optional int32 micDetectionThreshold = 18;
+  optional uint32 micDetectionTime = 19;
 }
 
 message SetMusicRequest {

@@ -41,7 +41,9 @@ const parameterRanges = {
     effectDefaultVolume: range(0, 80, 1),
     musicVolume: range(0, 80, 1),
     micVolume: range(0, 80, 1),
-    effectVolume: range(0, 80, 1)
+    effectVolume: range(0, 80, 1),
+    micDetectionThreshold: range(-60, 0, 1),
+    micDetectionTime: range(1, 30, 1)
   },
   music: {
     eq: eqRange,
@@ -240,7 +242,9 @@ export const buildParameterRanges = (db: any = {}) => {
       effectDefaultVolume: fromDbRange(safeDb.system, 'EffectDefaultVolume', parameterRanges.system.effectDefaultVolume),
       musicVolume: fromDbRange(safeDb.system, 'MusicVolume', parameterRanges.system.musicVolume),
       micVolume: fromDbRange(safeDb.system, 'MicVolume', parameterRanges.system.micVolume),
-      effectVolume: fromDbRange(safeDb.system, 'EffectVolume', parameterRanges.system.effectVolume)
+      effectVolume: fromDbRange(safeDb.system, 'EffectVolume', parameterRanges.system.effectVolume),
+      micDetectionThreshold: fromDbRange(safeDb.system, 'MicDetectionThreshold', parameterRanges.system.micDetectionThreshold),
+      micDetectionTime: fromDbRange(safeDb.system, 'MicDetectionTime', parameterRanges.system.micDetectionTime)
     },
     music: {
       eq: eqRangesFromDb(safeDb.music?.eq, parameterRanges.music.eq),

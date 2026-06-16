@@ -50,7 +50,15 @@
             "maxEffectVolume": 80,
             "stepEffectVolume": 1,
             "controlMode": "OUTPUT_CONTROL_MANUAL",
-            "sceneMode": "OUTPUT_SCENE_SING"
+            "sceneMode": "OUTPUT_SCENE_SING",
+            "micDetectionThreshold": -60,
+            "minMicDetectionThreshold": -60,
+            "maxMicDetectionThreshold": 0,
+            "stepMicDetectionThreshold": 1,
+            "micDetectionTime": 5,
+            "minMicDetectionTime": 1,
+            "maxMicDetectionTime": 30,
+            "stepMicDetectionTime": 1
         },
         "music": {
             "eq": {
