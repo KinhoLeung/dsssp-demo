@@ -39,6 +39,7 @@ export type DspPanelProps = {
   activeIndex: number
   dragging: boolean
   eqRange?: EqRangeConfig
+  disabled?: boolean
   headerExtra?: ReactNode
   handleFilterChange: (filterEvent: FilterChangeEvent) => void
   handlePointDoubleClick: (filterEvent: FilterPointEvent) => void
@@ -58,6 +59,7 @@ export function DspPanel({
   activeIndex,
   dragging,
   eqRange,
+  disabled = false,
   headerExtra,
   handleFilterChange,
   handlePointDoubleClick,
@@ -132,7 +134,9 @@ export function DspPanel({
         <div className="grid grid-cols-[auto,1fr,auto] items-center gap-3 pb-3">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="secondary">{uiText('Reset')}</Button>
+              <Button variant="secondary" disabled={disabled}>
+                {uiText('Reset')}
+              </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -145,7 +149,9 @@ export function DspPanel({
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>{uiText('Cancel')}</AlertDialogCancel>
-                <AlertDialogAction onClick={onReset}>{uiText('Reset')}</AlertDialogAction>
+                <AlertDialogAction onClick={onReset} disabled={disabled}>
+                  {uiText('Reset')}
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -154,12 +160,16 @@ export function DspPanel({
             aria-label={uiText('Bypass')}
             variant="outline"
             pressed={bypass}
+            disabled={disabled}
             onPressedChange={onBypassChange}
           >
             {uiText('Bypass')}
           </Toggle>
         </div>
-        <div ref={graphContainerRef} className="shadow-sm shadow-black relative w-full">
+        <div
+          ref={graphContainerRef}
+          className={`shadow-sm shadow-black relative w-full ${disabled ? 'pointer-events-none' : ''}`}
+        >
           {graphWidth > 0 && (
             <FrequencyResponseGraph
               width={graphWidth}
@@ -192,6 +202,9 @@ export function DspPanel({
                       index={index}
                       filter={filter}
                       active={activeIndex === index}
+                      dragX={!disabled}
+                      dragY={!disabled}
+                      wheelQ={!disabled}
                       showIcon={filter.type.includes('LOWPASS') || filter.type.includes('HIGHPASS')}
                       label={
                         filter.type.includes('LOWPASS') || filter.type.includes('HIGHPASS')
@@ -203,14 +216,14 @@ export function DspPanel({
                         activeIndex === index ? theme.filters?.colors?.[index]?.active : theme.filters?.colors?.[index]?.point
                       }
                       zeroBackground={theme.filters?.colors?.[index]?.background}
-                      onDrag={setDragging}
-                      onEnter={handleMouseEnter}
-                      onLeave={handleMouseLeave}
-                      onDoubleClick={handlePointDoubleClick}
-                      onChange={handleFilterChange}
+                      onDrag={disabled ? () => {} : setDragging}
+                      onEnter={disabled ? () => {} : handleMouseEnter}
+                      onLeave={disabled ? () => {} : handleMouseLeave}
+                      onDoubleClick={disabled ? () => {} : handlePointDoubleClick}
+                      onChange={disabled ? () => {} : handleFilterChange}
                     />
                   ))}
-                  {!dragging && <PointerTracker />}
+                  {!disabled && !dragging && <PointerTracker />}
                 </>
               ) : (
                 <FrequencyResponseCurve dotted magnitudes={[]} color={tailwindColors.slate[500]} />
@@ -229,7 +242,7 @@ export function DspPanel({
               index={index}
               filter={filter}
               allowedTypes={allowedTypesByUiIndex[index] ?? undefined}
-              disabled={!powered}
+              disabled={disabled || !powered}
               active={activeIndex === index}
               onLeave={handleMouseLeave}
               onEnter={handleMouseEnter}
@@ -279,11 +292,11 @@ export function DspPanel({
                   index={index}
                   filter={filter}
                   allowedTypes={allowedTypesByUiIndex[index] ?? undefined}
-                  disabled={!powered}
+                  disabled={disabled || !powered}
                   active={true}
-                  onLeave={handleMouseLeave}
-                  onEnter={handleMouseEnter}
-                  onChange={handleFilterChange}
+                  onLeave={disabled ? () => {} : handleMouseLeave}
+                  onEnter={disabled ? () => {} : handleMouseEnter}
+                  onChange={disabled ? () => {} : handleFilterChange}
                   eqRange={eqRange}
                 />
               </TabsContent>

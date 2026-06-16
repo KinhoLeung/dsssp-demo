@@ -159,6 +159,10 @@
     "version_mismatch": "版本不匹配",
 
     "mic_eq_link": "麦克风 EQ 联调",
+    "auto": "自动",
+    "manual": "手动",
+    "sing": "唱歌",
+    "dance": "热舞",
     "output": "输出",
     "mixer": "混音",
     "volume": "音量",

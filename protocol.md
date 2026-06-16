@@ -278,13 +278,45 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
 
 #### 6.2.2 GetDbResponse（设备→上位机，msg_id=GetDb，RESPONSE=1）
 
-分包模块数据库数据：payload 使用 protobuf 编码，对应 `webhmi.GetDbResponse`（定义见 `webhmi.proto`），其中 `section` 字段指示了当前响应所属的模块。
+分包模块数据库数据：payload 使用 protobuf 编码，对应 `webhmi.GetDbResponse`（定义见 `webhmi.proto`）。`GetDbResponse` 使用 `oneof payload`，设备端每次响应只填充一个与 `section` 对应的模块字段，不返回完整 `DeviceDb`。
+
+`section` 与 `payload` 字段对应关系：
+
+| section | payload 字段 |
+| ------- | ------------ |
+| `SEC_SYSTEM` | `system` |
+| `SEC_MUSIC` | `music` |
+| `SEC_MIC` | `mic` |
+| `SEC_REVERB` | `reverb` |
+| `SEC_ECHO` | `echo` |
+| `SEC_MAIN_OUTPUT` | `mainOutput` |
+| `SEC_SUB_OUTPUT` | `subOutput` |
+| `SEC_CENTER` | `center` |
+| `SEC_SURROUND` | `surround` |
+
+示例：请求 `SEC_MUSIC` 时，设备端响应的逻辑结构如下（实际传输为 protobuf）：
+
+```json
+{
+    "deviceId": "device demo",
+    "firmwareVersion": "1.0.0",
+    "section": "SEC_MUSIC",
+    "music": {
+        "eq": {},
+        "inputGain": 0,
+        "btGain": 0,
+        "udiskGain": 0
+    }
+}
+```
+
+设备端实现时应避免在栈上声明完整 `DeviceConfig` 或完整 `DeviceDb` 作为 `GetDbResponse` 的工作缓冲；`GetDbResponse` 只需要承载当前 section 的 oneof payload。
 
 #### 6.2.3 数据库结构
 
-下面 JSON 仅用于说明字段含义/结构示例（实际传输为 protobuf，`freq` 为 Hz 的 `uint32`）：
+下面 JSON 仅用于说明完整数据库字段含义/结构示例。它对应 Web 上位机导入/导出 `.webhmi` 配置文件时使用的 protobuf `webhmi.DeviceConfig`，不是设备端单次 `GetDbResponse` 的通信格式。
 
-范围/步进字段采用 `minXxx` / `maxXxx` / `stepXxx` 命名，由设备端随 `GetDbResponse` 下发，用于约束 Web 上位机控件。上位机在 Set* 请求中只提交实际参数值，不提交这些 UI 元数据。
+范围/步进字段采用 `minXxx` / `maxXxx` / `stepXxx` 命名，由设备端随对应 section 的 `GetDbResponse.payload` 下发，用于约束 Web 上位机控件。上位机在 Set* 请求中只提交实际参数值，不提交这些 UI 元数据。
 
 ```json
 {

@@ -68,6 +68,8 @@ const INITIAL_DATA = {
       musicVolume: 60,
       micVolume: 60,
       effectVolume: 60,
+      controlMode: webhmi.OutputControlMode.OUTPUT_CONTROL_AUTO,
+      sceneMode: webhmi.OutputSceneMode.OUTPUT_SCENE_SING,
     },
     music: {
       eq: DEFAULT_EQ,
@@ -118,7 +120,8 @@ const INITIAL_DATA = {
       micDirectLevelPhaseInversion: false,
     },
     mainOutput: {
-      eq: DEFAULT_EQ,
+      singEq: DEFAULT_EQ,
+      danceEq: DEFAULT_EQ,
       output: {
         leftChannelVolume: 0,
         rightChannelVolume: 0,
@@ -129,7 +132,17 @@ const INITIAL_DATA = {
         leftChannelVolumePhaseInversion: false,
         rightChannelVolumePhaseInversion: false,
       },
-      mixer: {
+      singMixer: {
+        micDirectLevel: 100,
+        musicLevel: 100,
+        reverbLevel: 100,
+        echoLevel: 100,
+        micDirectLevelPhaseInversion: false,
+        musicLevelPhaseInversion: false,
+        reverbLevelPhaseInversion: false,
+        echoLevelPhaseInversion: false,
+      },
+      danceMixer: {
         micDirectLevel: 100,
         musicLevel: 100,
         reverbLevel: 100,
@@ -142,9 +155,20 @@ const INITIAL_DATA = {
       compressor: { threshold: -1, ratio: 10, attack: 50, release: 200, bypass: false },
     },
     subOutput: {
-      eq: DEFAULT_EQ,
+      singEq: DEFAULT_EQ,
+      danceEq: DEFAULT_EQ,
       output: { volume: 0, delay: 0, mute: false, volumePhaseInversion: false },
-      mixer: {
+      singMixer: {
+        micDirectLevel: 100,
+        musicLevel: 100,
+        reverbLevel: 100,
+        echoLevel: 100,
+        micDirectLevelPhaseInversion: false,
+        musicLevelPhaseInversion: false,
+        reverbLevelPhaseInversion: false,
+        echoLevelPhaseInversion: false,
+      },
+      danceMixer: {
         micDirectLevel: 100,
         musicLevel: 100,
         reverbLevel: 100,
@@ -157,9 +181,20 @@ const INITIAL_DATA = {
       compressor: { threshold: -1, ratio: 10, attack: 50, release: 200, bypass: false },
     },
     center: {
-      eq: DEFAULT_EQ,
+      singEq: DEFAULT_EQ,
+      danceEq: DEFAULT_EQ,
       output: { volume: 0, delay: 0, mute: false, volumePhaseInversion: false },
-      mixer: {
+      singMixer: {
+        micDirectLevel: 100,
+        musicLevel: 100,
+        reverbLevel: 100,
+        echoLevel: 100,
+        micDirectLevelPhaseInversion: false,
+        musicLevelPhaseInversion: false,
+        reverbLevelPhaseInversion: false,
+        echoLevelPhaseInversion: false,
+      },
+      danceMixer: {
         micDirectLevel: 100,
         musicLevel: 100,
         reverbLevel: 100,
@@ -172,7 +207,8 @@ const INITIAL_DATA = {
       compressor: { threshold: -1, ratio: 10, attack: 50, release: 200, bypass: false },
     },
     surround: {
-      eq: DEFAULT_EQ,
+      singEq: DEFAULT_EQ,
+      danceEq: DEFAULT_EQ,
       output: {
         leftChannelVolume: 0,
         rightChannelVolume: 0,
@@ -183,7 +219,17 @@ const INITIAL_DATA = {
         leftChannelVolumePhaseInversion: false,
         rightChannelVolumePhaseInversion: false,
       },
-      mixer: {
+      singMixer: {
+        micDirectLevel: 100,
+        musicLevel: 100,
+        reverbLevel: 100,
+        echoLevel: 100,
+        micDirectLevelPhaseInversion: false,
+        musicLevelPhaseInversion: false,
+        reverbLevelPhaseInversion: false,
+        echoLevelPhaseInversion: false,
+      },
+      danceMixer: {
         micDirectLevel: 100,
         musicLevel: 100,
         reverbLevel: 100,
@@ -233,11 +279,12 @@ export function useTuningState(isDemoMode: boolean) {
     setDbFetchId((id) => id + 1)
   }, [])
 
-  const updateEq = useCallback((target: webhmi.EqTarget, updateFn: (eq: any) => void) => {
+  const updateEq = useCallback((target: webhmi.EqTarget, updateFn: (eq: any) => void, sceneMode?: webhmi.OutputSceneMode) => {
     setDbResponse((prev: any) => {
       const next = JSON.parse(JSON.stringify(prev))
       const db = next.db
       if (!db) return next
+      const isDance = (sceneMode ?? db.system?.sceneMode) === webhmi.OutputSceneMode.OUTPUT_SCENE_DANCE
       let eq: any = null
       switch (target) {
         case webhmi.EqTarget.MUSIC:
@@ -256,16 +303,16 @@ export function useTuningState(isDemoMode: boolean) {
           eq = db.echo?.eq
           break
         case webhmi.EqTarget.MAIN_OUTPUT:
-          eq = db.mainOutput?.eq
+          eq = isDance ? db.mainOutput?.danceEq : db.mainOutput?.singEq
           break
         case webhmi.EqTarget.SUB_OUTPUT:
-          eq = db.subOutput?.eq
+          eq = isDance ? db.subOutput?.danceEq : db.subOutput?.singEq
           break
         case webhmi.EqTarget.CENTER:
-          eq = db.center?.eq
+          eq = isDance ? db.center?.danceEq : db.center?.singEq
           break
         case webhmi.EqTarget.SURROUND:
-          eq = db.surround?.eq
+          eq = isDance ? db.surround?.danceEq : db.surround?.singEq
           break
       }
       if (eq) updateFn(eq)
@@ -310,12 +357,12 @@ export function useTuningState(isDemoMode: boolean) {
       queueCenter: (p: any) => mergeDb(p, ['center']),
       queueSurround: (p: any) => mergeDb(p, ['surround']),
 
-      queueEqBypass: (target: webhmi.EqTarget, bypass: boolean) => {
+      queueEqBypass: (target: webhmi.EqTarget, bypass: boolean, sceneMode?: webhmi.OutputSceneMode) => {
         updateEq(target, (eq) => {
           eq.bypass = bypass
-        })
+        }, sceneMode)
       },
-      queueEqPoint: (target: webhmi.EqTarget, point: any) => {
+      queueEqPoint: (target: webhmi.EqTarget, point: any, sceneMode?: webhmi.OutputSceneMode) => {
         updateEq(target, (eq) => {
           if (!eq.point) eq.point = []
           const idx = eq.point.findIndex((p: any) => p.index === point.index)
@@ -324,7 +371,7 @@ export function useTuningState(isDemoMode: boolean) {
           } else {
             eq.point.push(point)
           }
-        })
+        }, sceneMode)
       },
       saveMode: async (index: number) => {
         alert(
@@ -337,13 +384,13 @@ export function useTuningState(isDemoMode: boolean) {
       switchCurrentMode: async (index: number) => {
         mergeDb({ currentModeIndex: index }, ['system'])
       },
-      resetEq: async (target: webhmi.EqTarget) => {
+      resetEq: async (target: webhmi.EqTarget, sceneMode?: webhmi.OutputSceneMode) => {
         updateEq(target, (eq) => {
           eq.point = JSON.parse(JSON.stringify(DEFAULT_EQ_POINTS))
           eq.bypass = false
-        })
+        }, sceneMode)
       },
-      resetEqPointToDefault: async (target: webhmi.EqTarget, index: number) => {
+      resetEqPointToDefault: async (target: webhmi.EqTarget, index: number, sceneMode?: webhmi.OutputSceneMode) => {
         updateEq(target, (eq) => {
           const defPoint = DEFAULT_EQ_POINTS.find((p) => p.index === index)
           if (defPoint && eq.point) {
@@ -352,7 +399,7 @@ export function useTuningState(isDemoMode: boolean) {
               eq.point[idx] = { ...defPoint }
             }
           }
-        })
+        }, sceneMode)
       },
       applyImportData: (data: webhmi.IDeviceConfig) => {
         if (!data.db) return
@@ -397,24 +444,28 @@ export function useTuningState(isDemoMode: boolean) {
       if (data.db.surround) onlineSession.actions.queueSurround(data.db.surround)
 
       // Update EQs
-      const eqMap: Array<{ target: webhmi.EqTarget; eq: webhmi.IEq | null | undefined }> = [
+      const eqMap: Array<{ target: webhmi.EqTarget; eq: webhmi.IEq | null | undefined; sceneMode?: webhmi.OutputSceneMode }> = [
         { target: webhmi.EqTarget.MUSIC, eq: data.db.music?.eq },
         { target: webhmi.EqTarget.MIC_A, eq: data.db.mic?.micAEq?.eq },
         { target: webhmi.EqTarget.MIC_B, eq: data.db.mic?.micBEq?.eq },
         { target: webhmi.EqTarget.REVERB, eq: data.db.reverb?.eq },
         { target: webhmi.EqTarget.ECHO, eq: data.db.echo?.eq },
-        { target: webhmi.EqTarget.MAIN_OUTPUT, eq: data.db.mainOutput?.eq },
-        { target: webhmi.EqTarget.SUB_OUTPUT, eq: data.db.subOutput?.eq },
-        { target: webhmi.EqTarget.CENTER, eq: data.db.center?.eq },
-        { target: webhmi.EqTarget.SURROUND, eq: data.db.surround?.eq },
+        { target: webhmi.EqTarget.MAIN_OUTPUT, eq: data.db.mainOutput?.singEq, sceneMode: webhmi.OutputSceneMode.OUTPUT_SCENE_SING },
+        { target: webhmi.EqTarget.MAIN_OUTPUT, eq: data.db.mainOutput?.danceEq, sceneMode: webhmi.OutputSceneMode.OUTPUT_SCENE_DANCE },
+        { target: webhmi.EqTarget.SUB_OUTPUT, eq: data.db.subOutput?.singEq, sceneMode: webhmi.OutputSceneMode.OUTPUT_SCENE_SING },
+        { target: webhmi.EqTarget.SUB_OUTPUT, eq: data.db.subOutput?.danceEq, sceneMode: webhmi.OutputSceneMode.OUTPUT_SCENE_DANCE },
+        { target: webhmi.EqTarget.CENTER, eq: data.db.center?.singEq, sceneMode: webhmi.OutputSceneMode.OUTPUT_SCENE_SING },
+        { target: webhmi.EqTarget.CENTER, eq: data.db.center?.danceEq, sceneMode: webhmi.OutputSceneMode.OUTPUT_SCENE_DANCE },
+        { target: webhmi.EqTarget.SURROUND, eq: data.db.surround?.singEq, sceneMode: webhmi.OutputSceneMode.OUTPUT_SCENE_SING },
+        { target: webhmi.EqTarget.SURROUND, eq: data.db.surround?.danceEq, sceneMode: webhmi.OutputSceneMode.OUTPUT_SCENE_DANCE },
       ]
 
-      for (const { target, eq } of eqMap) {
+      for (const { target, eq, sceneMode } of eqMap) {
         if (!eq) continue
-        if (typeof eq.bypass === 'boolean') onlineSession.actions.queueEqBypass(target, eq.bypass)
+        if (typeof eq.bypass === 'boolean') onlineSession.actions.queueEqBypass(target, eq.bypass, sceneMode)
         if (Array.isArray(eq.point)) {
           for (const point of eq.point) {
-            onlineSession.actions.queueEqPoint(target, point)
+            onlineSession.actions.queueEqPoint(target, point, sceneMode)
           }
         }
       }

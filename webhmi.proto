@@ -60,6 +60,16 @@ enum DbSection {
   SEC_SURROUND = 8;
 }
 
+enum OutputControlMode {
+  OUTPUT_CONTROL_AUTO = 0;
+  OUTPUT_CONTROL_MANUAL = 1;
+}
+
+enum OutputSceneMode {
+  OUTPUT_SCENE_SING = 0;
+  OUTPUT_SCENE_DANCE = 1;
+}
+
 // ======== Full DB schema (GetDbResponse payload) ========
 
 message EqPoint {
@@ -187,6 +197,9 @@ message SystemDb {
   optional uint32 minEffectVolume = 40;
   optional uint32 maxEffectVolume = 41;
   optional uint32 stepEffectVolume = 42;
+
+  optional OutputControlMode controlMode = 43;
+  optional OutputSceneMode sceneMode = 44;
 }
 
 message MusicDb {
@@ -402,31 +415,39 @@ message Mixer {
 }
 
 message MainOutputDb {
-  optional Eq eq = 1;
+  optional Eq singEq = 1;
   optional StereoOutput output = 2;
-  optional Mixer mixer = 3;
+  optional Mixer singMixer = 3;
   optional Compressor compressor = 4;
+  optional Eq danceEq = 5;
+  optional Mixer danceMixer = 6;
 }
 
 message SubOutputDb {
-  optional Eq eq = 1;
+  optional Eq singEq = 1;
   optional MonoOutput output = 2;
-  optional Mixer mixer = 3;
+  optional Mixer singMixer = 3;
   optional Compressor compressor = 4;
+  optional Eq danceEq = 5;
+  optional Mixer danceMixer = 6;
 }
 
 message CenterDb {
-  optional Eq eq = 1;
+  optional Eq singEq = 1;
   optional MonoOutput output = 2;
-  optional Mixer mixer = 3;
+  optional Mixer singMixer = 3;
   optional Compressor compressor = 4;
+  optional Eq danceEq = 5;
+  optional Mixer danceMixer = 6;
 }
 
 message SurroundDb {
-  optional Eq eq = 1;
+  optional Eq singEq = 1;
   optional StereoOutput output = 2;
-  optional Mixer mixer = 3;
+  optional Mixer singMixer = 3;
   optional Compressor compressor = 4;
+  optional Eq danceEq = 5;
+  optional Mixer danceMixer = 6;
 }
 
 message DeviceDb {
@@ -482,7 +503,8 @@ message EqPointPatch {
 message EqPatch {
   optional EqTarget target = 1;
   optional bool bypass = 2;
-  repeated EqPointPatch point = 3;
+  optional OutputSceneMode sceneMode = 3;
+  repeated EqPointPatch point = 4;
 }
 
 message SetEqRequest {
@@ -557,6 +579,8 @@ message SetSystemRequest {
   optional uint32 effectVolume = 14;
 
   repeated string modeList = 15;
+  optional OutputControlMode controlMode = 16;
+  optional OutputSceneMode sceneMode = 17;
 }
 
 message SetMusicRequest {
@@ -614,27 +638,31 @@ message SetEchoRequest {
 
 message SetMainOutputRequest {
   optional StereoOutputPatch output = 1;
-  optional MixerPatch mixer = 2;
+  optional MixerPatch singMixer = 2;
   optional CompressorPatch compressor = 3;
+  optional MixerPatch danceMixer = 4;
 }
 
 message SetSubOutputRequest {
   optional MonoOutputPatch output = 1;
-  optional MixerPatch mixer = 2;
+  optional MixerPatch singMixer = 2;
   optional CompressorPatch compressor = 3;
+  optional MixerPatch danceMixer = 4;
 }
 
 // Protocol.md currently has no dedicated msg_id for these, but the DB contains these sections.
 message SetCenterRequest {
   optional MonoOutputPatch output = 1;
-  optional MixerPatch mixer = 2;
+  optional MixerPatch singMixer = 2;
   optional CompressorPatch compressor = 3;
+  optional MixerPatch danceMixer = 4;
 }
 
 message SetSurroundRequest {
   optional StereoOutputPatch output = 1;
-  optional MixerPatch mixer = 2;
+  optional MixerPatch singMixer = 2;
   optional CompressorPatch compressor = 3;
+  optional MixerPatch danceMixer = 4;
 }
 
 message SwitchCurrentModeRequest {
@@ -652,4 +680,5 @@ message SaveModeRequest {
 message ResetEqRequest {
   optional EqTarget target = 1;
   repeated uint32 index = 2; // empty = reset all points
+  optional OutputSceneMode sceneMode = 3;
 }

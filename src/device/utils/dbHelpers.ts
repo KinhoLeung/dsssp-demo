@@ -1,6 +1,8 @@
 import type { webhmi } from '@/device/proto/generated/webhmi'
 
 export type PendingEqTarget = {
+  target: webhmi.EqTarget
+  sceneMode?: webhmi.OutputSceneMode
   bypass?: boolean
   points: Map<number, webhmi.IEqPointPatch>
 }
@@ -48,9 +50,22 @@ export const applySectionPatch = <T extends object>(section: T | null | undefine
   return mergeDefinedObjects(section as unknown as Record<string, unknown>, patch as Record<string, unknown>) as unknown as T
 }
 
-export const getEqRefByTarget = (db: webhmi.IDeviceConfig, target: webhmi.EqTarget): webhmi.IEq | null => {
+export const getOutputSceneMode = (db: webhmi.IDeviceConfig | null): webhmi.OutputSceneMode => {
+  const value = db?.db?.system?.sceneMode
+  return typeof value === 'number' ? value as webhmi.OutputSceneMode : 0
+}
+
+export const getEqPendingKey = (target: webhmi.EqTarget, sceneMode?: webhmi.OutputSceneMode) =>
+  sceneMode === undefined ? String(target) : `${target}:${sceneMode}`
+
+export const getEqRefByTarget = (
+  db: webhmi.IDeviceConfig,
+  target: webhmi.EqTarget,
+  sceneMode = getOutputSceneMode(db),
+): webhmi.IEq | null => {
   const d = db.db
   if (!d) return null
+  const isDance = sceneMode === 1
   switch (target) {
     case 0:
       return d.music?.eq ?? null
@@ -63,20 +78,25 @@ export const getEqRefByTarget = (db: webhmi.IDeviceConfig, target: webhmi.EqTarg
     case 4:
       return d.echo?.eq ?? null
     case 5:
-      return d.mainOutput?.eq ?? null
+      return isDance ? d.mainOutput?.danceEq ?? d.mainOutput?.singEq ?? null : d.mainOutput?.singEq ?? d.mainOutput?.danceEq ?? null
     case 6:
-      return d.subOutput?.eq ?? null
+      return isDance ? d.subOutput?.danceEq ?? d.subOutput?.singEq ?? null : d.subOutput?.singEq ?? d.subOutput?.danceEq ?? null
     case 7:
-      return d.center?.eq ?? null
+      return isDance ? d.center?.danceEq ?? d.center?.singEq ?? null : d.center?.singEq ?? d.center?.danceEq ?? null
     case 8:
-      return d.surround?.eq ?? null
+      return isDance ? d.surround?.danceEq ?? d.surround?.singEq ?? null : d.surround?.singEq ?? d.surround?.danceEq ?? null
     default:
       return null
   }
 }
 
-export const applyEqBypassPatch = (db: webhmi.IDeviceConfig, target: webhmi.EqTarget, bypass: boolean): webhmi.IDeviceConfig => {
-  const eq = getEqRefByTarget(db, target)
+export const applyEqBypassPatch = (
+  db: webhmi.IDeviceConfig,
+  target: webhmi.EqTarget,
+  bypass: boolean,
+  sceneMode?: webhmi.OutputSceneMode,
+): webhmi.IDeviceConfig => {
+  const eq = getEqRefByTarget(db, target, sceneMode)
   if (!eq) return db
   eq.bypass = bypass
   return db
@@ -86,15 +106,21 @@ export const getEqPointRefByTargetAndIndex = (
   db: webhmi.IDeviceConfig,
   target: webhmi.EqTarget,
   index: number,
+  sceneMode?: webhmi.OutputSceneMode,
 ): webhmi.IEqPoint | null => {
-  const eq = getEqRefByTarget(db, target)
+  const eq = getEqRefByTarget(db, target, sceneMode)
   const points = eq?.point
   if (!Array.isArray(points)) return null
   return points.find((p) => p?.index === index) ?? null
 }
 
-export const applyEqPointPatch = (db: webhmi.IDeviceConfig, target: webhmi.EqTarget, patch: webhmi.IEqPointPatch): webhmi.IDeviceConfig => {
-  const eq = getEqRefByTarget(db, target)
+export const applyEqPointPatch = (
+  db: webhmi.IDeviceConfig,
+  target: webhmi.EqTarget,
+  patch: webhmi.IEqPointPatch,
+  sceneMode?: webhmi.OutputSceneMode,
+): webhmi.IDeviceConfig => {
+  const eq = getEqRefByTarget(db, target, sceneMode)
   if (!eq) return db
   if (!Array.isArray(eq.point)) eq.point = []
   if (typeof patch.index !== 'number') return db
@@ -108,8 +134,13 @@ export const applyEqPointPatch = (db: webhmi.IDeviceConfig, target: webhmi.EqTar
   return db
 }
 
-export const applyEqPointDefaults = (db: webhmi.IDeviceConfig, target: webhmi.EqTarget, indices?: number[]): webhmi.IDeviceConfig => {
-  const eq = getEqRefByTarget(db, target)
+export const applyEqPointDefaults = (
+  db: webhmi.IDeviceConfig,
+  target: webhmi.EqTarget,
+  indices?: number[],
+  sceneMode?: webhmi.OutputSceneMode,
+): webhmi.IDeviceConfig => {
+  const eq = getEqRefByTarget(db, target, sceneMode)
   if (!eq?.point?.length) return db
 
   const allow = indices?.length ? new Set(indices) : null
@@ -132,16 +163,17 @@ export const hasValue = (v: unknown): v is NonNullable<unknown> => v !== undefin
 export const nearlyEqual = (a: number, b: number, eps = 1e-6) => Math.abs(a - b) <= eps
 
 export const buildEqPatchesFromPending = (
-  pendingEq: Map<number, PendingEqTarget>,
+  pendingEq: Map<string, PendingEqTarget>,
   baseDb: webhmi.IDeviceConfig | null,
 ): webhmi.IEqPatch[] => {
   const out: webhmi.IEqPatch[] = []
 
-  for (const [targetRaw, entry] of pendingEq.entries()) {
-    const target = targetRaw as webhmi.EqTarget
-    const baseEq = baseDb ? getEqRefByTarget(baseDb, target) : null
+  for (const entry of pendingEq.values()) {
+    const { target, sceneMode } = entry
+    const baseEq = baseDb ? getEqRefByTarget(baseDb, target, sceneMode) : null
 
     const patch: webhmi.IEqPatch = { target }
+    if (sceneMode !== undefined) patch.sceneMode = sceneMode
 
     if (typeof entry.bypass === 'boolean') {
       const baseBypass = !!baseEq?.bypass

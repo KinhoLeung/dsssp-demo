@@ -105,11 +105,12 @@ export function useDeviceSession(
                 if (patch.eq) {
                   for (const eqPatch of patch.eq) {
                     if (typeof eqPatch.target !== 'number') continue
+                    const sceneMode = typeof eqPatch.sceneMode === 'number' ? eqPatch.sceneMode as webhmi.OutputSceneMode : undefined
                     if (typeof eqPatch.bypass === 'boolean') {
-                      applyEqBypassPatch(db, eqPatch.target as webhmi.EqTarget, eqPatch.bypass)
+                      applyEqBypassPatch(db, eqPatch.target as webhmi.EqTarget, eqPatch.bypass, sceneMode)
                     }
                     for (const pointPatch of eqPatch.point ?? []) {
-                      applyEqPointPatch(db, eqPatch.target as webhmi.EqTarget, pointPatch)
+                      applyEqPointPatch(db, eqPatch.target as webhmi.EqTarget, pointPatch, sceneMode)
                     }
                   }
                 }
@@ -255,12 +256,12 @@ export function useDeviceSession(
   }, [connection.client, queue.refreshDb])
 
   const resetEq = useCallback(
-    async (target: webhmi.EqTarget, indices?: number[]) => {
+    async (target: webhmi.EqTarget, indices?: number[], sceneMode?: webhmi.OutputSceneMode) => {
       if (!connection.client) return
       setLocalBusy(true)
       setLocalError('')
       try {
-        await queue.resetEq(connection.client, target, indices)
+        await queue.resetEq(connection.client, target, indices, sceneMode)
       } catch (e) {
         setLocalError(e instanceof Error ? e.message : String(e))
       } finally {
@@ -271,12 +272,12 @@ export function useDeviceSession(
   )
 
   const resetEqPointToDefault = useCallback(
-    async (target: webhmi.EqTarget, index: number) => {
+    async (target: webhmi.EqTarget, index: number, sceneMode?: webhmi.OutputSceneMode) => {
       if (!connection.client) return
       setLocalBusy(true)
       setLocalError('')
       try {
-        await queue.resetEqPointToDefault(connection.client, target, index)
+        await queue.resetEqPointToDefault(connection.client, target, index, sceneMode)
       } catch (e) {
         setLocalError(e instanceof Error ? e.message : String(e))
       } finally {
@@ -397,17 +398,17 @@ export function useDeviceSession(
   )
 
   const queueEqBypass = useCallback(
-    (target: webhmi.EqTarget, bypass: boolean) => {
+    (target: webhmi.EqTarget, bypass: boolean, sceneMode?: webhmi.OutputSceneMode) => {
       if (!connection.client) return
-      queue.queueEqBypass(connection.client, target, bypass)
+      queue.queueEqBypass(connection.client, target, bypass, sceneMode)
     },
     [connection.client, queue.queueEqBypass],
   )
 
   const queueEqPoint = useCallback(
-    (target: webhmi.EqTarget, patch: webhmi.IEqPointPatch) => {
+    (target: webhmi.EqTarget, patch: webhmi.IEqPointPatch, sceneMode?: webhmi.OutputSceneMode) => {
       if (!connection.client) return
-      queue.queueEqPoint(connection.client, target, patch)
+      queue.queueEqPoint(connection.client, target, patch, sceneMode)
     },
     [connection.client, queue.queueEqPoint],
   )

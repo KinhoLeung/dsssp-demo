@@ -284,27 +284,27 @@ export const buildParameterRanges = (db: any = {}) => {
       echoRightDelay: fromDbRange(safeDb.echo, 'EchoRightDelay', parameterRanges.echo.echoRightDelay)
     },
     mainOutput: {
-      eq: eqRangesFromDb(safeDb.mainOutput?.eq, parameterRanges.mainOutput.eq),
+      eq: eqRangesFromDb(safeDb.mainOutput?.singEq ?? safeDb.mainOutput?.danceEq, parameterRanges.mainOutput.eq),
       output: stereoOutputRangesFromDb(safeDb.mainOutput?.output, parameterRanges.mainOutput.output),
-      mixer: mixerRangesFromDb(safeDb.mainOutput?.mixer, parameterRanges.mainOutput.mixer),
+      mixer: mixerRangesFromDb(safeDb.mainOutput?.singMixer ?? safeDb.mainOutput?.danceMixer, parameterRanges.mainOutput.mixer),
       compressor: compressorRangesFromDb(safeDb.mainOutput?.compressor, parameterRanges.mainOutput.compressor)
     },
     subOutput: {
-      eq: eqRangesFromDb(safeDb.subOutput?.eq, parameterRanges.subOutput.eq),
+      eq: eqRangesFromDb(safeDb.subOutput?.singEq ?? safeDb.subOutput?.danceEq, parameterRanges.subOutput.eq),
       output: monoOutputRangesFromDb(safeDb.subOutput?.output, parameterRanges.subOutput.output),
-      mixer: mixerRangesFromDb(safeDb.subOutput?.mixer, parameterRanges.subOutput.mixer),
+      mixer: mixerRangesFromDb(safeDb.subOutput?.singMixer ?? safeDb.subOutput?.danceMixer, parameterRanges.subOutput.mixer),
       compressor: compressorRangesFromDb(safeDb.subOutput?.compressor, parameterRanges.subOutput.compressor)
     },
     center: {
-      eq: eqRangesFromDb(safeDb.center?.eq, parameterRanges.center.eq),
+      eq: eqRangesFromDb(safeDb.center?.singEq ?? safeDb.center?.danceEq, parameterRanges.center.eq),
       output: monoOutputRangesFromDb(safeDb.center?.output, parameterRanges.center.output),
-      mixer: mixerRangesFromDb(safeDb.center?.mixer, parameterRanges.center.mixer),
+      mixer: mixerRangesFromDb(safeDb.center?.singMixer ?? safeDb.center?.danceMixer, parameterRanges.center.mixer),
       compressor: compressorRangesFromDb(safeDb.center?.compressor, parameterRanges.center.compressor)
     },
     surround: {
-      eq: eqRangesFromDb(safeDb.surround?.eq, parameterRanges.surround.eq),
+      eq: eqRangesFromDb(safeDb.surround?.singEq ?? safeDb.surround?.danceEq, parameterRanges.surround.eq),
       output: stereoOutputRangesFromDb(safeDb.surround?.output, parameterRanges.surround.output),
-      mixer: mixerRangesFromDb(safeDb.surround?.mixer, parameterRanges.surround.mixer),
+      mixer: mixerRangesFromDb(safeDb.surround?.singMixer ?? safeDb.surround?.danceMixer, parameterRanges.surround.mixer),
       compressor: compressorRangesFromDb(safeDb.surround?.compressor, parameterRanges.surround.compressor)
     }
   }

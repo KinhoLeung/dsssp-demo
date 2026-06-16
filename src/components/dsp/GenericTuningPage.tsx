@@ -58,6 +58,28 @@ export type GenericTuningPageProps = {
   isDemoMode: boolean
 }
 
+const isOutputPanelKey = (key: PanelKey) => key === 'mainoutput' || key === 'suboutput' || key === 'center' || key === 'surround'
+
+const getSceneModeFromConfig = (config: webhmi.IDeviceConfig | null): webhmi.OutputSceneMode => {
+  const value = config?.db?.system?.sceneMode
+  return typeof value === 'number' ? value as webhmi.OutputSceneMode : webhmi.OutputSceneMode.OUTPUT_SCENE_SING
+}
+
+const getOutputEqForScene = (output: any, sceneMode: webhmi.OutputSceneMode): webhmi.IEq | null =>
+  sceneMode === webhmi.OutputSceneMode.OUTPUT_SCENE_DANCE
+    ? output?.danceEq ?? output?.singEq ?? null
+    : output?.singEq ?? output?.danceEq ?? null
+
+const getOutputMixerForScene = (output: any, sceneMode: webhmi.OutputSceneMode): webhmi.IMixer | null =>
+  sceneMode === webhmi.OutputSceneMode.OUTPUT_SCENE_DANCE
+    ? output?.danceMixer ?? output?.singMixer ?? null
+    : output?.singMixer ?? output?.danceMixer ?? null
+
+const mixerPatchForScene = (sceneMode: webhmi.OutputSceneMode, patch: webhmi.IMixerPatch) =>
+  sceneMode === webhmi.OutputSceneMode.OUTPUT_SCENE_DANCE
+    ? { danceMixer: patch }
+    : { singMixer: patch }
+
 export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
   const { t } = useTranslation()
   const ns = isDemoMode ? 'demoMode' : 'deviceDemo'
@@ -242,20 +264,20 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
         key: 'mainoutput',
         label: uiText('Main Output'),
         target: webhmi.EqTarget.MAIN_OUTPUT,
-        getEq: (db) => db?.db?.mainOutput?.eq ?? null,
+        getEq: (db) => getOutputEqForScene(db?.db?.mainOutput, getSceneModeFromConfig(db)),
       },
       {
         key: 'suboutput',
         label: uiText('Sub Output'),
         target: webhmi.EqTarget.SUB_OUTPUT,
-        getEq: (db) => db?.db?.subOutput?.eq ?? null,
+        getEq: (db) => getOutputEqForScene(db?.db?.subOutput, getSceneModeFromConfig(db)),
       },
-      { key: 'center', label: uiText('Center'), target: webhmi.EqTarget.CENTER, getEq: (db) => db?.db?.center?.eq ?? null },
+      { key: 'center', label: uiText('Center'), target: webhmi.EqTarget.CENTER, getEq: (db) => getOutputEqForScene(db?.db?.center, getSceneModeFromConfig(db)) },
       {
         key: 'surround',
         label: uiText('Surround'),
         target: webhmi.EqTarget.SURROUND,
-        getEq: (db) => db?.db?.surround?.eq ?? null,
+        getEq: (db) => getOutputEqForScene(db?.db?.surround, getSceneModeFromConfig(db)),
       },
     ],
     [uiText],
@@ -274,6 +296,18 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
   const subOutputDb = db?.subOutput ?? null
   const centerDb = db?.center ?? null
   const surroundDb = db?.surround ?? null
+  const outputControlMode = getEnumNumberValue(systemDb?.controlMode, webhmi.OutputControlMode)
+  const resolvedOutputControlMode = !Number.isNaN(outputControlMode)
+    ? outputControlMode as webhmi.OutputControlMode
+    : webhmi.OutputControlMode.OUTPUT_CONTROL_AUTO
+  const outputSceneMode = getEnumNumberValue(systemDb?.sceneMode, webhmi.OutputSceneMode)
+  const resolvedOutputSceneMode = !Number.isNaN(outputSceneMode)
+    ? outputSceneMode as webhmi.OutputSceneMode
+    : webhmi.OutputSceneMode.OUTPUT_SCENE_SING
+  const mainOutputMixer = getOutputMixerForScene(mainOutputDb, resolvedOutputSceneMode)
+  const subOutputMixer = getOutputMixerForScene(subOutputDb, resolvedOutputSceneMode)
+  const centerMixer = getOutputMixerForScene(centerDb, resolvedOutputSceneMode)
+  const surroundMixer = getOutputMixerForScene(surroundDb, resolvedOutputSceneMode)
   const ranges = useMemo(() => buildParameterRanges(db), [db])
   const {
     system: systemRanges,
@@ -340,16 +374,66 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
   const micDisabled = baseDisabled || !micDb
   const reverbDisabled = baseDisabled || !reverbDb
   const echoDisabled = baseDisabled || !echoDb
+  const outputAutoMode = resolvedOutputControlMode === webhmi.OutputControlMode.OUTPUT_CONTROL_AUTO
   const mainOutputDisabled = baseDisabled || !mainOutputDb
   const subOutputDisabled = baseDisabled || !subOutputDb
   const centerDisabled = baseDisabled || !centerDb
   const surroundDisabled = baseDisabled || !surroundDb
+  const mainOutputEqDisabled = mainOutputDisabled || outputAutoMode
+  const subOutputEqDisabled = subOutputDisabled || outputAutoMode
+  const centerEqDisabled = centerDisabled || outputAutoMode
+  const surroundEqDisabled = surroundDisabled || outputAutoMode
+  const mainOutputMixerDisabled = mainOutputDisabled || outputAutoMode
+  const subOutputMixerDisabled = subOutputDisabled || outputAutoMode
+  const centerMixerDisabled = centerDisabled || outputAutoMode
+  const surroundMixerDisabled = surroundDisabled || outputAutoMode
   const systemDisabled = baseDisabled || !systemDb
 
   const systemModeOptions = useMemo<SelectOption[]>(() => {
     const modes = systemDb?.modeList ?? []
     return modes.map((label, index) => ({ value: String(index), label }))
   }, [systemDb?.modeList])
+
+  const outputModeControls = (
+    <div className="flex flex-wrap items-center justify-center gap-2">
+      <ToggleGroup
+        type="single"
+        variant="outline"
+        value={String(resolvedOutputControlMode)}
+        onValueChange={(value) => {
+          if (!value) return
+          actions.queueSystem({ controlMode: Number(value) as webhmi.OutputControlMode })
+        }}
+        disabled={systemDisabled}
+        className="gap-0"
+      >
+        <ToggleGroupItem value={String(webhmi.OutputControlMode.OUTPUT_CONTROL_AUTO)} className="rounded-r-none">
+          {uiText('Auto')}
+        </ToggleGroupItem>
+        <ToggleGroupItem value={String(webhmi.OutputControlMode.OUTPUT_CONTROL_MANUAL)} className="rounded-l-none border-l-0">
+          {uiText('Manual')}
+        </ToggleGroupItem>
+      </ToggleGroup>
+      <ToggleGroup
+        type="single"
+        variant="outline"
+        value={String(resolvedOutputSceneMode)}
+        onValueChange={(value) => {
+          if (!value) return
+          actions.queueSystem({ sceneMode: Number(value) as webhmi.OutputSceneMode })
+        }}
+        disabled={systemDisabled}
+        className="gap-0"
+      >
+        <ToggleGroupItem value={String(webhmi.OutputSceneMode.OUTPUT_SCENE_SING)} className="rounded-r-none">
+          {uiText('Sing')}
+        </ToggleGroupItem>
+        <ToggleGroupItem value={String(webhmi.OutputSceneMode.OUTPUT_SCENE_DANCE)} className="rounded-l-none border-l-0">
+          {uiText('Dance')}
+        </ToggleGroupItem>
+      </ToggleGroup>
+    </div>
+  )
 
   const [isBleRenameDialogOpen, setIsBleRenameDialogOpen] = useState(false)
   const [bleNameDraft, setBleNameDraft] = useState('')
@@ -428,12 +512,12 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
       mainOutputDb.output.rightMute,
     )
   const showMainOutputMixerCard =
-    !!mainOutputDb?.mixer &&
+    !!mainOutputMixer &&
     hasAny(
-      mainOutputDb.mixer.micDirectLevel,
-      mainOutputDb.mixer.musicLevel,
-      mainOutputDb.mixer.reverbLevel,
-      mainOutputDb.mixer.echoLevel,
+      mainOutputMixer.micDirectLevel,
+      mainOutputMixer.musicLevel,
+      mainOutputMixer.reverbLevel,
+      mainOutputMixer.echoLevel,
     )
   const showMainOutputCompressorCard =
     !!mainOutputDb?.compressor &&
@@ -448,8 +532,8 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
   const showSubOutputOutputCard =
     !!subOutputDb?.output && hasAny(subOutputDb.output.volume, subOutputDb.output.delay, subOutputDb.output.mute)
   const showSubOutputMixerCard =
-    !!subOutputDb?.mixer &&
-    hasAny(subOutputDb.mixer.micDirectLevel, subOutputDb.mixer.musicLevel, subOutputDb.mixer.reverbLevel, subOutputDb.mixer.echoLevel)
+    !!subOutputMixer &&
+    hasAny(subOutputMixer.micDirectLevel, subOutputMixer.musicLevel, subOutputMixer.reverbLevel, subOutputMixer.echoLevel)
   const showSubOutputCompressorCard =
     !!subOutputDb?.compressor &&
     hasAny(
@@ -462,7 +546,7 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
 
   const showCenterOutputCard = !!centerDb?.output && hasAny(centerDb.output.volume, centerDb.output.delay, centerDb.output.mute)
   const showCenterMixerCard =
-    !!centerDb?.mixer && hasAny(centerDb.mixer.micDirectLevel, centerDb.mixer.musicLevel, centerDb.mixer.reverbLevel, centerDb.mixer.echoLevel)
+    !!centerMixer && hasAny(centerMixer.micDirectLevel, centerMixer.musicLevel, centerMixer.reverbLevel, centerMixer.echoLevel)
   const showCenterCompressorCard =
     !!centerDb?.compressor &&
     hasAny(
@@ -484,8 +568,8 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
       surroundDb.output.rightMute,
     )
   const showSurroundMixerCard =
-    !!surroundDb?.mixer &&
-    hasAny(surroundDb.mixer.micDirectLevel, surroundDb.mixer.musicLevel, surroundDb.mixer.reverbLevel, surroundDb.mixer.echoLevel)
+    !!surroundMixer &&
+    hasAny(surroundMixer.micDirectLevel, surroundMixer.musicLevel, surroundMixer.reverbLevel, surroundMixer.echoLevel)
   const showSurroundCompressorCard =
     !!surroundDb?.compressor &&
     hasAny(
@@ -699,7 +783,8 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
         gain,
         q,
       }
-      actionsRef.current.queueEqPoint(def.target, pointPatch)
+      const sceneMode = isOutputPanelKey(key) ? getSceneModeFromConfig(stateRef.current.db) : undefined
+      actionsRef.current.queueEqPoint(def.target, pointPatch, sceneMode)
 
       // Sync changes if Mic Joint Debugging is enabled
       if (jointDebug && otherKey) {
@@ -720,7 +805,8 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
 
       const uiIndex = filterEvent.index
       const deviceIndex = stateForPanel.pointIndexByUiIndex[uiIndex] ?? uiIndex
-      void actionsRef.current.resetEqPointToDefault(def.target, deviceIndex)
+      const sceneMode = isOutputPanelKey(key) ? getSceneModeFromConfig(stateRef.current.db) : undefined
+      void actionsRef.current.resetEqPointToDefault(def.target, deviceIndex, sceneMode)
 
       // Sync changes if Mic Joint Debugging is enabled
       const jointDebug = stateForPanel.pointIndexByUiIndex.length > 0 && stateRef.current.db?.db?.mic?.micEqJointDebugging
@@ -1954,13 +2040,15 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                   pointIndexByUiIndex={panelStateByKey.mainoutput.pointIndexByUiIndex}
                   activeIndex={activeIndex}
                   dragging={dragging}
+                  disabled={mainOutputEqDisabled}
                   handleFilterChange={handleFilterChangeByKey.mainoutput}
                   handlePointDoubleClick={handlePointDoubleClickByKey.mainoutput}
                   handleMouseEnter={handleMouseEnter}
                   handleMouseLeave={handleMouseLeave}
                   setDragging={setDragging}
-                  onReset={() => void actions.resetEq(webhmi.EqTarget.MAIN_OUTPUT)}
-                  onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.MAIN_OUTPUT, pressed)}
+                  headerExtra={outputModeControls}
+                  onReset={() => void actions.resetEq(webhmi.EqTarget.MAIN_OUTPUT, undefined, resolvedOutputSceneMode)}
+                  onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.MAIN_OUTPUT, pressed, resolvedOutputSceneMode)}
                 />
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {showMainOutputOutputCard && (
@@ -2039,73 +2127,73 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                   )}
                   {showMainOutputMixerCard && (
                     <ParameterCard title="Mixer" contentClassName="sm:grid-cols-2">
-                      {hasNumber(mainOutputDb?.mixer?.micDirectLevel) && (
+                      {hasNumber(mainOutputMixer?.micDirectLevel) && (
                         <NumberControl
                           label="Mic Direct Level"
-                          value={mainOutputDb?.mixer?.micDirectLevel ?? undefined}
+                          value={mainOutputMixer?.micDirectLevel ?? undefined}
                           {...mainOutputRanges.mixer.micDirectLevel}
-                          disabled={mainOutputDisabled}
-                          onChange={(value) => actions.queueMainOutput({ mixer: { micDirectLevel: Math.round(value) } })}
+                          disabled={mainOutputMixerDisabled}
+                          onChange={(value) => actions.queueMainOutput(mixerPatchForScene(resolvedOutputSceneMode, { micDirectLevel: Math.round(value) }))}
                           extra={
-                            hasBoolean(mainOutputDb?.mixer?.micDirectLevelPhaseInversion) && (
+                            hasBoolean(mainOutputMixer?.micDirectLevelPhaseInversion) && (
                               <PhaseInversionToggle
-                                pressed={mainOutputDb?.mixer?.micDirectLevelPhaseInversion}
-                                disabled={mainOutputDisabled}
-                                onChange={(pressed) => actions.queueMainOutput({ mixer: { micDirectLevelPhaseInversion: pressed } })}
+                                pressed={mainOutputMixer?.micDirectLevelPhaseInversion}
+                                disabled={mainOutputMixerDisabled}
+                                onChange={(pressed) => actions.queueMainOutput(mixerPatchForScene(resolvedOutputSceneMode, { micDirectLevelPhaseInversion: pressed }))}
                               />
                             )
                           }
                         />
                       )}
-                      {hasNumber(mainOutputDb?.mixer?.musicLevel) && (
+                      {hasNumber(mainOutputMixer?.musicLevel) && (
                         <NumberControl
                           label="Music Level"
-                          value={mainOutputDb?.mixer?.musicLevel ?? undefined}
+                          value={mainOutputMixer?.musicLevel ?? undefined}
                           {...mainOutputRanges.mixer.musicLevel}
-                          disabled={mainOutputDisabled}
-                          onChange={(value) => actions.queueMainOutput({ mixer: { musicLevel: Math.round(value) } })}
+                          disabled={mainOutputMixerDisabled}
+                          onChange={(value) => actions.queueMainOutput(mixerPatchForScene(resolvedOutputSceneMode, { musicLevel: Math.round(value) }))}
                           extra={
-                            hasBoolean(mainOutputDb?.mixer?.musicLevelPhaseInversion) && (
+                            hasBoolean(mainOutputMixer?.musicLevelPhaseInversion) && (
                               <PhaseInversionToggle
-                                pressed={mainOutputDb?.mixer?.musicLevelPhaseInversion}
-                                disabled={mainOutputDisabled}
-                                onChange={(pressed) => actions.queueMainOutput({ mixer: { musicLevelPhaseInversion: pressed } })}
+                                pressed={mainOutputMixer?.musicLevelPhaseInversion}
+                                disabled={mainOutputMixerDisabled}
+                                onChange={(pressed) => actions.queueMainOutput(mixerPatchForScene(resolvedOutputSceneMode, { musicLevelPhaseInversion: pressed }))}
                               />
                             )
                           }
                         />
                       )}
-                      {hasNumber(mainOutputDb?.mixer?.reverbLevel) && (
+                      {hasNumber(mainOutputMixer?.reverbLevel) && (
                         <NumberControl
                           label="Reverb Level"
-                          value={mainOutputDb?.mixer?.reverbLevel ?? undefined}
+                          value={mainOutputMixer?.reverbLevel ?? undefined}
                           {...mainOutputRanges.mixer.reverbLevel}
-                          disabled={mainOutputDisabled}
-                          onChange={(value) => actions.queueMainOutput({ mixer: { reverbLevel: Math.round(value) } })}
+                          disabled={mainOutputMixerDisabled}
+                          onChange={(value) => actions.queueMainOutput(mixerPatchForScene(resolvedOutputSceneMode, { reverbLevel: Math.round(value) }))}
                           extra={
-                            hasBoolean(mainOutputDb?.mixer?.reverbLevelPhaseInversion) && (
+                            hasBoolean(mainOutputMixer?.reverbLevelPhaseInversion) && (
                               <PhaseInversionToggle
-                                pressed={mainOutputDb?.mixer?.reverbLevelPhaseInversion}
-                                disabled={mainOutputDisabled}
-                                onChange={(pressed) => actions.queueMainOutput({ mixer: { reverbLevelPhaseInversion: pressed } })}
+                                pressed={mainOutputMixer?.reverbLevelPhaseInversion}
+                                disabled={mainOutputMixerDisabled}
+                                onChange={(pressed) => actions.queueMainOutput(mixerPatchForScene(resolvedOutputSceneMode, { reverbLevelPhaseInversion: pressed }))}
                               />
                             )
                           }
                         />
                       )}
-                      {hasNumber(mainOutputDb?.mixer?.echoLevel) && (
+                      {hasNumber(mainOutputMixer?.echoLevel) && (
                         <NumberControl
                           label="Echo Level"
-                          value={mainOutputDb?.mixer?.echoLevel ?? undefined}
+                          value={mainOutputMixer?.echoLevel ?? undefined}
                           {...mainOutputRanges.mixer.echoLevel}
-                          disabled={mainOutputDisabled}
-                          onChange={(value) => actions.queueMainOutput({ mixer: { echoLevel: Math.round(value) } })}
+                          disabled={mainOutputMixerDisabled}
+                          onChange={(value) => actions.queueMainOutput(mixerPatchForScene(resolvedOutputSceneMode, { echoLevel: Math.round(value) }))}
                           extra={
-                            hasBoolean(mainOutputDb?.mixer?.echoLevelPhaseInversion) && (
+                            hasBoolean(mainOutputMixer?.echoLevelPhaseInversion) && (
                               <PhaseInversionToggle
-                                pressed={mainOutputDb?.mixer?.echoLevelPhaseInversion}
-                                disabled={mainOutputDisabled}
-                                onChange={(pressed) => actions.queueMainOutput({ mixer: { echoLevelPhaseInversion: pressed } })}
+                                pressed={mainOutputMixer?.echoLevelPhaseInversion}
+                                disabled={mainOutputMixerDisabled}
+                                onChange={(pressed) => actions.queueMainOutput(mixerPatchForScene(resolvedOutputSceneMode, { echoLevelPhaseInversion: pressed }))}
                               />
                             )
                           }
@@ -2194,13 +2282,15 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                   pointIndexByUiIndex={panelStateByKey.suboutput.pointIndexByUiIndex}
                   activeIndex={activeIndex}
                   dragging={dragging}
+                  disabled={subOutputEqDisabled}
                   handleFilterChange={handleFilterChangeByKey.suboutput}
                   handlePointDoubleClick={handlePointDoubleClickByKey.suboutput}
                   handleMouseEnter={handleMouseEnter}
                   handleMouseLeave={handleMouseLeave}
                   setDragging={setDragging}
-                  onReset={() => void actions.resetEq(webhmi.EqTarget.SUB_OUTPUT)}
-                  onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.SUB_OUTPUT, pressed)}
+                  headerExtra={outputModeControls}
+                  onReset={() => void actions.resetEq(webhmi.EqTarget.SUB_OUTPUT, undefined, resolvedOutputSceneMode)}
+                  onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.SUB_OUTPUT, pressed, resolvedOutputSceneMode)}
                 />
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {showSubOutputOutputCard && (
@@ -2244,73 +2334,73 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                   )}
                   {showSubOutputMixerCard && (
                     <ParameterCard title="Mixer" contentClassName="sm:grid-cols-2">
-                      {hasNumber(subOutputDb?.mixer?.micDirectLevel) && (
+                      {hasNumber(subOutputMixer?.micDirectLevel) && (
                         <NumberControl
                           label="Mic Direct Level"
-                          value={subOutputDb?.mixer?.micDirectLevel ?? undefined}
+                          value={subOutputMixer?.micDirectLevel ?? undefined}
                           {...subOutputRanges.mixer.micDirectLevel}
-                          disabled={subOutputDisabled}
-                          onChange={(value) => actions.queueSubOutput({ mixer: { micDirectLevel: Math.round(value) } })}
+                          disabled={subOutputMixerDisabled}
+                          onChange={(value) => actions.queueSubOutput(mixerPatchForScene(resolvedOutputSceneMode, { micDirectLevel: Math.round(value) }))}
                           extra={
-                            hasBoolean(subOutputDb?.mixer?.micDirectLevelPhaseInversion) && (
+                            hasBoolean(subOutputMixer?.micDirectLevelPhaseInversion) && (
                               <PhaseInversionToggle
-                                pressed={subOutputDb?.mixer?.micDirectLevelPhaseInversion}
-                                disabled={subOutputDisabled}
-                                onChange={(pressed) => actions.queueSubOutput({ mixer: { micDirectLevelPhaseInversion: pressed } })}
+                                pressed={subOutputMixer?.micDirectLevelPhaseInversion}
+                                disabled={subOutputMixerDisabled}
+                                onChange={(pressed) => actions.queueSubOutput(mixerPatchForScene(resolvedOutputSceneMode, { micDirectLevelPhaseInversion: pressed }))}
                               />
                             )
                           }
                         />
                       )}
-                      {hasNumber(subOutputDb?.mixer?.musicLevel) && (
+                      {hasNumber(subOutputMixer?.musicLevel) && (
                         <NumberControl
                           label="Music Level"
-                          value={subOutputDb?.mixer?.musicLevel ?? undefined}
+                          value={subOutputMixer?.musicLevel ?? undefined}
                           {...subOutputRanges.mixer.musicLevel}
-                          disabled={subOutputDisabled}
-                          onChange={(value) => actions.queueSubOutput({ mixer: { musicLevel: Math.round(value) } })}
+                          disabled={subOutputMixerDisabled}
+                          onChange={(value) => actions.queueSubOutput(mixerPatchForScene(resolvedOutputSceneMode, { musicLevel: Math.round(value) }))}
                           extra={
-                            hasBoolean(subOutputDb?.mixer?.musicLevelPhaseInversion) && (
+                            hasBoolean(subOutputMixer?.musicLevelPhaseInversion) && (
                               <PhaseInversionToggle
-                                pressed={subOutputDb?.mixer?.musicLevelPhaseInversion}
-                                disabled={subOutputDisabled}
-                                onChange={(pressed) => actions.queueSubOutput({ mixer: { musicLevelPhaseInversion: pressed } })}
+                                pressed={subOutputMixer?.musicLevelPhaseInversion}
+                                disabled={subOutputMixerDisabled}
+                                onChange={(pressed) => actions.queueSubOutput(mixerPatchForScene(resolvedOutputSceneMode, { musicLevelPhaseInversion: pressed }))}
                               />
                             )
                           }
                         />
                       )}
-                      {hasNumber(subOutputDb?.mixer?.reverbLevel) && (
+                      {hasNumber(subOutputMixer?.reverbLevel) && (
                         <NumberControl
                           label="Reverb Level"
-                          value={subOutputDb?.mixer?.reverbLevel ?? undefined}
+                          value={subOutputMixer?.reverbLevel ?? undefined}
                           {...subOutputRanges.mixer.reverbLevel}
-                          disabled={subOutputDisabled}
-                          onChange={(value) => actions.queueSubOutput({ mixer: { reverbLevel: Math.round(value) } })}
+                          disabled={subOutputMixerDisabled}
+                          onChange={(value) => actions.queueSubOutput(mixerPatchForScene(resolvedOutputSceneMode, { reverbLevel: Math.round(value) }))}
                           extra={
-                            hasBoolean(subOutputDb?.mixer?.reverbLevelPhaseInversion) && (
+                            hasBoolean(subOutputMixer?.reverbLevelPhaseInversion) && (
                               <PhaseInversionToggle
-                                pressed={subOutputDb?.mixer?.reverbLevelPhaseInversion}
-                                disabled={subOutputDisabled}
-                                onChange={(pressed) => actions.queueSubOutput({ mixer: { reverbLevelPhaseInversion: pressed } })}
+                                pressed={subOutputMixer?.reverbLevelPhaseInversion}
+                                disabled={subOutputMixerDisabled}
+                                onChange={(pressed) => actions.queueSubOutput(mixerPatchForScene(resolvedOutputSceneMode, { reverbLevelPhaseInversion: pressed }))}
                               />
                             )
                           }
                         />
                       )}
-                      {hasNumber(subOutputDb?.mixer?.echoLevel) && (
+                      {hasNumber(subOutputMixer?.echoLevel) && (
                         <NumberControl
                           label="Echo Level"
-                          value={subOutputDb?.mixer?.echoLevel ?? undefined}
+                          value={subOutputMixer?.echoLevel ?? undefined}
                           {...subOutputRanges.mixer.echoLevel}
-                          disabled={subOutputDisabled}
-                          onChange={(value) => actions.queueSubOutput({ mixer: { echoLevel: Math.round(value) } })}
+                          disabled={subOutputMixerDisabled}
+                          onChange={(value) => actions.queueSubOutput(mixerPatchForScene(resolvedOutputSceneMode, { echoLevel: Math.round(value) }))}
                           extra={
-                            hasBoolean(subOutputDb?.mixer?.echoLevelPhaseInversion) && (
+                            hasBoolean(subOutputMixer?.echoLevelPhaseInversion) && (
                               <PhaseInversionToggle
-                                pressed={subOutputDb?.mixer?.echoLevelPhaseInversion}
-                                disabled={subOutputDisabled}
-                                onChange={(pressed) => actions.queueSubOutput({ mixer: { echoLevelPhaseInversion: pressed } })}
+                                pressed={subOutputMixer?.echoLevelPhaseInversion}
+                                disabled={subOutputMixerDisabled}
+                                onChange={(pressed) => actions.queueSubOutput(mixerPatchForScene(resolvedOutputSceneMode, { echoLevelPhaseInversion: pressed }))}
                               />
                             )
                           }
@@ -2399,13 +2489,15 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                   pointIndexByUiIndex={panelStateByKey.center.pointIndexByUiIndex}
                   activeIndex={activeIndex}
                   dragging={dragging}
+                  disabled={centerEqDisabled}
                   handleFilterChange={handleFilterChangeByKey.center}
                   handlePointDoubleClick={handlePointDoubleClickByKey.center}
                   handleMouseEnter={handleMouseEnter}
                   handleMouseLeave={handleMouseLeave}
                   setDragging={setDragging}
-                  onReset={() => void actions.resetEq(webhmi.EqTarget.CENTER)}
-                  onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.CENTER, pressed)}
+                  headerExtra={outputModeControls}
+                  onReset={() => void actions.resetEq(webhmi.EqTarget.CENTER, undefined, resolvedOutputSceneMode)}
+                  onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.CENTER, pressed, resolvedOutputSceneMode)}
                 />
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {showCenterOutputCard && (
@@ -2449,73 +2541,73 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                   )}
                   {showCenterMixerCard && (
                     <ParameterCard title="Mixer" contentClassName="sm:grid-cols-2">
-                      {hasNumber(centerDb?.mixer?.micDirectLevel) && (
+                      {hasNumber(centerMixer?.micDirectLevel) && (
                         <NumberControl
                           label="Mic Direct Level"
-                          value={centerDb?.mixer?.micDirectLevel ?? undefined}
+                          value={centerMixer?.micDirectLevel ?? undefined}
                           {...centerRanges.mixer.micDirectLevel}
-                          disabled={centerDisabled}
-                          onChange={(value) => actions.queueCenter({ mixer: { micDirectLevel: Math.round(value) } })}
+                          disabled={centerMixerDisabled}
+                          onChange={(value) => actions.queueCenter(mixerPatchForScene(resolvedOutputSceneMode, { micDirectLevel: Math.round(value) }))}
                           extra={
-                            hasBoolean(centerDb?.mixer?.micDirectLevelPhaseInversion) && (
+                            hasBoolean(centerMixer?.micDirectLevelPhaseInversion) && (
                               <PhaseInversionToggle
-                                pressed={centerDb?.mixer?.micDirectLevelPhaseInversion}
-                                disabled={centerDisabled}
-                                onChange={(pressed) => actions.queueCenter({ mixer: { micDirectLevelPhaseInversion: pressed } })}
+                                pressed={centerMixer?.micDirectLevelPhaseInversion}
+                                disabled={centerMixerDisabled}
+                                onChange={(pressed) => actions.queueCenter(mixerPatchForScene(resolvedOutputSceneMode, { micDirectLevelPhaseInversion: pressed }))}
                               />
                             )
                           }
                         />
                       )}
-                      {hasNumber(centerDb?.mixer?.musicLevel) && (
+                      {hasNumber(centerMixer?.musicLevel) && (
                         <NumberControl
                           label="Music Level"
-                          value={centerDb?.mixer?.musicLevel ?? undefined}
+                          value={centerMixer?.musicLevel ?? undefined}
                           {...centerRanges.mixer.musicLevel}
-                          disabled={centerDisabled}
-                          onChange={(value) => actions.queueCenter({ mixer: { musicLevel: Math.round(value) } })}
+                          disabled={centerMixerDisabled}
+                          onChange={(value) => actions.queueCenter(mixerPatchForScene(resolvedOutputSceneMode, { musicLevel: Math.round(value) }))}
                           extra={
-                            hasBoolean(centerDb?.mixer?.musicLevelPhaseInversion) && (
+                            hasBoolean(centerMixer?.musicLevelPhaseInversion) && (
                               <PhaseInversionToggle
-                                pressed={centerDb?.mixer?.musicLevelPhaseInversion}
-                                disabled={centerDisabled}
-                                onChange={(pressed) => actions.queueCenter({ mixer: { musicLevelPhaseInversion: pressed } })}
+                                pressed={centerMixer?.musicLevelPhaseInversion}
+                                disabled={centerMixerDisabled}
+                                onChange={(pressed) => actions.queueCenter(mixerPatchForScene(resolvedOutputSceneMode, { musicLevelPhaseInversion: pressed }))}
                               />
                             )
                           }
                         />
                       )}
-                      {hasNumber(centerDb?.mixer?.reverbLevel) && (
+                      {hasNumber(centerMixer?.reverbLevel) && (
                         <NumberControl
                           label="Reverb Level"
-                          value={centerDb?.mixer?.reverbLevel ?? undefined}
+                          value={centerMixer?.reverbLevel ?? undefined}
                           {...centerRanges.mixer.reverbLevel}
-                          disabled={centerDisabled}
-                          onChange={(value) => actions.queueCenter({ mixer: { reverbLevel: Math.round(value) } })}
+                          disabled={centerMixerDisabled}
+                          onChange={(value) => actions.queueCenter(mixerPatchForScene(resolvedOutputSceneMode, { reverbLevel: Math.round(value) }))}
                           extra={
-                            hasBoolean(centerDb?.mixer?.reverbLevelPhaseInversion) && (
+                            hasBoolean(centerMixer?.reverbLevelPhaseInversion) && (
                               <PhaseInversionToggle
-                                pressed={centerDb?.mixer?.reverbLevelPhaseInversion}
-                                disabled={centerDisabled}
-                                onChange={(pressed) => actions.queueCenter({ mixer: { reverbLevelPhaseInversion: pressed } })}
+                                pressed={centerMixer?.reverbLevelPhaseInversion}
+                                disabled={centerMixerDisabled}
+                                onChange={(pressed) => actions.queueCenter(mixerPatchForScene(resolvedOutputSceneMode, { reverbLevelPhaseInversion: pressed }))}
                               />
                             )
                           }
                         />
                       )}
-                      {hasNumber(centerDb?.mixer?.echoLevel) && (
+                      {hasNumber(centerMixer?.echoLevel) && (
                         <NumberControl
                           label="Echo Level"
-                          value={centerDb?.mixer?.echoLevel ?? undefined}
+                          value={centerMixer?.echoLevel ?? undefined}
                           {...centerRanges.mixer.echoLevel}
-                          disabled={centerDisabled}
-                          onChange={(value) => actions.queueCenter({ mixer: { echoLevel: Math.round(value) } })}
+                          disabled={centerMixerDisabled}
+                          onChange={(value) => actions.queueCenter(mixerPatchForScene(resolvedOutputSceneMode, { echoLevel: Math.round(value) }))}
                           extra={
-                            hasBoolean(centerDb?.mixer?.echoLevelPhaseInversion) && (
+                            hasBoolean(centerMixer?.echoLevelPhaseInversion) && (
                               <PhaseInversionToggle
-                                pressed={centerDb?.mixer?.echoLevelPhaseInversion}
-                                disabled={centerDisabled}
-                                onChange={(pressed) => actions.queueCenter({ mixer: { echoLevelPhaseInversion: pressed } })}
+                                pressed={centerMixer?.echoLevelPhaseInversion}
+                                disabled={centerMixerDisabled}
+                                onChange={(pressed) => actions.queueCenter(mixerPatchForScene(resolvedOutputSceneMode, { echoLevelPhaseInversion: pressed }))}
                               />
                             )
                           }
@@ -2599,13 +2691,15 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                   pointIndexByUiIndex={panelStateByKey.surround.pointIndexByUiIndex}
                   activeIndex={activeIndex}
                   dragging={dragging}
+                  disabled={surroundEqDisabled}
                   handleFilterChange={handleFilterChangeByKey.surround}
                   handlePointDoubleClick={handlePointDoubleClickByKey.surround}
                   handleMouseEnter={handleMouseEnter}
                   handleMouseLeave={handleMouseLeave}
                   setDragging={setDragging}
-                  onReset={() => void actions.resetEq(webhmi.EqTarget.SURROUND)}
-                  onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.SURROUND, pressed)}
+                  headerExtra={outputModeControls}
+                  onReset={() => void actions.resetEq(webhmi.EqTarget.SURROUND, undefined, resolvedOutputSceneMode)}
+                  onBypassChange={(pressed) => actions.queueEqBypass(webhmi.EqTarget.SURROUND, pressed, resolvedOutputSceneMode)}
                 />
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {showSurroundOutputCard && (
@@ -2684,73 +2778,73 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
                   )}
                   {showSurroundMixerCard && (
                     <ParameterCard title="Mixer" contentClassName="sm:grid-cols-2">
-                      {hasNumber(surroundDb?.mixer?.micDirectLevel) && (
+                      {hasNumber(surroundMixer?.micDirectLevel) && (
                         <NumberControl
                           label="Mic Direct Level"
-                          value={surroundDb?.mixer?.micDirectLevel ?? undefined}
+                          value={surroundMixer?.micDirectLevel ?? undefined}
                           {...surroundRanges.mixer.micDirectLevel}
-                          disabled={surroundDisabled}
-                          onChange={(value) => actions.queueSurround({ mixer: { micDirectLevel: Math.round(value) } })}
+                          disabled={surroundMixerDisabled}
+                          onChange={(value) => actions.queueSurround(mixerPatchForScene(resolvedOutputSceneMode, { micDirectLevel: Math.round(value) }))}
                           extra={
-                            hasBoolean(surroundDb?.mixer?.micDirectLevelPhaseInversion) && (
+                            hasBoolean(surroundMixer?.micDirectLevelPhaseInversion) && (
                               <PhaseInversionToggle
-                                pressed={surroundDb?.mixer?.micDirectLevelPhaseInversion}
-                                disabled={surroundDisabled}
-                                onChange={(pressed) => actions.queueSurround({ mixer: { micDirectLevelPhaseInversion: pressed } })}
+                                pressed={surroundMixer?.micDirectLevelPhaseInversion}
+                                disabled={surroundMixerDisabled}
+                                onChange={(pressed) => actions.queueSurround(mixerPatchForScene(resolvedOutputSceneMode, { micDirectLevelPhaseInversion: pressed }))}
                               />
                             )
                           }
                         />
                       )}
-                      {hasNumber(surroundDb?.mixer?.musicLevel) && (
+                      {hasNumber(surroundMixer?.musicLevel) && (
                         <NumberControl
                           label="Music Level"
-                          value={surroundDb?.mixer?.musicLevel ?? undefined}
+                          value={surroundMixer?.musicLevel ?? undefined}
                           {...surroundRanges.mixer.musicLevel}
-                          disabled={surroundDisabled}
-                          onChange={(value) => actions.queueSurround({ mixer: { musicLevel: Math.round(value) } })}
+                          disabled={surroundMixerDisabled}
+                          onChange={(value) => actions.queueSurround(mixerPatchForScene(resolvedOutputSceneMode, { musicLevel: Math.round(value) }))}
                           extra={
-                            hasBoolean(surroundDb?.mixer?.musicLevelPhaseInversion) && (
+                            hasBoolean(surroundMixer?.musicLevelPhaseInversion) && (
                               <PhaseInversionToggle
-                                pressed={surroundDb?.mixer?.musicLevelPhaseInversion}
-                                disabled={surroundDisabled}
-                                onChange={(pressed) => actions.queueSurround({ mixer: { musicLevelPhaseInversion: pressed } })}
+                                pressed={surroundMixer?.musicLevelPhaseInversion}
+                                disabled={surroundMixerDisabled}
+                                onChange={(pressed) => actions.queueSurround(mixerPatchForScene(resolvedOutputSceneMode, { musicLevelPhaseInversion: pressed }))}
                               />
                             )
                           }
                         />
                       )}
-                      {hasNumber(surroundDb?.mixer?.reverbLevel) && (
+                      {hasNumber(surroundMixer?.reverbLevel) && (
                         <NumberControl
                           label="Reverb Level"
-                          value={surroundDb?.mixer?.reverbLevel ?? undefined}
+                          value={surroundMixer?.reverbLevel ?? undefined}
                           {...surroundRanges.mixer.reverbLevel}
-                          disabled={surroundDisabled}
-                          onChange={(value) => actions.queueSurround({ mixer: { reverbLevel: Math.round(value) } })}
+                          disabled={surroundMixerDisabled}
+                          onChange={(value) => actions.queueSurround(mixerPatchForScene(resolvedOutputSceneMode, { reverbLevel: Math.round(value) }))}
                           extra={
-                            hasBoolean(surroundDb?.mixer?.reverbLevelPhaseInversion) && (
+                            hasBoolean(surroundMixer?.reverbLevelPhaseInversion) && (
                               <PhaseInversionToggle
-                                pressed={surroundDb?.mixer?.reverbLevelPhaseInversion}
-                                disabled={surroundDisabled}
-                                onChange={(pressed) => actions.queueSurround({ mixer: { reverbLevelPhaseInversion: pressed } })}
+                                pressed={surroundMixer?.reverbLevelPhaseInversion}
+                                disabled={surroundMixerDisabled}
+                                onChange={(pressed) => actions.queueSurround(mixerPatchForScene(resolvedOutputSceneMode, { reverbLevelPhaseInversion: pressed }))}
                               />
                             )
                           }
                         />
                       )}
-                      {hasNumber(surroundDb?.mixer?.echoLevel) && (
+                      {hasNumber(surroundMixer?.echoLevel) && (
                         <NumberControl
                           label="Echo Level"
-                          value={surroundDb?.mixer?.echoLevel ?? undefined}
+                          value={surroundMixer?.echoLevel ?? undefined}
                           {...surroundRanges.mixer.echoLevel}
-                          disabled={surroundDisabled}
-                          onChange={(value) => actions.queueSurround({ mixer: { echoLevel: Math.round(value) } })}
+                          disabled={surroundMixerDisabled}
+                          onChange={(value) => actions.queueSurround(mixerPatchForScene(resolvedOutputSceneMode, { echoLevel: Math.round(value) }))}
                           extra={
-                            hasBoolean(surroundDb?.mixer?.echoLevelPhaseInversion) && (
+                            hasBoolean(surroundMixer?.echoLevelPhaseInversion) && (
                               <PhaseInversionToggle
-                                pressed={surroundDb?.mixer?.echoLevelPhaseInversion}
-                                disabled={surroundDisabled}
-                                onChange={(pressed) => actions.queueSurround({ mixer: { echoLevelPhaseInversion: pressed } })}
+                                pressed={surroundMixer?.echoLevelPhaseInversion}
+                                disabled={surroundMixerDisabled}
+                                onChange={(pressed) => actions.queueSurround(mixerPatchForScene(resolvedOutputSceneMode, { echoLevelPhaseInversion: pressed }))}
                               />
                             )
                           }
@@ -2832,3 +2926,4 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
     </div>
   )
 }
+

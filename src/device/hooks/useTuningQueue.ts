@@ -9,6 +9,7 @@ import {
   applySectionPatch,
   buildEqPatchesFromPending,
   cloneObject,
+  getEqPendingKey,
   getEqPointRefByTargetAndIndex,
   mergePatch,
   type PendingEqTarget,
@@ -24,7 +25,7 @@ type PendingPatches = {
   subOutput?: webhmi.ISetSubOutputRequest
   center?: webhmi.ISetCenterRequest
   surround?: webhmi.ISetSurroundRequest
-  eq: Map<number, PendingEqTarget>
+  eq: Map<string, PendingEqTarget>
 }
 
 export function useTuningQueue(options: { authOk: boolean | null } = { authOk: null }) {
@@ -159,23 +160,24 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
     setFlushError('')
   }, [resetPending])
 
-  const resetEq = useCallback(async (client: WebhmiClient, target: webhmi.EqTarget, indices?: number[]) => {
+  const resetEq = useCallback(async (client: WebhmiClient, target: webhmi.EqTarget, indices?: number[], sceneMode?: webhmi.OutputSceneMode) => {
     if (options.authOk !== true) return
 
     try {
       const index = indices?.length ? indices : []
-      await client.resetEq({ target, index })
+      await client.resetEq({ target, index, sceneMode })
 
-      const pending = pendingRef.current.eq.get(target)
+      const pendingKey = getEqPendingKey(target, sceneMode)
+      const pending = pendingRef.current.eq.get(pendingKey)
       if (pending) {
         pending.points.clear()
-        if (pending.bypass === undefined) pendingRef.current.eq.delete(target)
+        if (pending.bypass === undefined) pendingRef.current.eq.delete(pendingKey)
       }
       if (!hasPending()) clearFlushTimer()
 
-      if (baseDbRef.current) applyEqPointDefaults(baseDbRef.current, target, indices)
+      if (baseDbRef.current) applyEqPointDefaults(baseDbRef.current, target, indices, sceneMode)
 
-      updateDbDraft((currentDb) => applyEqPointDefaults(currentDb, target, indices))
+      updateDbDraft((currentDb) => applyEqPointDefaults(currentDb, target, indices, sceneMode))
       setDirty(hasPending())
       setFlushError('')
     } catch (e) {
@@ -185,13 +187,13 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
   }, [options.authOk, hasPending, clearFlushTimer, updateDbDraft])
 
   const resetEqPointToDefault = useCallback(
-    async (client: WebhmiClient, target: webhmi.EqTarget, index: number) => {
+    async (client: WebhmiClient, target: webhmi.EqTarget, index: number, sceneMode?: webhmi.OutputSceneMode) => {
       if (options.authOk !== true) return
 
       const sourceDb = db ?? baseDbRef.current
       if (!sourceDb) return
 
-      const point = getEqPointRefByTargetAndIndex(sourceDb, target, index)
+      const point = getEqPointRefByTargetAndIndex(sourceDb, target, index, sceneMode)
       if (!point) return
 
       const patch: webhmi.IEqPointPatch = { index }
@@ -202,18 +204,19 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
       if (Object.keys(patch).length <= 1) return
 
       try {
-        await client.setEq({ eq: [{ target, point: [patch] }] })
+        await client.setEq({ eq: [{ target, sceneMode, point: [patch] }] })
 
-        const pending = pendingRef.current.eq.get(target)
+        const pendingKey = getEqPendingKey(target, sceneMode)
+        const pending = pendingRef.current.eq.get(pendingKey)
         if (pending) {
           pending.points.delete(index)
-          if (pending.points.size === 0 && pending.bypass === undefined) pendingRef.current.eq.delete(target)
+          if (pending.points.size === 0 && pending.bypass === undefined) pendingRef.current.eq.delete(pendingKey)
         }
         if (!hasPending()) clearFlushTimer()
 
-        if (baseDbRef.current) applyEqPointPatch(baseDbRef.current, target, patch)
+        if (baseDbRef.current) applyEqPointPatch(baseDbRef.current, target, patch, sceneMode)
 
-        updateDbDraft((currentDb) => applyEqPointPatch(currentDb, target, patch))
+        updateDbDraft((currentDb) => applyEqPointPatch(currentDb, target, patch, sceneMode))
         setDirty(hasPending())
         setFlushError('')
       } catch (e) {
@@ -300,7 +303,7 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
 
     const mergePendingAfterFailure = (sent: PendingPatches) => {
       const current = pendingRef.current
-      const mergedEq = new Map<number, PendingEqTarget>()
+      const mergedEq = new Map<string, PendingEqTarget>()
 
       const mergeEqTarget = (base: PendingEqTarget | undefined, patch: PendingEqTarget | undefined): PendingEqTarget => {
         const basePoints = base?.points ?? new Map<number, webhmi.IEqPointPatch>()
@@ -311,7 +314,11 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
           const prev = points.get(idx) ?? { index: idx }
           points.set(idx, mergePatch(prev, pp))
         }
-        const out: PendingEqTarget = { points }
+        const out: PendingEqTarget = {
+          target: patch?.target ?? base?.target ?? 0,
+          sceneMode: patch?.sceneMode ?? base?.sceneMode,
+          points,
+        }
         if (typeof base?.bypass === 'boolean') out.bypass = base.bypass
         if (typeof patch?.bypass === 'boolean') out.bypass = patch.bypass
         return out
@@ -380,9 +387,10 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
       if (baseDb && sentEq.length > 0) {
         for (const eqPatch of sentEq) {
           if (typeof eqPatch.target !== 'number') continue
-          if (typeof eqPatch.bypass === 'boolean') applyEqBypassPatch(baseDb, eqPatch.target as webhmi.EqTarget, eqPatch.bypass)
+          const sceneMode = typeof eqPatch.sceneMode === 'number' ? eqPatch.sceneMode as webhmi.OutputSceneMode : undefined
+          if (typeof eqPatch.bypass === 'boolean') applyEqBypassPatch(baseDb, eqPatch.target as webhmi.EqTarget, eqPatch.bypass, sceneMode)
           for (const pointPatch of eqPatch.point ?? []) {
-            applyEqPointPatch(baseDb, eqPatch.target as webhmi.EqTarget, pointPatch)
+            applyEqPointPatch(baseDb, eqPatch.target as webhmi.EqTarget, pointPatch, sceneMode)
           }
         }
       }
@@ -539,12 +547,13 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
   )
 
   const queueEqBypass = useCallback(
-    (client: WebhmiClient, target: webhmi.EqTarget, bypass: boolean) => {
-      const entry: PendingEqTarget = pendingRef.current.eq.get(target) ?? { points: new Map() }
+    (client: WebhmiClient, target: webhmi.EqTarget, bypass: boolean, sceneMode?: webhmi.OutputSceneMode) => {
+      const key = getEqPendingKey(target, sceneMode)
+      const entry: PendingEqTarget = pendingRef.current.eq.get(key) ?? { target, sceneMode, points: new Map() }
       entry.bypass = bypass
-      pendingRef.current.eq.set(target, entry)
+      pendingRef.current.eq.set(key, entry)
 
-      updateDbDraft((currentDb) => applyEqBypassPatch(currentDb, target, bypass))
+      updateDbDraft((currentDb) => applyEqBypassPatch(currentDb, target, bypass, sceneMode))
       setDirty(true)
       setFlushError('')
       markUserChange(client)
@@ -553,15 +562,16 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
   )
 
   const queueEqPoint = useCallback(
-    (client: WebhmiClient, target: webhmi.EqTarget, patch: webhmi.IEqPointPatch) => {
+    (client: WebhmiClient, target: webhmi.EqTarget, patch: webhmi.IEqPointPatch, sceneMode?: webhmi.OutputSceneMode) => {
       if (typeof patch.index !== 'number') throw new Error('EqPointPatch.index is required')
 
-      const entry = pendingRef.current.eq.get(target) ?? { points: new Map() }
+      const key = getEqPendingKey(target, sceneMode)
+      const entry = pendingRef.current.eq.get(key) ?? { target, sceneMode, points: new Map() }
       const prev = entry.points.get(patch.index) ?? { index: patch.index }
       entry.points.set(patch.index, mergePatch(prev, patch))
-      pendingRef.current.eq.set(target, entry)
+      pendingRef.current.eq.set(key, entry)
 
-      updateDbDraft((currentDb) => applyEqPointPatch(currentDb, target, patch))
+      updateDbDraft((currentDb) => applyEqPointPatch(currentDb, target, patch, sceneMode))
       setDirty(true)
       setFlushError('')
       markUserChange(client)
