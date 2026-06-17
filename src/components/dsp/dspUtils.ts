@@ -90,6 +90,8 @@ export const FBX_OPTIONS: SelectOption[] = [
 ]
 
 export const nearlyEqual = (a: number, b: number, eps = 1e-6) => Math.abs(a - b) <= eps
+export const isFixedQFilterType = (type: string | null | undefined) =>
+  typeof type === 'string' && (type.includes('HIGHPASS') || type.includes('LOWPASS'))
 
 export const panelStateEqual = (a: PanelState, b: PanelState) => {
   if (a.pointIndexByUiIndex.length !== b.pointIndexByUiIndex.length) return false

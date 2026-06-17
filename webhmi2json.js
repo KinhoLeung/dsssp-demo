@@ -16,6 +16,7 @@ if (!inputFile) {
 
 const inputPath = path.resolve(inputFile);
 const protoPath = path.join(__dirname, 'webhmi.proto');
+const FLOAT_DECIMAL_PLACES = 6;
 
 if (!fs.existsSync(inputPath)) {
     console.error(`File not found: ${inputPath}`);
@@ -27,6 +28,26 @@ if (!fs.existsSync(protoPath)) {
     process.exit(1);
 }
 
+const cleanFloatNoise = (value) => {
+    if (Array.isArray(value)) {
+        return value.map(cleanFloatNoise);
+    }
+
+    if (value !== null && typeof value === 'object') {
+        const out = {};
+        for (const [key, childValue] of Object.entries(value)) {
+            out[key] = cleanFloatNoise(childValue);
+        }
+        return out;
+    }
+
+    if (typeof value === 'number' && Number.isFinite(value) && !Number.isInteger(value)) {
+        return Number(value.toFixed(FLOAT_DECIMAL_PLACES));
+    }
+
+    return value;
+};
+
 // Load the proto definition
 protobuf.load(protoPath, (err, root) => {
     if (err) {
@@ -34,26 +55,25 @@ protobuf.load(protoPath, (err, root) => {
         process.exit(1);
     }
 
-    // Obtain the message type
-    const GetDbResponse = root.lookupType('webhmi.GetDbResponse');
+    // Current exported .webhmi files use DeviceConfig.
+    const DeviceConfig = root.lookupType('webhmi.DeviceConfig');
+
+    const toPlainObjectOptions = {
+        longs: String,
+        enums: String,
+        bytes: String,
+        defaults: true,
+        arrays: true,
+        objects: true,
+    };
 
     try {
         // Read the file
         const buffer = fs.readFileSync(inputPath);
 
-        // Decode (from binary)
-        const message = GetDbResponse.decode(buffer);
-
-        // Convert to plain object
-        // Options allow controlling how fields are output (e.g. enums as strings)
-        const object = GetDbResponse.toObject(message, {
-            longs: String,
-            enums: String,
-            bytes: String,
-            defaults: true, // Output default values (optional, can be removed)
-            arrays: true,
-            objects: true,
-        });
+        // Decode current app exports.
+        const message = DeviceConfig.decode(buffer);
+        const object = cleanFloatNoise(DeviceConfig.toObject(message, toPlainObjectOptions));
 
         const jsonOutput = JSON.stringify(object, null, 2);
 

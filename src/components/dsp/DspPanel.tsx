@@ -21,7 +21,7 @@ import scale from '../../configs/scale'
 import theme, { getTheme } from '../../configs/theme'
 import FilterCard from '../FilterCard'
 
-import { uiTextKey } from './dspUtils'
+import { isFixedQFilterType, uiTextKey } from './dspUtils'
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
@@ -204,10 +204,10 @@ export function DspPanel({
                       active={activeIndex === index}
                       dragX={!disabled}
                       dragY={!disabled}
-                      wheelQ={!disabled}
-                      showIcon={filter.type.includes('LOWPASS') || filter.type.includes('HIGHPASS')}
+                      wheelQ={!disabled && !isFixedQFilterType(filter.type)}
+                      showIcon={isFixedQFilterType(filter.type)}
                       label={
-                        filter.type.includes('LOWPASS') || filter.type.includes('HIGHPASS')
+                        isFixedQFilterType(filter.type)
                           ? ''
                           : String(pointIndexByUiIndex[index] ?? index)
                       }

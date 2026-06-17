@@ -9,6 +9,7 @@ import {
   hasEnum,
   getEnumNumberValue,
   nearlyEqual,
+  isFixedQFilterType,
   panelStateEqual,
   buildPanelStateFromEq,
   mapGraphTypeToFilterType,
@@ -719,7 +720,11 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
       const stateForPanel = panelStateByKeyRef.current[key]
       if (!def || !stateForPanel) return
 
-      const { index: uiIndex, ended, ...filter } = filterEvent
+      const { index: uiIndex, ended, ...filterEventFilter } = filterEvent
+      const existingFilter = stateForPanel.filters[uiIndex]
+      const filter = isFixedQFilterType(filterEventFilter.type) && existingFilter
+        ? { ...filterEventFilter, q: existingFilter.q }
+        : filterEventFilter
 
       // Ensure active state and dragging state are maintained during any interaction
       if (!ended) {

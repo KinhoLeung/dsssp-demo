@@ -13,6 +13,7 @@ import tailwindColors from 'tailwindcss/colors'
 import filterColors from '../../configs/colors'
 import type { EqRangeConfig } from '../../configs/parameterRanges'
 import scale from '../../configs/scale'
+import { isFixedQFilterType } from '../dsp/dspUtils'
 
 import { FilterInput, FilterSelect, SliderInput } from '.'
 import { getStepPrecision } from './numberUtils'
@@ -56,6 +57,7 @@ const FilterCard = ({
   const zeroFreq = useMemo(() => getZeroFreq(type), [type])
   const zeroGain = useMemo(() => getZeroGain(type), [type])
   const zeroQ = useMemo(() => getZeroQ(type), [type])
+  const fixedQFilter = useMemo(() => isFixedQFilterType(type), [type])
 
   const color =
     type === 'BYPASS'
@@ -124,7 +126,7 @@ const FilterCard = ({
           className="flex-1"
           label="Q"
           value={filter.q}
-          disabled={disabled || zeroQ}
+          disabled={disabled || zeroQ || fixedQFilter}
           onChange={(q, ended) => onChange({ ...filter, index, q, ended })}
         />
       </div>
