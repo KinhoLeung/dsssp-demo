@@ -34,7 +34,7 @@
     "engineering"
   ],
   "scripts": {
-    "proto:gen": "node ./node_modules/protobufjs-cli/bin/pbjs -t static-module -w es6 -o src/device/proto/generated/webhmi.js webhmi.proto && node ./node_modules/protobufjs-cli/bin/pbts -o src/device/proto/generated/webhmi.d.ts src/device/proto/generated/webhmi.js",
+    "proto:gen": "node ./node_modules/protobufjs-cli/bin/pbjs -t static-module -w es6 -o src/device/proto/generated/webhmi.js webhmi.proto && node ./node_modules/protobufjs-cli/bin/pbts -o src/device/proto/generated/webhmi.d.ts src/device/proto/generated/webhmi.js && node scripts/mark-generated.mjs",
     "predev": "npm run proto:gen",
     "prebuild": "npm run proto:gen",
     "prelint": "npm run proto:gen",
@@ -48,6 +48,9 @@
     "deps": "npx taze",
     "deps:update": "npx taze -w",
     "deploy:github": "gh-pages -d dist",
+    "test": "node scripts/test-runner.mjs",
+    "test:watch": "node scripts/test-runner.mjs --watch",
+    "test:coverage": "node scripts/test-runner.mjs --coverage",
     "lint": "tsc && eslint .",
     "lint:fix": "eslint . --fix"
   },

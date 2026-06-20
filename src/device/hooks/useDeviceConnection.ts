@@ -2,7 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import {
   BLE_DEVICE_PROFILES,
-  HID_DEVICE_PROFILES,
+  findBleDeviceProfile,
+  findHidDeviceProfile,
+  getBleRequestFilters,
+  getHidRequestFilters,
   uniqueBleServices,
 } from '@/configs/deviceProfiles'
 import { BleTransport, HidTransport, WebhmiClient } from '@/device'
@@ -69,12 +72,7 @@ export function useDeviceConnection(options: {
           (interactive
             ? (
               await navigator.hid.requestDevice({
-                filters: HID_DEVICE_PROFILES.map((p) => ({
-                  vendorId: p.vendorId,
-                  productId: p.productId,
-                  usagePage: p.usagePage,
-                  usage: p.usage,
-                })),
+                filters: getHidRequestFilters(),
               })
             )[0]
             : null)
@@ -82,12 +80,7 @@ export function useDeviceConnection(options: {
         if (!device) return null
         setSelectedHidDevice(device)
 
-        const profile =
-          HID_DEVICE_PROFILES.find((p) =>
-            p.vendorId === device.vendorId &&
-            p.productId === device.productId &&
-            device.collections.some(c => c.usagePage === p.usagePage && c.usage === p.usage)
-          ) ?? HID_DEVICE_PROFILES[0]
+        const profile = findHidDeviceProfile(device)
         if (!profile) throw new Error('No HID device profile configured')
 
         const transport = new HidTransport(device, { reportId: profile.reportId, reportSize: profile.reportSize })
@@ -140,7 +133,7 @@ export function useDeviceConnection(options: {
           existing ??
           (interactive
             ? await navigator.bluetooth.requestDevice({
-              filters: BLE_DEVICE_PROFILES.map((p) => ({ services: [p.service] })),
+              filters: getBleRequestFilters(),
               optionalServices: uniqueBleServices(),
             })
             : null)
@@ -148,8 +141,7 @@ export function useDeviceConnection(options: {
         if (!device) return null
         setSelectedBleDevice(device)
 
-        const profile =
-          BLE_DEVICE_PROFILES.find((p) => device.name?.includes(p.label)) ?? BLE_DEVICE_PROFILES[0]
+        const profile = findBleDeviceProfile(device)
 
         const transport = new BleTransport(device, {
           service: profile.service,

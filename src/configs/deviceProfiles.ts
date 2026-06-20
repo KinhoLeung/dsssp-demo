@@ -17,6 +17,19 @@ export type BleDeviceProfile = {
   notify?: boolean
 }
 
+export type HidDeviceLike = {
+  vendorId: number
+  productId: number
+  collections?: Array<{
+    usagePage?: number
+    usage?: number
+  }>
+}
+
+export type BleDeviceLike = {
+  name?: string
+}
+
 export const HID_DEVICE_PROFILES: HidDeviceProfile[] = [
   {
     id: 'esp32-hid-303a-40a0',
@@ -50,6 +63,29 @@ export const BLE_DEVICE_PROFILES: BleDeviceProfile[] = [
   },
 ]
 
-export const uniqueBleServices = () => {
-  return Array.from(new Set(BLE_DEVICE_PROFILES.map((p) => p.service)))
-}
+export const getHidRequestFilters = () =>
+  HID_DEVICE_PROFILES.map((profile) => ({
+    vendorId: profile.vendorId,
+    productId: profile.productId,
+    usagePage: profile.usagePage,
+    usage: profile.usage,
+  }))
+
+export const findHidDeviceProfile = (device: HidDeviceLike) =>
+  HID_DEVICE_PROFILES.find((profile) => {
+    if (profile.vendorId !== device.vendorId || profile.productId !== device.productId) return false
+    if (profile.usagePage === undefined && profile.usage === undefined) return true
+
+    return (device.collections ?? []).some((collection) =>
+      (profile.usagePage === undefined || collection.usagePage === profile.usagePage) &&
+      (profile.usage === undefined || collection.usage === profile.usage),
+    )
+  }) ?? HID_DEVICE_PROFILES[0]
+
+export const getBleRequestFilters = () =>
+  BLE_DEVICE_PROFILES.map((profile) => ({ services: [profile.service] }))
+
+export const uniqueBleServices = () => Array.from(new Set(BLE_DEVICE_PROFILES.map((profile) => profile.service)))
+
+export const findBleDeviceProfile = (device: BleDeviceLike) =>
+  BLE_DEVICE_PROFILES.find((profile) => device.name?.includes(profile.label)) ?? BLE_DEVICE_PROFILES[0]

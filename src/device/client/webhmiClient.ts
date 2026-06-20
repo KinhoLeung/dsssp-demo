@@ -217,6 +217,7 @@ export class WebhmiClient {
   }
 
   private logRequest(name: string, request: any, pbType: any) {
+    if (!this.shouldLogProtocolPayloads()) return
     if (!pbType || !request) return
     try {
       const message = pbType.fromObject(request)
@@ -236,6 +237,7 @@ export class WebhmiClient {
   }
 
   private logResponse(name: string, payload: Uint8Array, pbType: any, isEvent = false) {
+    if (!this.shouldLogProtocolPayloads()) return
     if (!pbType) return
     try {
       const message = pbType.decode(payload)
@@ -270,6 +272,10 @@ export class WebhmiClient {
         this.logResponse(eventName, payload, eventPbType, true)
       }
     })
+  }
+
+  private shouldLogProtocolPayloads() {
+    return import.meta.env.DEV || import.meta.env.VITE_PROTOCOL_LOGS === 'true'
   }
 
   async setEq(request: webhmi.ISetEqRequest) {

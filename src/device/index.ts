@@ -4,4 +4,4 @@ export * from './session'
 export * from './proto'
 export * from './client'
 export * from './selectedDevices'
-
+export * from './testing/mockTransport'

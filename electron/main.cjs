@@ -10,8 +10,9 @@ function createWindow() {
     autoHideMenuBar: true,
     icon: path.join(__dirname, '../dist/favicon.ico'),
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
+      preload: path.join(__dirname, 'preload.cjs'),
+      nodeIntegration: false,
+      contextIsolation: true,
       webBluetooth: true
     }
   });
@@ -52,8 +53,9 @@ function createWindow() {
       maximizable: false,
       titleBarStyle: 'hidden',
       webPreferences: {
-        nodeIntegration: true,
-        contextIsolation: false
+        preload: path.join(__dirname, 'preload.cjs'),
+        nodeIntegration: false,
+        contextIsolation: true
       }
     });
 
@@ -112,16 +114,30 @@ function createWindow() {
     updateOrCreatePicker('hid', details.deviceList, callback);
   });
 
-  // Automatically grant device permissions for HID
-  mainWindow.webContents.session.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {
-    if (permission === 'hid' || permission === 'bluetooth') {
-      return true;
+  const isAllowedOrigin = (origin) => {
+    if (!origin) return app.isPackaged;
+    try {
+      const url = new URL(origin);
+      if (url.protocol === 'file:') return app.isPackaged;
+      if (!app.isPackaged && (url.hostname === 'localhost' || url.hostname === '127.0.0.1') && url.port === '3003') {
+        return true;
+      }
+    } catch {
+      return false;
     }
-    return true; 
+    return false;
+  };
+
+  // Grant only the device permissions this app needs, and only for the app origin.
+  mainWindow.webContents.session.setPermissionCheckHandler((_webContents, permission, requestingOrigin) => {
+    if (permission === 'hid' || permission === 'bluetooth') {
+      return isAllowedOrigin(requestingOrigin);
+    }
+    return false;
   });
 
   mainWindow.webContents.session.setDevicePermissionHandler((details) => {
-    if (details.deviceType === 'hid' || details.deviceType === 'bluetooth') {
+    if ((details.deviceType === 'hid' || details.deviceType === 'bluetooth') && isAllowedOrigin(details.origin || details.requestingUrl)) {
       return true;
     }
     return false;

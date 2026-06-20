@@ -8,8 +8,8 @@ import type { CardData } from '@/components/lightswind/code-hover-cards'
 import ColourfulText from '@/components/ui/colourful-text'
 import { Spinner } from '@/components/ui/spinner'
 import {
-  BLE_DEVICE_PROFILES,
-  HID_DEVICE_PROFILES,
+  getBleRequestFilters,
+  getHidRequestFilters,
   uniqueBleServices,
 } from '@/configs/deviceProfiles'
 import { setSelectedBleDevice, setSelectedHidDevice } from '@/device/selectedDevices'
@@ -34,12 +34,7 @@ function Home() {
         window.alert(t('errors.webhidNotSupported'))
         return
       }
-      const hidFilters = HID_DEVICE_PROFILES.map((profile) => ({
-        vendorId: profile.vendorId,
-        productId: profile.productId,
-        usagePage: profile.usagePage,
-        usage: profile.usage,
-      }))
+      const hidFilters = getHidRequestFilters()
       if (hidFilters.length === 0) {
         window.alert(t('errors.noHidProfiles'))
         return
@@ -75,9 +70,7 @@ function Home() {
         window.alert(t('errors.webbleNotSupported'))
         return
       }
-      const bleFilters = BLE_DEVICE_PROFILES.map((profile) => ({
-        services: [profile.service],
-      }))
+      const bleFilters = getBleRequestFilters()
       if (bleFilters.length === 0) {
         window.alert(t('errors.noBleProfiles'))
         return
