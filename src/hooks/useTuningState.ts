@@ -343,9 +343,6 @@ export function useTuningState(isDemoMode: boolean) {
       authError: '',
       db: dbResponse,
       dbFetchId,
-      dirty: false,
-      flushing: false,
-      flushError: '',
     }),
     [dbResponse, dbFetchId],
   )

@@ -19,9 +19,6 @@ export type DeviceSessionState = {
   authError: string
   db: webhmi.IDeviceConfig | null
   dbFetchId: number
-  dirty: boolean
-  flushing: boolean
-  flushError: string
 }
 
 export function useDeviceSession(
@@ -51,9 +48,6 @@ export function useDeviceSession(
     authError: auth.authError,
     db: queue.db,
     dbFetchId: queue.dbFetchId,
-    dirty: queue.dirty,
-    flushing: queue.flushing,
-    flushError: queue.flushError,
   }
 
   const disconnect = useCallback(async () => {

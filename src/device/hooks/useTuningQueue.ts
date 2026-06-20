@@ -48,7 +48,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
 
   const [db, setDb] = useState<webhmi.IDeviceConfig | null>(null)
   const [dbFetchId, setDbFetchId] = useState<number>(0)
-  const [dirty, setDirty] = useState(false)
   const [flushing, setFlushing] = useState(false)
   const [flushError, setFlushError] = useState('')
 
@@ -97,7 +96,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
     userLastChangeAtRef.current = null
     lastTxAtRef.current = null
     clearFlushTimer()
-    setDirty(false)
     setFlushError('')
   }, [clearFlushTimer])
 
@@ -105,7 +103,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
     baseDbRef.current = null
     setDb(null)
     setDbFetchId(0)
-    setDirty(false)
     setFlushing(false)
     setFlushError('')
   }, [])
@@ -140,19 +137,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
     }
   }, [resetPending])
 
-  const commitDeviceDbSnapshot = useCallback((deviceDb: webhmi.IDeviceDb) => {
-    const nextDb: webhmi.IDeviceConfig = {
-      ...(cloneObject(baseDbRef.current ?? {}) as webhmi.IDeviceConfig),
-      db: cloneObject(deviceDb),
-    }
-    resetPending()
-    baseDbRef.current = cloneObject(nextDb)
-    setDb(nextDb)
-    setDbFetchId((id) => id + 1)
-    setDirty(false)
-    setFlushError('')
-  }, [resetPending])
-
   const resetEq = useCallback(async (client: WebhmiClient, target: webhmi.EqTarget, indices?: number[], sceneMode?: webhmi.OutputSceneMode) => {
     if (options.authOk !== true) return
 
@@ -171,7 +155,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
       if (baseDbRef.current) applyEqPointDefaults(baseDbRef.current, target, indices, sceneMode)
 
       updateDbDraft((currentDb) => applyEqPointDefaults(currentDb, target, indices, sceneMode))
-      setDirty(hasPending())
       setFlushError('')
     } catch (e) {
       setFlushError(e instanceof Error ? e.message : String(e))
@@ -210,7 +193,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
         if (baseDbRef.current) applyEqPointPatch(baseDbRef.current, target, patch, sceneMode)
 
         updateDbDraft((currentDb) => applyEqPointPatch(currentDb, target, patch, sceneMode))
-        setDirty(hasPending())
         setFlushError('')
       } catch (e) {
         setFlushError(e instanceof Error ? e.message : String(e))
@@ -389,14 +371,12 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
       }
 
       flushRetryDelayRef.current = 0
-      setDirty(hasPending())
       setFlushError('')
     } catch (e) {
       if (snapshot) mergePendingAfterFailure(snapshot)
       const message = e instanceof Error ? e.message : String(e)
       console.warn('[Flush] failed:', message)
       setFlushError(message)
-      setDirty(true)
 
       const next = flushRetryDelayRef.current ? Math.min(flushRetryDelayRef.current * 2, 10_000) : 500
       flushRetryDelayRef.current = next
@@ -420,7 +400,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
         if (currentDb.db) currentDb.db.system = applySectionPatch(currentDb.db.system, patch)
         return currentDb
       })
-      setDirty(true)
       setFlushError('')
       markUserChange(client)
     },
@@ -434,7 +413,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
         if (currentDb.db) currentDb.db.music = applySectionPatch(currentDb.db.music, patch)
         return currentDb
       })
-      setDirty(true)
       setFlushError('')
       markUserChange(client)
     },
@@ -448,7 +426,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
         if (currentDb.db) currentDb.db.mic = applySectionPatch(currentDb.db.mic, patch)
         return currentDb
       })
-      setDirty(true)
       setFlushError('')
       markUserChange(client)
     },
@@ -462,7 +439,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
         if (currentDb.db) currentDb.db.reverb = applySectionPatch(currentDb.db.reverb, patch)
         return currentDb
       })
-      setDirty(true)
       setFlushError('')
       markUserChange(client)
     },
@@ -476,7 +452,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
         if (currentDb.db) currentDb.db.echo = applySectionPatch(currentDb.db.echo, patch)
         return currentDb
       })
-      setDirty(true)
       setFlushError('')
       markUserChange(client)
     },
@@ -490,7 +465,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
         if (currentDb.db) currentDb.db.mainOutput = applySectionPatch(currentDb.db.mainOutput, patch)
         return currentDb
       })
-      setDirty(true)
       setFlushError('')
       markUserChange(client)
     },
@@ -504,7 +478,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
         if (currentDb.db) currentDb.db.subOutput = applySectionPatch(currentDb.db.subOutput, patch)
         return currentDb
       })
-      setDirty(true)
       setFlushError('')
       markUserChange(client)
     },
@@ -518,7 +491,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
         if (currentDb.db) currentDb.db.center = applySectionPatch(currentDb.db.center, patch)
         return currentDb
       })
-      setDirty(true)
       setFlushError('')
       markUserChange(client)
     },
@@ -532,7 +504,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
         if (currentDb.db) currentDb.db.surround = applySectionPatch(currentDb.db.surround, patch)
         return currentDb
       })
-      setDirty(true)
       setFlushError('')
       markUserChange(client)
     },
@@ -547,7 +518,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
       pendingRef.current.eq.set(key, entry)
 
       updateDbDraft((currentDb) => applyEqBypassPatch(currentDb, target, bypass, sceneMode))
-      setDirty(true)
       setFlushError('')
       markUserChange(client)
     },
@@ -573,7 +543,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
       if (queueOptions.syncDraft !== false) {
         updateDbDraft((currentDb) => applyEqPointPatch(currentDb, target, patch, sceneMode))
       }
-      setDirty(true)
       setFlushError('')
       markUserChange(client)
     },
@@ -583,16 +552,12 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
   return {
     db,
     dbFetchId,
-    dirty,
     flushing,
     flushError,
-    setDb,
-    setDbFetchId,
     resetPending,
     clearDb,
     updateDbDraft,
     refreshDb,
-    commitDeviceDbSnapshot,
     resetEq,
     resetEqPointToDefault,
     switchCurrentMode,

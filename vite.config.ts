@@ -159,8 +159,7 @@ export default defineConfig(({ mode }) => {
             }
 
             if (
-              normalizedId.includes('/node_modules/motion/') ||
-              normalizedId.includes('/node_modules/framer-motion/')
+              normalizedId.includes('/node_modules/motion/')
             ) {
               return 'vendor-motion'
             }
