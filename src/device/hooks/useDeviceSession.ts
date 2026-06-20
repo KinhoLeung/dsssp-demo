@@ -18,7 +18,6 @@ export type DeviceSessionState = {
   authOk: boolean | null
   authError: string
   db: webhmi.IDeviceConfig | null
-  dbJson: string
   dbFetchId: number
   dirty: boolean
   flushing: boolean
@@ -51,7 +50,6 @@ export function useDeviceSession(
     authOk: auth.authOk,
     authError: auth.authError,
     db: queue.db,
-    dbJson: queue.dbJson,
     dbFetchId: queue.dbFetchId,
     dirty: queue.dirty,
     flushing: queue.flushing,

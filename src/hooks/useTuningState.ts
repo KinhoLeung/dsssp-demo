@@ -342,7 +342,6 @@ export function useTuningState(isDemoMode: boolean) {
       authOk: true,
       authError: '',
       db: dbResponse,
-      dbJson: JSON.stringify(dbResponse),
       dbFetchId,
       dirty: false,
       flushing: false,
