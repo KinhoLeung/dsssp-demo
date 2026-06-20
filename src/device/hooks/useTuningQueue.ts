@@ -202,21 +202,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
     [options.authOk, db, hasPending, clearFlushTimer, updateDbDraft],
   )
 
-  const switchCurrentMode = useCallback(
-    async (client: WebhmiClient, index: number) => {
-      if (options.authOk !== true) return
-
-      try {
-        await client.switchCurrentMode({ currentModeIndex: index })
-        await refreshDb(client)
-      } catch (e) {
-        setFlushError(e instanceof Error ? e.message : String(e))
-        throw e
-      }
-    },
-    [options.authOk, refreshDb],
-  )
-
   const saveMode = useCallback(
     async (client: WebhmiClient, index: number) => {
       if (options.authOk !== true) return
@@ -275,6 +260,7 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
 
     let flushSucceeded = false
     let snapshot: PendingPatches | null = null
+    let refreshedDb = false
 
     const mergePendingAfterFailure = (sent: PendingPatches) => {
       const current = pendingRef.current
@@ -347,8 +333,13 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
       for (const op of ops) await op
       flushSucceeded = true
 
+      if (p.system?.currentModeIndex !== undefined) {
+        await refreshDb(client)
+        refreshedDb = true
+      }
+
       const baseDb = baseDbRef.current
-      if (baseDb?.db) {
+      if (!refreshedDb && baseDb?.db) {
         if (p.system) baseDb.db.system = applySectionPatch(baseDb.db.system, p.system) ?? baseDb.db.system
         if (p.music) baseDb.db.music = applySectionPatch(baseDb.db.music, p.music) ?? baseDb.db.music
         if (p.mic) baseDb.db.mic = applySectionPatch(baseDb.db.mic, p.mic) ?? baseDb.db.mic
@@ -359,7 +350,7 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
         if (p.center) baseDb.db.center = applySectionPatch(baseDb.db.center, p.center) ?? baseDb.db.center
         if (p.surround) baseDb.db.surround = applySectionPatch(baseDb.db.surround, p.surround) ?? baseDb.db.surround
       }
-      if (baseDb && sentEq.length > 0) {
+      if (!refreshedDb && baseDb && sentEq.length > 0) {
         for (const eqPatch of sentEq) {
           if (typeof eqPatch.target !== 'number') continue
           const sceneMode = typeof eqPatch.sceneMode === 'number' ? eqPatch.sceneMode as webhmi.OutputSceneMode : undefined
@@ -386,7 +377,7 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
       flushInFlightRef.current = false
       if (flushSucceeded && (flushRequestedRef.current || hasPending())) rescheduleUserFlush(client)
     }
-  }, [hasPending, options.authOk, clearFlushTimer, rescheduleUserFlush, scheduleFlush])
+  }, [hasPending, options.authOk, clearFlushTimer, refreshDb, rescheduleUserFlush, scheduleFlush])
 
   useEffect(() => {
     flushNowRef.current = flushNow
@@ -560,7 +551,6 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
     refreshDb,
     resetEq,
     resetEqPointToDefault,
-    switchCurrentMode,
     saveMode,
     flushNow,
     queueSystem,

@@ -390,9 +390,6 @@ export function useTuningState(isDemoMode: boolean) {
           }),
         )
       },
-      switchCurrentMode: async (index: number) => {
-        mergeDb({ currentModeIndex: index }, ['system'])
-      },
       resetEq: async (target: webhmi.EqTarget, sceneMode?: webhmi.OutputSceneMode) => {
         updateEq(target, (eq) => {
           eq.point = JSON.parse(JSON.stringify(DEFAULT_EQ_POINTS))

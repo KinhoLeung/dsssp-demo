@@ -11,8 +11,6 @@ export enum MsgId {
   SetSubOutput = 0x0009,
   SetCenter = 0x000a,
   SetSurround = 0x000b,
-  SwitchCurrentMode = 0x000c,
-  SaveMode = 0x000d,
-  ResetEq = 0x000e,
+  SaveMode = 0x000c,
+  ResetEq = 0x000d,
 }
-

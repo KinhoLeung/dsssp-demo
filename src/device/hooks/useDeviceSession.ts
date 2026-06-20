@@ -72,16 +72,6 @@ export function useDeviceSession(
       const pb = getWebhmiNamespace()
 
       const unsub = nextClient.onEvent(({ msgId, payload }) => {
-        if (msgId === MsgId.SwitchCurrentMode) {
-          try {
-            // Trigger database refresh upon mode switch event
-            void queue.refreshDb(nextClient)
-          } catch (e) {
-            console.error(`[web:rx] failed to decode EVENT msgId=0x${msgId.toString(16)}:`, e)
-          }
-          return
-        }
-
         queue.updateDbDraft((db) => {
           if (!db.db) return db
           try {
@@ -280,22 +270,6 @@ export function useDeviceSession(
     [connection.client, queue.resetEqPointToDefault],
   )
 
-  const switchCurrentMode = useCallback(
-    async (index: number) => {
-      if (!connection.client) return
-      setLocalBusy(true)
-      setLocalError('')
-      try {
-        await queue.switchCurrentMode(connection.client, index)
-      } catch (e) {
-        setLocalError(e instanceof Error ? e.message : String(e))
-      } finally {
-        setLocalBusy(false)
-      }
-    },
-    [connection.client, queue.switchCurrentMode],
-  )
-
   const saveMode = useCallback(
     async (index: number) => {
       if (!connection.client) return
@@ -440,7 +414,6 @@ export function useDeviceSession(
       queueSurround,
       queueEqBypass,
       queueEqPoint,
-      switchCurrentMode,
       saveMode,
       resetPending: queue.resetPending,
     },

@@ -150,9 +150,8 @@ crc16（2 bytes）
 | 0x0009 | SetSubOutput      | 设置 SubOutput 参数（patch）  |
 | 0x000a | SetCenter         | 设置 Center 参数（patch）     |
 | 0x000b | SetSurround       | 设置 Surround 参数（patch）  |
-| 0x000c | SwitchCurrentMode | 切换当前模式                  |
-| 0x000d | SaveMode          | 保存当前模式参数              |
-| 0x000e | ResetEq           | 重置EQ参数                    |
+| 0x000c | SaveMode          | 保存当前模式参数              |
+| 0x000d | ResetEq           | 重置EQ参数                    |
 
 ## 5 安全机制与交互流程
 
@@ -1442,28 +1441,14 @@ payload：protobuf `webhmi.SetSurroundRequest`
 
 payload：protobuf `webhmi.SetSurroundRequest`
 
-### 6.13 切换当前模式（SwitchCurrentMode）0x000c
+### 6.13 保存模式（SaveMode）0x000c
 
-#### 6.13.1 SwitchCurrentModeRequest（上位机→设备，msg_id=SwitchCurrentMode 0x000c，RESPONSE=1）
-
-payload：protobuf `webhmi.SwitchCurrentModeRequest`
-
-#### 6.13.2 SwitchCurrentModeResponse（设备→上位机，msg_id=SwitchCurrentMode 0x000c，RESPONSE=1）
-
-payload：protobuf `webhmi.SwitchCurrentModeResponse`
-
-#### 6.13.3 SwitchCurrentModeReport（设备→上位机，msg_id=SwitchCurrentMode 0x000c，RESPONSE=0，EVENT=1）
-
-payload：protobuf `webhmi.SwitchCurrentModeResponse`
-
-### 6.14 保存模式（SaveMode）0x000d
-
-#### 6.14.1 SaveModeRequest（上位机→设备，msg_id=SaveMode 0x000d，RESPONSE=0）
+#### 6.13.1 SaveModeRequest（上位机→设备，msg_id=SaveMode 0x000c，RESPONSE=0）
 
 payload：protobuf `webhmi.SaveModeRequest`
 
-### 6.15 重置EQ参数（ResetEq）0x000e
+### 6.14 重置EQ参数（ResetEq）0x000d
 
-#### 6.15.1 ResetEqRequest（上位机→设备，msg_id=ResetEq 0x000e，RESPONSE=0）
+#### 6.14.1 ResetEqRequest（上位机→设备，msg_id=ResetEq 0x000d，RESPONSE=0）
 
 payload：protobuf `webhmi.ResetEqRequest`

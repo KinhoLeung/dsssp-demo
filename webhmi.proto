@@ -707,14 +707,6 @@ message SetSurroundRequest {
   optional CompressorPatch compressor = 4;
 }
 
-message SwitchCurrentModeRequest {
-  optional uint32 currentModeIndex = 1;
-}
-
-message SwitchCurrentModeResponse {
-  optional uint32 currentModeIndex = 1;
-}
-
 message SaveModeRequest {
   optional uint32 currentModeIndex = 1;
 }

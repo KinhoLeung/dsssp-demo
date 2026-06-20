@@ -28,7 +28,6 @@ import { cn } from '@/lib/utils'
 type SystemActions = {
   queueSystem: (patch: webhmi.ISetSystemRequest) => void
   flushNow: () => void | Promise<void>
-  switchCurrentMode: (index: number) => void | Promise<void>
   saveMode: (index: number) => void | Promise<void>
 }
 
@@ -250,13 +249,14 @@ export function SystemPanel({
                 <Label className="text-xs text-muted-foreground">
                   {uiText('Current Mode')}
                 </Label>
-                <Select
-                  value={systemModeValue}
-                  onValueChange={(value) => {
-                    void actions.switchCurrentMode(Number(value))
-                  }}
-                  disabled={disabled}
-                >
+                  <Select
+                    value={systemModeValue}
+                    onValueChange={(value) => {
+                      actions.queueSystem({ currentModeIndex: Number(value) })
+                      void actions.flushNow()
+                    }}
+                    disabled={disabled}
+                  >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder={uiText('Select mode')} />
                   </SelectTrigger>

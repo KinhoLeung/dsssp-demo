@@ -262,14 +262,10 @@ export class WebhmiClient {
       const msgName = MsgId[msgId]
       if (!msgName) return
 
-      const eventPbType =
-        msgId === MsgId.SwitchCurrentMode
-          ? this.pb.SwitchCurrentModeResponse
-          : (this.pb as any)[`${msgName}Request`]
+      const eventPbType = (this.pb as any)[`${msgName}Request`]
 
       if (eventPbType) {
-        const eventName = msgId === MsgId.SwitchCurrentMode ? 'SwitchCurrentModeReport' : msgName
-        this.logResponse(eventName, payload, eventPbType, true)
+        this.logResponse(msgName, payload, eventPbType, true)
       }
     })
   }
@@ -336,16 +332,6 @@ export class WebhmiClient {
     this.logRequest('SetSurroundRequest', request, this.pb.SetSurroundRequest)
     const payload = this.pb.SetSurroundRequest.encode(request).finish()
     await this.session.request(MsgId.SetSurround, payload, { expectResponse: false })
-  }
-
-  async switchCurrentMode(request: webhmi.ISwitchCurrentModeRequest): Promise<webhmi.ISwitchCurrentModeResponse> {
-    this.logRequest('SwitchCurrentModeRequest', request, this.pb.SwitchCurrentModeRequest)
-    const payload = this.pb.SwitchCurrentModeRequest.encode(request).finish()
-    const frame = await this.session.request(MsgId.SwitchCurrentMode, payload)
-    if (!frame) throw new Error('SwitchCurrentMode failed: no response')
-    if (frame.payload.length === 0) return {}
-    this.logResponse('SwitchCurrentModeResponse', frame.payload, this.pb.SwitchCurrentModeResponse)
-    return this.pb.SwitchCurrentModeResponse.decode(frame.payload)
   }
 
   async saveMode(request: webhmi.ISaveModeRequest) {
