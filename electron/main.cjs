@@ -72,7 +72,9 @@ function createWindow() {
       if (deviceCallback) {
         try {
           deviceCallback('');
-        } catch (e) {}
+        } catch (e) {
+          console.error('Failed to notify device callback on close:', e);
+        }
         deviceCallback = null;
       }
     });
@@ -89,7 +91,9 @@ function createWindow() {
     if (cb) {
       try {
         cb(deviceId || '');
-      } catch (e) {}
+      } catch (e) {
+        console.error('Failed to handle device-selected callback:', e);
+      }
     }
   });
 
@@ -101,7 +105,7 @@ function createWindow() {
 
   // Handle Web Bluetooth pairing (if required, on session)
   mainWindow.webContents.session.setBluetoothPairingHandler((details, callback) => {
-    console.log('Bluetooth Pairing Required:', details);
+    console.warn('Bluetooth Pairing Required:', details);
     callback({
       pin: '0000', // Default PIN
       accept: true

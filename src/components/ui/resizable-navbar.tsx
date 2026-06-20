@@ -1,15 +1,15 @@
-"use client";
-import { cn } from "@/lib/utils";
-import { IconMenu2, IconX } from "@tabler/icons-react";
+'use client';
+import { IconMenu2, IconX } from '@tabler/icons-react';
+import { Globe } from 'lucide-react';
 import {
   motion,
   AnimatePresence,
-} from "motion/react";
+} from 'motion/react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import React, { useState } from "react";
-import { Globe } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import GameIconsSettingsKnobs from "@/assets/GameIconsSettingsKnobs.svg";
+import GameIconsSettingsKnobs from '@/assets/GameIconsSettingsKnobs.svg';
+import { cn } from '@/lib/utils';
 
 
 interface NavbarProps {
@@ -56,7 +56,7 @@ export const Navbar = ({ children, className }: NavbarProps) => {
   return (
     <motion.div
       // IMPORTANT: Change this to class of `fixed` if you want the navbar to be fixed
-      className={cn("sticky inset-x-0 top-0 z-40 w-full", className)}
+      className={cn('sticky inset-x-0 top-0 z-40 w-full', className)}
     >
       {React.Children.map(children, (child) =>
         React.isValidElement(child)
@@ -74,20 +74,20 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
   return (
     <motion.div
       animate={{
-        backdropFilter: visible ? "blur(10px)" : "none",
+        backdropFilter: visible ? 'blur(10px)' : 'none',
         boxShadow: visible
-          ? "0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset"
-          : "none",
-        width: visible ? "40%" : "100%",
+          ? '0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset'
+          : 'none',
+        width: visible ? '40%' : '100%',
         y: visible ? 20 : 0,
       }}
       transition={{
-        type: "spring",
+        type: 'spring',
         stiffness: 200,
         damping: 50,
       }}
       className={cn(
-        "relative z-[60] mx-auto hidden w-full max-w-none flex-row items-center justify-between self-start rounded-none border border-border bg-background px-4 py-2 lg:flex",
+        'relative z-[60] mx-auto hidden w-full max-w-none flex-row items-center justify-between self-start rounded-none border border-border bg-background px-4 py-2 lg:flex',
         className,
       )}
     >
@@ -103,7 +103,7 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
     <motion.div
       onMouseLeave={() => setHovered(null)}
       className={cn(
-        "absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-2 text-sm font-medium text-muted-foreground transition duration-200 hover:text-foreground lg:flex lg:space-x-2",
+        'absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-2 text-sm font-medium text-muted-foreground transition duration-200 hover:text-foreground lg:flex lg:space-x-2',
         className,
       )}
     >
@@ -132,23 +132,23 @@ export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
   return (
     <motion.div
       animate={{
-        backdropFilter: visible ? "blur(10px)" : "none",
+        backdropFilter: visible ? 'blur(10px)' : 'none',
         boxShadow: visible
-          ? "0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset"
-          : "none",
-        width: "100%",
-        paddingRight: "0px",
-        paddingLeft: "0px",
-        borderRadius: "0px",
+          ? '0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset'
+          : 'none',
+        width: '100%',
+        paddingRight: '0px',
+        paddingLeft: '0px',
+        borderRadius: '0px',
         y: visible ? 20 : 0,
       }}
       transition={{
-        type: "spring",
+        type: 'spring',
         stiffness: 200,
         damping: 50,
       }}
       className={cn(
-        "relative z-50 mx-0 flex w-full max-w-none flex-col items-center justify-between rounded-none border border-border bg-background px-4 py-2 lg:hidden",
+        'relative z-50 mx-0 flex w-full max-w-none flex-col items-center justify-between rounded-none border border-border bg-background px-4 py-2 lg:hidden',
         className,
       )}
     >
@@ -164,7 +164,7 @@ export const MobileNavHeader = ({
   return (
     <div
       className={cn(
-        "flex w-full flex-row items-center justify-between",
+        'flex w-full flex-row items-center justify-between',
         className,
       )}
     >
@@ -187,12 +187,12 @@ export const MobileNavMenu = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className={cn(
-            "absolute inset-x-0 top-16 z-50 flex w-full flex-col items-start justify-start gap-4 rounded-lg bg-background px-4 py-8 shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]",
+            'absolute inset-x-0 top-16 z-50 flex w-full flex-col items-start justify-start gap-4 rounded-lg bg-background px-4 py-8 shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]',
             className,
           )}
           onClickCapture={(e) => {
             const target = e.target as HTMLElement | null;
-            if (target?.closest("a")) onClose();
+            if (target?.closest('a')) onClose();
           }}
         >
           {children}
@@ -225,23 +225,23 @@ export const MobileNavToggle = ({
 };
 
 const normalizeLanguage = (lng: string | undefined | null) => {
-  if (!lng) return "en";
-  if (lng.toLowerCase().startsWith("zh")) return "zh-CN";
-  return "en";
+  if (!lng) return 'en';
+  if (lng.toLowerCase().startsWith('zh')) return 'zh-CN';
+  return 'en';
 };
 
 export const NavbarLanguageToggle = () => {
   const { t, i18n } = useTranslation();
   const current = normalizeLanguage(i18n.resolvedLanguage || i18n.language);
-  const next = current === "zh-CN" ? "en" : "zh-CN";
-  const nextLabel = next === "zh-CN" ? "中文" : "EN";
+  const next = current === 'zh-CN' ? 'en' : 'zh-CN';
+  const nextLabel = next === 'zh-CN' ? '中文' : 'EN';
 
   return (
     <button
       onClick={() => i18n.changeLanguage(next)}
       className="flex h-10 items-center justify-center gap-2 rounded-md px-3 hover:bg-accent focus:outline-none"
-      aria-label={t("language.toggle")}
-      title={t("language.toggle")}
+      aria-label={t('language.toggle')}
+      title={t('language.toggle')}
       type="button"
     >
       <Globe className="h-4 w-4" />
@@ -270,31 +270,31 @@ export const NavbarLogo = () => {
 
 export const NavbarButton = ({
   href,
-  as: Tag = "a",
+  as: Tag = 'a',
   children,
   className,
-  variant = "primary",
+  variant = 'primary',
   ...props
 }: {
   href?: string;
   as?: React.ElementType;
   children: React.ReactNode;
   className?: string;
-  variant?: "primary" | "secondary" | "dark" | "gradient";
+  variant?: 'primary' | 'secondary' | 'dark' | 'gradient';
 } & (
-    | React.ComponentPropsWithoutRef<"a">
-    | React.ComponentPropsWithoutRef<"button">
+    | React.ComponentPropsWithoutRef<'a'>
+    | React.ComponentPropsWithoutRef<'button'>
   )) => {
   const baseStyles =
-    "px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-bold relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center";
+    'px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-bold relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center';
 
   const variantStyles = {
     primary:
-      "shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]",
-    secondary: "bg-secondary text-secondary-foreground shadow-none",
-    dark: "bg-foreground text-background shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]",
+      'shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]',
+    secondary: 'bg-secondary text-secondary-foreground shadow-none',
+    dark: 'bg-foreground text-background shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]',
     gradient:
-      "bg-gradient-to-b from-blue-500 to-blue-700 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset]",
+      'bg-gradient-to-b from-blue-500 to-blue-700 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset]',
   };
 
   return (

@@ -1,12 +1,10 @@
-/* eslint-disable import/order, no-console, no-undef */
+import { build } from 'esbuild'
 import { spawn } from 'node:child_process'
 import { existsSync, watch as watchFs } from 'node:fs'
 import { mkdir, readdir, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-
-import { build } from 'esbuild'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '..')

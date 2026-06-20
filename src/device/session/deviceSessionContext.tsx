@@ -1,10 +1,11 @@
 import { createContext, useCallback, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { useDeviceSession } from '../hooks/useDeviceSession'
+
 import { toast } from '@/hooks/use-toast'
 import i18n from '@/locales/i18n'
 
-import { useDeviceSession } from '../hooks/useDeviceSession'
 
 type DeviceSessionValue = ReturnType<typeof useDeviceSession>
 

@@ -1,14 +1,14 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 import react from '@vitejs/plugin-react-swc'
-import path from 'path'
-import { defineConfig } from 'vite'
-import svgr from 'vite-plugin-svgr'
-import { VitePWA } from 'vite-plugin-pwa'
 import util from 'node:util'
+import path from 'path'
+import { defineConfig, type ViteDevServer } from 'vite'
+import { VitePWA } from 'vite-plugin-pwa'
+import svgr from 'vite-plugin-svgr'
 
 const logProxyPlugin = () => ({
   name: 'log-proxy',
-  configureServer(server: { middlewares: { use: Function } }) {
+  configureServer(server: ViteDevServer) {
     server.middlewares.use('/__log', (req: any, res: any) => {
       if (req.method !== 'POST') {
         res.statusCode = 405
@@ -41,7 +41,7 @@ const logProxyPlugin = () => ({
           )
           logger(prefix, ...formattedArgs)
         } catch {
-          console.log('[web:log] invalid payload')
+          console.warn('[web:log] invalid payload')
         }
 
         res.statusCode = 204
@@ -99,7 +99,7 @@ export default defineConfig(({ mode }) => {
     base: getBase(mode),
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "./src"),
+        '@': path.resolve(__dirname, './src'),
       },
     },
     server: {

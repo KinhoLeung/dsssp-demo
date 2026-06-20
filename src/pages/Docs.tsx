@@ -1,10 +1,9 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import ReactMarkdown from 'react-markdown'
 import rehypeSlug from 'rehype-slug'
 import remarkGfm from 'remark-gfm'
-import { useTranslation } from 'react-i18next'
 
-import { cn } from '@/lib/utils'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -26,6 +25,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
+import { cn } from '@/lib/utils'
 
 const markdownFiles = import.meta.glob('../docs/**/*.md', { query: '?raw', import: 'default' })
 

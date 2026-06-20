@@ -1,5 +1,20 @@
 import { decodeFrame, MAGIC } from './frame'
 
+const concat = (a: Uint8Array, b: Uint8Array) => {
+  if (a.length === 0) return b.slice()
+  const out = new Uint8Array(a.length + b.length)
+  out.set(a)
+  out.set(b, a.length)
+  return out
+}
+
+const indexOfMagic = (buf: Uint8Array) => {
+  for (let i = 0; i + 1 < buf.length; i++) {
+    if (buf[i] === MAGIC[0] && buf[i + 1] === MAGIC[1]) return i
+  }
+  return -1
+}
+
 export class FrameStreamDecoder {
   private buffer = new Uint8Array()
 
@@ -41,19 +56,3 @@ export class FrameStreamDecoder {
     return frames
   }
 }
-
-const concat = (a: Uint8Array, b: Uint8Array) => {
-  if (a.length === 0) return b.slice()
-  const out = new Uint8Array(a.length + b.length)
-  out.set(a)
-  out.set(b, a.length)
-  return out
-}
-
-const indexOfMagic = (buf: Uint8Array) => {
-  for (let i = 0; i + 1 < buf.length; i++) {
-    if (buf[i] === MAGIC[0] && buf[i + 1] === MAGIC[1]) return i
-  }
-  return -1
-}
-

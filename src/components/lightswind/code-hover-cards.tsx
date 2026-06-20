@@ -1,11 +1,14 @@
-"use client";
-import React, { useState, useRef } from 'react';
-import { cn } from '../../lib/utils';
+'use client';
 import {
   Github,
   Code,
   Dices,
 } from 'lucide-react';
+import type React from 'react';
+import { useState, useRef } from 'react';
+
+import { cn } from '../../lib/utils';
+
 
 export interface CardData {
   id: string;

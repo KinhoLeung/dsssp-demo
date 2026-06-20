@@ -1,12 +1,6 @@
 export { }
 
 declare global {
-  interface HIDInputReportEvent extends Event {
-    data: DataView
-    device: HIDDevice
-    reportId: number
-  }
-
   interface HIDCollectionInfo {
     usagePage?: number
     usage?: number
@@ -23,6 +17,12 @@ declare global {
     sendReport(reportId: number, data: BufferSource): Promise<void>
     addEventListener(type: string, listener: (event: any) => void): void
     removeEventListener(type: string, listener: (event: any) => void): void
+  }
+
+  interface HIDInputReportEvent extends Event {
+    data: DataView
+    device: HIDDevice
+    reportId: number
   }
 
   interface HIDConnectionEvent extends Event {

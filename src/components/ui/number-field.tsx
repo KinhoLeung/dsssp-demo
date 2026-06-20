@@ -1,6 +1,6 @@
-import * as React from "react"
+import * as React from 'react'
 
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils'
 
 type NumberFieldContextValue = {
   inputId: string
@@ -33,13 +33,14 @@ const useNumberFieldContext = (component: string) => {
 }
 
 const clamp = (value: number, min?: number, max?: number) => {
+  let nextValue = value
   if (min !== undefined) {
-    value = Math.max(value, min)
+    nextValue = Math.max(nextValue, min)
   }
   if (max !== undefined) {
-    value = Math.min(value, max)
+    nextValue = Math.min(nextValue, max)
   }
-  return value
+  return nextValue
 }
 
 const MAX_STEP_PRECISION = 6
@@ -84,13 +85,13 @@ const normalizeValue = (
 }
 
 const parseNumber = (value: string) => {
-  if (value.trim() === "") return undefined
+  if (value.trim() === '') return undefined
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : undefined
 }
 
 const formatNumber = (value?: number, step?: number) => {
-  if (value === undefined || Number.isNaN(value)) return ""
+  if (value === undefined || Number.isNaN(value)) return ''
   if (step !== undefined) {
     const safeStep = normalizeStep(step)
     const precision = getStepPrecision(safeStep)
@@ -161,7 +162,7 @@ const NumberField = React.forwardRef<HTMLDivElement, NumberFieldProps>(
           if (!isControlled) {
             setInternalValue(undefined)
           }
-          setInputValue("")
+          setInputValue('')
           onValueChange?.(undefined)
           return
         }
@@ -178,7 +179,7 @@ const NumberField = React.forwardRef<HTMLDivElement, NumberFieldProps>(
     const commitInputValue = React.useCallback(() => {
       const parsed = parseNumber(inputValue)
       if (parsed === undefined) {
-        if (inputValue.trim() === "") {
+        if (inputValue.trim() === '') {
           updateValue(undefined)
           return
         }
@@ -225,9 +226,9 @@ const NumberField = React.forwardRef<HTMLDivElement, NumberFieldProps>(
       >
         <div
           data-slot="number-field"
-          data-disabled={disabled ? "true" : undefined}
-          data-invalid={invalid ? "true" : undefined}
-          className={cn("group grid gap-2", className)}
+          data-disabled={disabled ? 'true' : undefined}
+          data-invalid={invalid ? 'true' : undefined}
+          className={cn('group grid gap-2', className)}
           ref={ref}
           {...props}
         />
@@ -235,19 +236,19 @@ const NumberField = React.forwardRef<HTMLDivElement, NumberFieldProps>(
     )
   }
 )
-NumberField.displayName = "NumberField"
+NumberField.displayName = 'NumberField'
 
 export type NumberFieldGroupProps = React.HTMLAttributes<HTMLDivElement>
 
 const NumberFieldGroup = React.forwardRef<HTMLDivElement, NumberFieldGroupProps>(
   ({ className, ...props }, ref) => {
-    const context = useNumberFieldContext("NumberFieldGroup")
+    const context = useNumberFieldContext('NumberFieldGroup')
     const groupRef = React.useRef<HTMLDivElement | null>(null)
 
     const setRefs = React.useCallback(
       (node: HTMLDivElement | null) => {
         groupRef.current = node
-        if (typeof ref === "function") {
+        if (typeof ref === 'function') {
           ref(node)
         } else if (ref) {
           ref.current = node
@@ -266,15 +267,15 @@ const NumberFieldGroup = React.forwardRef<HTMLDivElement, NumberFieldGroupProps>
         const direction: 1 | -1 = event.deltaY < 0 ? 1 : -1
         context.stepBy(direction)
       }
-      element.addEventListener("wheel", handleWheel, { passive: false })
-      return () => element.removeEventListener("wheel", handleWheel)
+      element.addEventListener('wheel', handleWheel, { passive: false })
+      return () => element.removeEventListener('wheel', handleWheel)
     }, [context.disabled, context.readOnly, context.stepBy])
 
     return (
       <div
         data-slot="number-field-group"
         className={cn(
-          "focus-within:border-ring focus-within:ring-ring/50 border-input has-aria-invalid:ring-destructive/20 dark:has-aria-invalid:ring-destructive/40 has-aria-invalid:border-destructive relative rounded-md border transition-shadow focus-within:ring-[3px]",
+          'focus-within:border-ring focus-within:ring-ring/50 border-input has-aria-invalid:ring-destructive/20 dark:has-aria-invalid:ring-destructive/40 has-aria-invalid:border-destructive relative rounded-md border transition-shadow focus-within:ring-[3px]',
           className
         )}
         ref={setRefs}
@@ -283,19 +284,19 @@ const NumberFieldGroup = React.forwardRef<HTMLDivElement, NumberFieldGroupProps>
     )
   }
 )
-NumberFieldGroup.displayName = "NumberFieldGroup"
+NumberFieldGroup.displayName = 'NumberFieldGroup'
 
-export type NumberFieldLabelProps = React.ComponentPropsWithoutRef<"label">
+export type NumberFieldLabelProps = React.ComponentPropsWithoutRef<'label'>
 
 const NumberFieldLabel = React.forwardRef<HTMLLabelElement, NumberFieldLabelProps>(
   ({ className, htmlFor, ...props }, ref) => {
-    const context = useNumberFieldContext("NumberFieldLabel")
+    const context = useNumberFieldContext('NumberFieldLabel')
 
     return (
       <label
         data-slot="number-field-label"
         className={cn(
-          "aria-invalid:text-destructive flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+          'aria-invalid:text-destructive flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50',
           className
         )}
         htmlFor={htmlFor ?? context.inputId}
@@ -305,28 +306,27 @@ const NumberFieldLabel = React.forwardRef<HTMLLabelElement, NumberFieldLabelProp
     )
   }
 )
-NumberFieldLabel.displayName = "NumberFieldLabel"
+NumberFieldLabel.displayName = 'NumberFieldLabel'
 
-export interface NumberFieldInputProps
-  extends Omit<
-    React.ComponentPropsWithoutRef<"input">,
-    "type" | "value" | "defaultValue"
-  > { }
+export type NumberFieldInputProps = Omit<
+  React.ComponentPropsWithoutRef<'input'>,
+  'type' | 'value' | 'defaultValue'
+>
 
 const NumberFieldInput = React.forwardRef<HTMLInputElement, NumberFieldInputProps>(
   ({ className, onChange, onBlur, onKeyDown, inputMode, ...props }, ref) => {
-    const context = useNumberFieldContext("NumberFieldInput")
+    const context = useNumberFieldContext('NumberFieldInput')
     const ariaInvalid =
       context.invalid ||
-        props["aria-invalid"] === true ||
-        props["aria-invalid"] === "true"
-        ? "true"
+        props['aria-invalid'] === true ||
+        props['aria-invalid'] === 'true'
+        ? 'true'
         : undefined
 
     const setRefs = React.useCallback(
       (node: HTMLInputElement | null) => {
         context.inputRef.current = node
-        if (typeof ref === "function") {
+        if (typeof ref === 'function') {
           ref(node)
         } else if (ref) {
           ref.current = node
@@ -346,7 +346,7 @@ const NumberFieldInput = React.forwardRef<HTMLInputElement, NumberFieldInputProp
     }
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-      if (event.key === "Enter") {
+      if (event.key === 'Enter') {
         context.commitInputValue()
       }
       onKeyDown?.(event)
@@ -357,13 +357,13 @@ const NumberFieldInput = React.forwardRef<HTMLInputElement, NumberFieldInputProp
         {...props}
         data-slot="number-field-input"
         className={cn(
-          "placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 flex h-9 w-full min-w-0 rounded-md bg-transparent px-3 py-1 text-center text-base shadow-xs transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+          'placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 flex h-9 w-full min-w-0 rounded-md bg-transparent px-3 py-1 text-center text-base shadow-xs transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
           className
         )}
         id={context.inputId}
         name={context.name}
         type="number"
-        inputMode={inputMode ?? "decimal"}
+        inputMode={inputMode ?? 'decimal'}
         min={context.min}
         max={context.max}
         step={normalizeStep(context.step)}
@@ -380,7 +380,7 @@ const NumberFieldInput = React.forwardRef<HTMLInputElement, NumberFieldInputProp
     )
   }
 )
-NumberFieldInput.displayName = "NumberFieldInput"
+NumberFieldInput.displayName = 'NumberFieldInput'
 
 export type NumberFieldDecrementTriggerProps =
   React.ButtonHTMLAttributes<HTMLButtonElement>
@@ -389,7 +389,7 @@ const NumberFieldDecrementTrigger = React.forwardRef<
   HTMLButtonElement,
   NumberFieldDecrementTriggerProps
 >(({ className, onClick, disabled, ...props }, ref) => {
-  const context = useNumberFieldContext("NumberFieldDecrementTrigger")
+  const context = useNumberFieldContext('NumberFieldDecrementTrigger')
   const parsed = parseNumber(context.inputValue)
   const currentValue = parsed ?? context.value
   const isAtMin =
@@ -410,7 +410,7 @@ const NumberFieldDecrementTrigger = React.forwardRef<
       type="button"
       data-slot="number-field-decrement-trigger"
       className={cn(
-        "absolute top-1/2 left-0 -translate-y-1/2 p-3 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+        'absolute top-1/2 left-0 -translate-y-1/2 p-3 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
         className
       )}
       onClick={handleClick}
@@ -431,7 +431,7 @@ const NumberFieldDecrementTrigger = React.forwardRef<
     </button>
   )
 })
-NumberFieldDecrementTrigger.displayName = "NumberFieldDecrementTrigger"
+NumberFieldDecrementTrigger.displayName = 'NumberFieldDecrementTrigger'
 
 export type NumberFieldIncrementTriggerProps =
   React.ButtonHTMLAttributes<HTMLButtonElement>
@@ -440,7 +440,7 @@ const NumberFieldIncrementTrigger = React.forwardRef<
   HTMLButtonElement,
   NumberFieldIncrementTriggerProps
 >(({ className, onClick, disabled, ...props }, ref) => {
-  const context = useNumberFieldContext("NumberFieldIncrementTrigger")
+  const context = useNumberFieldContext('NumberFieldIncrementTrigger')
   const parsed = parseNumber(context.inputValue)
   const currentValue = parsed ?? context.value
   const isAtMax =
@@ -461,7 +461,7 @@ const NumberFieldIncrementTrigger = React.forwardRef<
       type="button"
       data-slot="number-field-increment-trigger"
       className={cn(
-        "absolute top-1/2 right-0 -translate-y-1/2 p-3 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+        'absolute top-1/2 right-0 -translate-y-1/2 p-3 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
         className
       )}
       onClick={handleClick}
@@ -482,7 +482,7 @@ const NumberFieldIncrementTrigger = React.forwardRef<
     </button>
   )
 })
-NumberFieldIncrementTrigger.displayName = "NumberFieldIncrementTrigger"
+NumberFieldIncrementTrigger.displayName = 'NumberFieldIncrementTrigger'
 
 export type NumberFieldErrorMessageProps = React.HTMLAttributes<HTMLDivElement>
 
@@ -492,12 +492,12 @@ const NumberFieldErrorMessage = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     data-slot="number-field-error-message"
-    className={cn("text-destructive text-sm", className)}
+    className={cn('text-destructive text-sm', className)}
     ref={ref}
     {...props}
   />
 ))
-NumberFieldErrorMessage.displayName = "NumberFieldErrorMessage"
+NumberFieldErrorMessage.displayName = 'NumberFieldErrorMessage'
 
 export type NumberFieldDescriptionProps = React.HTMLAttributes<HTMLDivElement>
 
@@ -507,12 +507,12 @@ const NumberFieldDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     data-slot="number-field-description"
-    className={cn("text-muted-foreground text-sm", className)}
+    className={cn('text-muted-foreground text-sm', className)}
     ref={ref}
     {...props}
   />
 ))
-NumberFieldDescription.displayName = "NumberFieldDescription"
+NumberFieldDescription.displayName = 'NumberFieldDescription'
 
 export {
   NumberField,

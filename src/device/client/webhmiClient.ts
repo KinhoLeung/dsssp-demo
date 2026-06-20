@@ -1,9 +1,9 @@
 import type { webhmi } from '../proto/generated/webhmi'
 import { MsgId } from '../proto/msgId'
 import { getWebhmiNamespace } from '../proto/webhmi'
+import type { DecodedFrame } from '../protocol/frame'
 import { RpcSession } from '../session'
 import type { Transport } from '../transport'
-import type { DecodedFrame } from '../protocol/frame'
 
 
 export class WebhmiClient {
@@ -30,14 +30,14 @@ export class WebhmiClient {
   async authVerify(publicKeySpkiDer: Uint8Array) {
     // 🔴 埋入防伪标志：用于自校验逻辑
     // 必须确保该 Token 字符串字面量出现在最终编译的 JS 中，且未被 Tree-shaking 移除
-    const INTEGRITY_TOKEN = "SEC_VERIFY_V1_TOKEN";
+    const INTEGRITY_TOKEN = 'SEC_VERIFY_V1_TOKEN';
 
     // 自校验：如果这个函数被外部篡改（例如：client.authVerify = () => true），则 Marker 会消失
     if (import.meta.env.PROD) {
       const fnStr = this.authVerify.toString();
       // 仅检查 Token 是否存在，不再检查代码逻辑细节（如 subtle.verify），避免压缩导致变量重命名后误杀
       if (!fnStr.includes(INTEGRITY_TOKEN)) {
-        throw new Error("System Integrity Violation");
+        throw new Error('System Integrity Violation');
       }
     }
 

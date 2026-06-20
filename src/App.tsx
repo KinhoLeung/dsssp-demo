@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Outlet } from 'react-router-dom'
 
 import {
   MobileNav,

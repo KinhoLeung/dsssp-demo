@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { useDeviceAuth } from './useDeviceAuth'
+import { useDeviceConnection } from './useDeviceConnection'
+import { useTuningQueue, type QueueEqPointOptions } from './useTuningQueue'
+
+import type { WebhmiClient } from '@/device'
+import type { webhmi } from '@/device/proto/generated/webhmi'
 import { MsgId } from '@/device/proto/msgId'
 import { getWebhmiNamespace } from '@/device/proto/webhmi'
-import type { webhmi } from '@/device/proto/generated/webhmi'
-import type { WebhmiClient } from '@/device'
 import { applyEqBypassPatch, applyEqPointPatch, applySectionPatch } from '@/device/utils/dbHelpers'
 
-import { useDeviceConnection } from './useDeviceConnection'
-import { useDeviceAuth } from './useDeviceAuth'
-import { useTuningQueue, type QueueEqPointOptions } from './useTuningQueue'
 
 export type DeviceSessionState = {
   connected: boolean
@@ -67,7 +68,7 @@ export function useDeviceSession(
 
   // Setup client listeners when connected
   const setConnectedClient = useCallback(
-    (nextClient: WebhmiClient, _transport: 'hid' | 'ble') => {
+    (nextClient: WebhmiClient) => {
       const pb = getWebhmiNamespace()
 
       const unsub = nextClient.onEvent(({ msgId, payload }) => {

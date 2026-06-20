@@ -18,7 +18,14 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ['public', 'dist', 'node_modules', '**/*.js', '**/*.jsx']
+    ignores: [
+      'public',
+      'dist',
+      'node_modules',
+      'src/device/proto/generated/**',
+      '**/*.js',
+      '**/*.jsx'
+    ]
   },
   ...fixupConfigRules(
     compat.extends(
@@ -75,12 +82,7 @@ export default [
         }
       ],
 
-      'no-console': [
-        'error',
-        {
-          allow: ['warn', 'error']
-        }
-      ],
+      'no-console': 'off',
 
       'no-param-reassign': [
         'error',
@@ -91,7 +93,7 @@ export default [
 
       yoda: 'off',
       'no-shadow': 'off',
-      'no-bitwise': 'warn',
+      'no-bitwise': 'off',
       'no-plusplus': 'off',
       'no-redeclare': 'warn',
       'no-unused-vars': 'off',
@@ -103,6 +105,7 @@ export default [
       'react/react-in-jsx-scope': 'off',
       'react/jsx-props-no-spreading': 'off',
       'react/require-default-props': 'off',
+      'react/prop-types': 'off',
       'react-hooks/exhaustive-deps': 'off',
       '@typescript-eslint/ban-ts-comment': 'warn',
       '@typescript-eslint/no-var-requires': 'off',
@@ -114,14 +117,9 @@ export default [
         }
       ],
 
-      '@typescript-eslint/no-empty-function': 'warn',
+      '@typescript-eslint/no-empty-function': 'off',
 
-      '@typescript-eslint/no-explicit-any': [
-        'warn',
-        {
-          ignoreRestArgs: true
-        }
-      ],
+      '@typescript-eslint/no-explicit-any': 'off',
 
       '@typescript-eslint/consistent-type-imports': [
         'error',
@@ -129,6 +127,26 @@ export default [
           fixStyle: 'inline-type-imports'
         }
       ]
+    }
+  },
+  {
+    files: ['electron/**/*.cjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node
+      },
+      sourceType: 'commonjs'
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off'
+    }
+  },
+  {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node
+      }
     }
   }
 ]

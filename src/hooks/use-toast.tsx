@@ -1,11 +1,11 @@
 
-import * as React from "react";
+import * as React from 'react';
 
 // Define the ToastActionElement type
 export type ToastActionElement = React.ReactElement;
 
 // Define toast types for visual distinction
-export type ToastType = "default" | "destructive" | "success" | "warning" | "info";
+export type ToastType = 'default' | 'destructive' | 'success' | 'warning' | 'info';
 
 // Main Toast interface
 export interface ToastItem {
@@ -15,7 +15,7 @@ export interface ToastItem {
   action?: ToastActionElement;
   type?: ToastType;
   duration?: number;
-  variant?: "default" | "destructive" | "success" | "warning" | "info";
+  variant?: 'default' | 'destructive' | 'success' | 'warning' | 'info';
   onOpenChange?: (open: boolean) => void;
   open?: boolean;
 }
@@ -24,10 +24,10 @@ export type ToasterToast = ToastItem;
 
 // Action types for reducer
 const actionTypes = {
-  ADD_TOAST: "ADD_TOAST",
-  UPDATE_TOAST: "UPDATE_TOAST",
-  DISMISS_TOAST: "DISMISS_TOAST",
-  REMOVE_TOAST: "REMOVE_TOAST",
+  ADD_TOAST: 'ADD_TOAST',
+  UPDATE_TOAST: 'UPDATE_TOAST',
+  DISMISS_TOAST: 'DISMISS_TOAST',
+  REMOVE_TOAST: 'REMOVE_TOAST',
 } as const;
 
 // Configuration constants
@@ -47,19 +47,19 @@ type ActionType = typeof actionTypes;
 
 type Action =
   | {
-      type: ActionType["ADD_TOAST"];
+      type: ActionType['ADD_TOAST'];
       toast: ToasterToast;
     }
   | {
-      type: ActionType["UPDATE_TOAST"];
+      type: ActionType['UPDATE_TOAST'];
       toast: Partial<ToasterToast>;
     }
   | {
-      type: ActionType["DISMISS_TOAST"];
+      type: ActionType['DISMISS_TOAST'];
       toastId?: string;
     }
   | {
-      type: ActionType["REMOVE_TOAST"];
+      type: ActionType['REMOVE_TOAST'];
       toastId?: string;
     };
 
@@ -140,7 +140,7 @@ function dispatch(action: Action) {
 }
 
 // Toast function for creating toasts
-type ToastOptions = Omit<ToastItem, "id">;
+type ToastOptions = Omit<ToastItem, 'id'>;
 
 function toast(props: ToastOptions) {
   const id = genId();
@@ -208,11 +208,11 @@ function toast(props: ToastOptions) {
 }
 
 // Convenience functions for different toast types
-toast.default = (props: Omit<ToastOptions, "type">) => toast({ ...props, type: "default" });
-toast.destructive = (props: Omit<ToastOptions, "type">) => toast({ ...props, type: "destructive" });
-toast.success = (props: Omit<ToastOptions, "type">) => toast({ ...props, type: "success", variant: "success" });
-toast.warning = (props: Omit<ToastOptions, "type">) => toast({ ...props, type: "warning" });
-toast.info = (props: Omit<ToastOptions, "type">) => toast({ ...props, type: "info" });
+toast.default = (props: Omit<ToastOptions, 'type'>) => toast({ ...props, type: 'default' });
+toast.destructive = (props: Omit<ToastOptions, 'type'>) => toast({ ...props, type: 'destructive' });
+toast.success = (props: Omit<ToastOptions, 'type'>) => toast({ ...props, type: 'success', variant: 'success' });
+toast.warning = (props: Omit<ToastOptions, 'type'>) => toast({ ...props, type: 'warning' });
+toast.info = (props: Omit<ToastOptions, 'type'>) => toast({ ...props, type: 'info' });
 
 // Hook for consuming toasts
 function useToast() {
