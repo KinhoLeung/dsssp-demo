@@ -4,6 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { webhmi } from '@/device/proto/generated/webhmi'
 import { useDeviceSessionContext } from '@/device/session/deviceSessionContext'
 
+type QueueEqPointOptions = {
+  syncDraft?: boolean
+}
+
 const DEFAULT_EQ_POINTS = [
   {
     index: 0,
@@ -370,7 +374,8 @@ export function useTuningState(isDemoMode: boolean) {
           eq.bypass = bypass
         }, sceneMode)
       },
-      queueEqPoint: (target: webhmi.EqTarget, point: any, sceneMode?: webhmi.OutputSceneMode) => {
+      queueEqPoint: (target: webhmi.EqTarget, point: any, sceneMode?: webhmi.OutputSceneMode, options?: QueueEqPointOptions) => {
+        if (options?.syncDraft === false) return
         updateEq(target, (eq) => {
           if (!eq.point) eq.point = []
           const idx = eq.point.findIndex((p: any) => p.index === point.index)

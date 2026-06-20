@@ -28,13 +28,23 @@ type PendingPatches = {
   eq: Map<string, PendingEqTarget>
 }
 
+export type QueueEqPointOptions = {
+  syncDraft?: boolean
+}
+
+type UpdateDbDraftOptions = {
+  refreshJson?: boolean
+}
+
 export function useTuningQueue(options: { authOk: boolean | null } = { authOk: null }) {
   const USER_DEBOUNCE_MS = 200
   const USER_THROTTLE_MS = 200
+  const DB_JSON_DEBOUNCE_MS = 250
 
   const pendingRef = useRef<PendingPatches>({ eq: new Map() })
   const baseDbRef = useRef<webhmi.IDeviceConfig | null>(null)
   const flushTimerRef = useRef<number | null>(null)
+  const dbJsonTimerRef = useRef<number | null>(null)
   const userBurstStartAtRef = useRef<number | null>(null)
   const userLastChangeAtRef = useRef<number | null>(null)
   const lastTxAtRef = useRef<number | null>(null)
@@ -59,6 +69,21 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
       flushTimerRef.current = null
     }
   }, [])
+
+  const clearDbJsonTimer = useCallback(() => {
+    if (dbJsonTimerRef.current) {
+      window.clearTimeout(dbJsonTimerRef.current)
+      dbJsonTimerRef.current = null
+    }
+  }, [])
+
+  const scheduleDbJsonUpdate = useCallback((nextDb: webhmi.IDeviceConfig) => {
+    clearDbJsonTimer()
+    dbJsonTimerRef.current = window.setTimeout(() => {
+      dbJsonTimerRef.current = null
+      setDbJson(JSON.stringify(nextDb, null, 2))
+    }, DB_JSON_DEBOUNCE_MS)
+  }, [clearDbJsonTimer, DB_JSON_DEBOUNCE_MS])
 
   const hasPending = useCallback(() => {
     const p = pendingRef.current
@@ -100,24 +125,29 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
 
   const clearDb = useCallback(() => {
     baseDbRef.current = null
+    clearDbJsonTimer()
     setDb(null)
     setDbJson('')
     setDbFetchId(0)
     setDirty(false)
     setFlushing(false)
     setFlushError('')
-  }, [])
+  }, [clearDbJsonTimer])
 
-  const updateDbDraft = useCallback((updater: (draft: webhmi.IDeviceConfig) => webhmi.IDeviceConfig) => {
+  const updateDbDraft = useCallback((updater: (draft: webhmi.IDeviceConfig) => webhmi.IDeviceConfig, options: UpdateDbDraftOptions = {}) => {
     setDb((currentDb) => {
       if (!currentDb) return null
       const nextDb = updater(cloneObject(currentDb))
-      const nextJson = JSON.stringify(nextDb, null, 2)
-      setDbJson(nextJson)
+      if (options.refreshJson) {
+        clearDbJsonTimer()
+        setDbJson(JSON.stringify(nextDb, null, 2))
+      } else {
+        scheduleDbJsonUpdate(nextDb)
+      }
       setDbFetchId((id) => id + 1)
       return nextDb
     })
-  }, [])
+  }, [clearDbJsonTimer, scheduleDbJsonUpdate])
 
   const refreshDb = useCallback(async (client: WebhmiClient) => {
     setFlushing(false)
@@ -132,6 +162,7 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
       resetPending()
       baseDbRef.current = cloneObject(fetchedDb)
       setDb(fetchedDb)
+      clearDbJsonTimer()
       setDbJson(pretty)
       setDbFetchId((id) => id + 1)
       console.info('[useTuningQueue] Database refreshed successfully.')
@@ -141,7 +172,7 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
       setFlushError(message)
       throw e
     }
-  }, [resetPending])
+  }, [resetPending, clearDbJsonTimer])
 
   const commitDeviceDbSnapshot = useCallback((client: WebhmiClient, deviceDb: webhmi.IDeviceDb) => {
     const nextDb: webhmi.IDeviceConfig = {
@@ -154,11 +185,12 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
     resetPending()
     baseDbRef.current = cloneObject(nextDb)
     setDb(nextDb)
+    clearDbJsonTimer()
     setDbJson(pretty)
     setDbFetchId((id) => id + 1)
     setDirty(false)
     setFlushError('')
-  }, [resetPending])
+  }, [resetPending, clearDbJsonTimer])
 
   const resetEq = useCallback(async (client: WebhmiClient, target: webhmi.EqTarget, indices?: number[], sceneMode?: webhmi.OutputSceneMode) => {
     if (options.authOk !== true) return
@@ -419,6 +451,8 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
     flushNowRef.current = flushNow
   }, [flushNow])
 
+  useEffect(() => clearDbJsonTimer, [clearDbJsonTimer])
+
   // Queue Param modifications
   const queueSystem = useCallback(
     (client: WebhmiClient, patch: webhmi.ISetSystemRequest) => {
@@ -562,7 +596,13 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
   )
 
   const queueEqPoint = useCallback(
-    (client: WebhmiClient, target: webhmi.EqTarget, patch: webhmi.IEqPointPatch, sceneMode?: webhmi.OutputSceneMode) => {
+    (
+      client: WebhmiClient,
+      target: webhmi.EqTarget,
+      patch: webhmi.IEqPointPatch,
+      sceneMode?: webhmi.OutputSceneMode,
+      queueOptions: QueueEqPointOptions = {},
+    ) => {
       if (typeof patch.index !== 'number') throw new Error('EqPointPatch.index is required')
 
       const key = getEqPendingKey(target, sceneMode)
@@ -571,7 +611,9 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
       entry.points.set(patch.index, mergePatch(prev, patch))
       pendingRef.current.eq.set(key, entry)
 
-      updateDbDraft((currentDb) => applyEqPointPatch(currentDb, target, patch, sceneMode))
+      if (queueOptions.syncDraft !== false) {
+        updateDbDraft((currentDb) => applyEqPointPatch(currentDb, target, patch, sceneMode))
+      }
       setDirty(true)
       setFlushError('')
       markUserChange(client)

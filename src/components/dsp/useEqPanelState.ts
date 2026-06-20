@@ -15,7 +15,12 @@ import { getSceneModeFromConfig } from './useOutputScene'
 import type { webhmi } from '@/device/proto/generated/webhmi'
 
 type TuningActions = {
-  queueEqPoint: (target: webhmi.EqTarget, patch: webhmi.IEqPointPatch, sceneMode?: webhmi.OutputSceneMode) => void
+  queueEqPoint: (
+    target: webhmi.EqTarget,
+    patch: webhmi.IEqPointPatch,
+    sceneMode?: webhmi.OutputSceneMode,
+    queueOptions?: { syncDraft?: boolean },
+  ) => void
   resetEqPointToDefault: (target: webhmi.EqTarget, index: number, sceneMode?: webhmi.OutputSceneMode) => Promise<unknown>
 }
 
@@ -39,6 +44,7 @@ export function useEqPanelState(options: {
   const [dragging, setDraggingState] = useState(false)
   const isDraggingRef = useRef(false)
   const setDragging = useCallback((dragging: boolean) => {
+    if (isDraggingRef.current === dragging) return
     isDraggingRef.current = dragging
     setDraggingState(dragging)
   }, [])
@@ -100,6 +106,7 @@ export function useEqPanelState(options: {
 
   const uiRafIdRef = useRef<number | null>(null)
   const pendingUiPatchesRef = useRef<Map<PanelKey, Map<number, Partial<any>>>>(new Map())
+  const deferredDraftKeysRef = useRef<Set<string>>(new Set())
 
   const graphFilterEqual = (a: any, b: any) =>
     a.type === b.type && nearlyEqual(a.freq, b.freq) && nearlyEqual(a.gain, b.gain) && nearlyEqual(a.q, b.q)
@@ -163,12 +170,13 @@ export function useEqPanelState(options: {
       if (!def || !stateForPanel) return
 
       const { index: uiIndex, ended, ...filterEventFilter } = filterEvent
+      const isLiveDrag = ended !== true
       const existingFilter = stateForPanel.filters[uiIndex]
       const filter = isFixedQFilterType(filterEventFilter.type) && existingFilter
         ? { ...filterEventFilter, q: existingFilter.q }
         : filterEventFilter
 
-      if (!ended) {
+      if (isLiveDrag) {
         setActiveIndex(uiIndex)
         setDragging(true)
       } else {
@@ -177,8 +185,15 @@ export function useEqPanelState(options: {
 
       const jointDebug = dbRef.current?.db?.mic?.micEqJointDebugging
       const otherKey = (jointDebug && (key === 'mica' || key === 'micb')) ? (key === 'mica' ? 'micb' : 'mica') : null
+      const deferredDraftKey = `${key}:${uiIndex}`
+      const hadDeferredDraft = deferredDraftKeysRef.current.has(deferredDraftKey)
 
-      if (ended) {
+      if (isLiveDrag) {
+        deferredDraftKeysRef.current.add(deferredDraftKey)
+        if (otherKey) deferredDraftKeysRef.current.add(`${otherKey}:${uiIndex}`)
+      }
+
+      if (!isLiveDrag) {
         const pendingForKey = pendingUiPatchesRef.current.get(key)
         if (pendingForKey) {
           pendingForKey.delete(uiIndex)
@@ -218,7 +233,7 @@ export function useEqPanelState(options: {
       const freq = Math.max(1, Math.round(filter.freq))
 
       const sourceDb = dbRef.current
-      if (sourceDb) {
+      if (!isLiveDrag && !hadDeferredDraft && sourceDb) {
         const currentEq = def.getEq(sourceDb)
         if (currentEq?.point) {
           const cp = currentEq.point.find((point) => point && point.index === deviceIndex)
@@ -236,13 +251,19 @@ export function useEqPanelState(options: {
         q,
       }
       const sceneMode = isOutputPanelKey(key) ? getSceneModeFromConfig(dbRef.current) : undefined
-      actionsRef.current.queueEqPoint(def.target, pointPatch, sceneMode)
+      const queueOptions = isLiveDrag ? { syncDraft: false } : undefined
+      actionsRef.current.queueEqPoint(def.target, pointPatch, sceneMode, queueOptions)
 
       if (jointDebug && otherKey) {
         const otherPanel = panelByKey[otherKey]
         if (otherPanel) {
-          actionsRef.current.queueEqPoint(otherPanel.target, pointPatch)
+          actionsRef.current.queueEqPoint(otherPanel.target, pointPatch, undefined, queueOptions)
         }
+      }
+
+      if (!isLiveDrag) {
+        deferredDraftKeysRef.current.delete(deferredDraftKey)
+        if (otherKey) deferredDraftKeysRef.current.delete(`${otherKey}:${uiIndex}`)
       }
     },
     [applyUiPatches, panelByKey, scheduleUiFlush, setActiveIndex, setDragging],

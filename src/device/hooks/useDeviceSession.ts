@@ -8,7 +8,7 @@ import { applyEqBypassPatch, applyEqPointPatch, applySectionPatch } from '@/devi
 
 import { useDeviceConnection } from './useDeviceConnection'
 import { useDeviceAuth } from './useDeviceAuth'
-import { useTuningQueue } from './useTuningQueue'
+import { useTuningQueue, type QueueEqPointOptions } from './useTuningQueue'
 
 export type DeviceSessionState = {
   connected: boolean
@@ -406,9 +406,14 @@ export function useDeviceSession(
   )
 
   const queueEqPoint = useCallback(
-    (target: webhmi.EqTarget, patch: webhmi.IEqPointPatch, sceneMode?: webhmi.OutputSceneMode) => {
+    (
+      target: webhmi.EqTarget,
+      patch: webhmi.IEqPointPatch,
+      sceneMode?: webhmi.OutputSceneMode,
+      queueOptions?: QueueEqPointOptions,
+    ) => {
       if (!connection.client) return
-      queue.queueEqPoint(connection.client, target, patch, sceneMode)
+      queue.queueEqPoint(connection.client, target, patch, sceneMode, queueOptions)
     },
     [connection.client, queue.queueEqPoint],
   )
