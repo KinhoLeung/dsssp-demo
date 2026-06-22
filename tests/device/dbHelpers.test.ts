@@ -3,6 +3,7 @@ import { test } from 'node:test'
 
 import {
   applyEqBypassPatch,
+  applyEqPointDefaults,
   applyEqPointPatch,
   applySectionPatch,
   buildEqPatchesFromPending,
@@ -56,7 +57,7 @@ test('buildEqPatchesFromPending only emits fields changed from base DB', () => {
       music: {
         eq: {
           bypass: false,
-          point: [{ index: 0, type: 0, freq: 1000, gain: 0, q: 1 }],
+          point: [{ index: 0, type: 0, freq: 1000, gain: 0, q: 0.7, peakQ: 1 }],
         },
       },
     },
@@ -66,7 +67,7 @@ test('buildEqPatchesFromPending only emits fields changed from base DB', () => {
     target: 0 as any,
     bypass: false,
     points: new Map([
-      [0, { index: 0, type: 0 as any, freq: 1200, gain: 0, q: 1 }],
+      [0, { index: 0, type: 0 as any, freq: 1200, gain: 0, q: 0.7, peakQ: 2 }],
     ]),
   })
 
@@ -75,7 +76,41 @@ test('buildEqPatchesFromPending only emits fields changed from base DB', () => {
   assert.deepEqual(patches, [
     {
       target: 0,
-      point: [{ index: 0, freq: 1200 }],
+      point: [{ index: 0, freq: 1200, peakQ: 2 }],
     },
   ])
+})
+
+test('applyEqPointDefaults restores both common and Peak Q defaults', () => {
+  const db: any = {
+    db: {
+      music: {
+        eq: {
+          point: [
+            {
+              index: 0,
+              type: 0,
+              freq: 1200,
+              gain: 3,
+              q: 0.9,
+              peakQ: 2.2,
+              defaultType: 1,
+              defaultFreq: 1000,
+              defaultGain: 0,
+              defaultQ: 0.7,
+              defaultPeakQ: 1.1,
+            },
+          ],
+        },
+      },
+    },
+  }
+
+  applyEqPointDefaults(db, 0 as any, [0])
+
+  assert.equal(db.db.music.eq.point[0].type, 1)
+  assert.equal(db.db.music.eq.point[0].freq, 1000)
+  assert.equal(db.db.music.eq.point[0].gain, 0)
+  assert.equal(db.db.music.eq.point[0].q, 0.7)
+  assert.equal(db.db.music.eq.point[0].peakQ, 1.1)
 })

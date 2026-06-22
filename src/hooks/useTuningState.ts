@@ -15,21 +15,25 @@ const DEFAULT_EQ_POINTS = [
     freq: 20,
     gain: 0,
     q: 0.699999988079071,
+    peakQ: 1,
     defaultType: webhmi.FilterType.HighPass,
     defaultFreq: 20,
     defaultGain: 0,
     defaultQ: 0.699999988079071,
+    defaultPeakQ: 1,
   },
   {
     index: 1,
     type: webhmi.FilterType.Peak,
     freq: 666,
     gain: 6,
-    q: 1,
+    q: 0.699999988079071,
+    peakQ: 1,
     defaultType: webhmi.FilterType.Peak,
     defaultFreq: 666,
     defaultGain: 6,
-    defaultQ: 1,
+    defaultQ: 0.699999988079071,
+    defaultPeakQ: 1,
   },
   {
     index: 2,
@@ -37,10 +41,12 @@ const DEFAULT_EQ_POINTS = [
     freq: 20000,
     gain: 0,
     q: 0.699999988079071,
+    peakQ: 1,
     defaultType: webhmi.FilterType.LowPass,
     defaultFreq: 20000,
     defaultGain: 0,
     defaultQ: 0.699999988079071,
+    defaultPeakQ: 1,
   },
 ]
 
@@ -50,6 +56,12 @@ const DEFAULT_EQ = {
   typeList: [webhmi.FilterType.Peak, webhmi.FilterType.LowShelf, webhmi.FilterType.HighShelf],
   lowPassTypeList: [webhmi.FilterType.LowPass],
   bypass: false,
+  minQ: 0.1,
+  maxQ: 2,
+  stepQ: 0.1,
+  minPeakQ: 0.1,
+  maxPeakQ: 25,
+  stepPeakQ: 0.1,
 }
 
 const INITIAL_DATA = {

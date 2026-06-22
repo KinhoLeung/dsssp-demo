@@ -8,6 +8,7 @@ export type EqRangeConfig = {
   freq: RangeConfig
   gain: RangeConfig
   q: RangeConfig
+  peakQ: RangeConfig
 }
 
 const range = (min: number, max: number, step: number): RangeConfig => ({
@@ -19,7 +20,8 @@ const range = (min: number, max: number, step: number): RangeConfig => ({
 const eqRange: EqRangeConfig = {
   freq: range(20, 20000, 1),
   gain: range(-18, 12, 0.1),
-  q: range(0.1, 25, 0.1)
+  q: range(0.1, 2, 0.1),
+  peakQ: range(0.1, 25, 0.1)
 }
 
 const levelRange = range(0, 100, 1)
@@ -184,7 +186,8 @@ const fromDbRange = (source: RangeSource, fieldName: string, fallback: RangeConf
 const eqRangesFromDb = (source: RangeSource, fallback: EqRangeConfig): EqRangeConfig => ({
   freq: fromDbRange(source, 'Freq', fallback.freq),
   gain: fromDbRange(source, 'Gain', fallback.gain),
-  q: fromDbRange(source, 'Q', fallback.q)
+  q: fromDbRange(source, 'Q', fallback.q),
+  peakQ: fromDbRange(source, 'PeakQ', fallback.peakQ)
 })
 
 const noiseRangesFromDb = (source: RangeSource, fallback: typeof parameterRanges.music.noise) => ({

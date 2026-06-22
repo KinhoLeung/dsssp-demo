@@ -17,6 +17,12 @@ test('buildParameterRanges uses device min/max/step when valid', () => {
         minGain: -9,
         maxGain: 6,
         stepGain: 0.5,
+        minQ: 0.2,
+        maxQ: 12,
+        stepQ: 0.2,
+        minPeakQ: 0.3,
+        maxPeakQ: 15,
+        stepPeakQ: 0.3,
       },
       minInputGain: -6,
       maxInputGain: 3,
@@ -26,6 +32,8 @@ test('buildParameterRanges uses device min/max/step when valid', () => {
 
   assert.deepEqual(ranges.music.eq.freq, { min: 40, max: 16000, step: 5 })
   assert.deepEqual(ranges.music.eq.gain, { min: -9, max: 6, step: 0.5 })
+  assert.deepEqual(ranges.music.eq.q, { min: 0.2, max: 12, step: 0.2 })
+  assert.deepEqual(ranges.music.eq.peakQ, { min: 0.3, max: 15, step: 0.3 })
   assert.deepEqual(ranges.music.inputGain, { min: -6, max: 3, step: 1 })
 })
 
@@ -36,11 +44,15 @@ test('buildParameterRanges falls back when device range is invalid', () => {
         minFreq: 20000,
         maxFreq: 20,
         stepFreq: 0,
+        minPeakQ: 10,
+        maxPeakQ: 1,
+        stepPeakQ: 0,
       },
     },
   })
 
   assert.deepEqual(ranges.music.eq.freq, { min: 20, max: 20000, step: 1 })
+  assert.deepEqual(ranges.music.eq.peakQ, { min: 0.1, max: 25, step: 0.1 })
 })
 
 test('range helpers clamp and apply additional bounds', () => {

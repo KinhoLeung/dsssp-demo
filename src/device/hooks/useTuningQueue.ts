@@ -177,6 +177,7 @@ export function useTuningQueue(options: { authOk: boolean | null } = { authOk: n
       if (typeof point.defaultFreq === 'number') patch.freq = point.defaultFreq
       if (typeof point.defaultGain === 'number') patch.gain = point.defaultGain
       if (typeof point.defaultQ === 'number') patch.q = point.defaultQ
+      if (typeof point.defaultPeakQ === 'number') patch.peakQ = point.defaultPeakQ
       if (Object.keys(patch).length <= 1) return
 
       try {

@@ -153,6 +153,7 @@ export const applyEqPointDefaults = (
     if (typeof p.defaultFreq === 'number') p.freq = p.defaultFreq
     if (typeof p.defaultGain === 'number') p.gain = p.defaultGain
     if (typeof p.defaultQ === 'number') p.q = p.defaultQ
+    if (typeof p.defaultPeakQ === 'number') p.peakQ = p.defaultPeakQ
   }
 
   return db
@@ -201,6 +202,12 @@ export const buildEqPatchesFromPending = (
       }
       if (hasValue(pointPatch.q) && (basePoint == null || !hasValue(basePoint.q) || !nearlyEqual(pointPatch.q, basePoint.q))) {
         minimized.q = pointPatch.q
+      }
+      if (
+        hasValue(pointPatch.peakQ) &&
+        (basePoint == null || !hasValue(basePoint.peakQ) || !nearlyEqual(pointPatch.peakQ, basePoint.peakQ))
+      ) {
+        minimized.peakQ = pointPatch.peakQ
       }
 
       if (Object.keys(minimized).length > 1) points.push(minimized)

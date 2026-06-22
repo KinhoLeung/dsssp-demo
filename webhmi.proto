@@ -78,11 +78,13 @@ message EqPoint {
   optional uint32 freq = 3; // Hz
   optional float gain = 4;
   optional float q = 5;
+  optional float peakQ = 6;
 
-  optional FilterType defaultType = 6;
-  optional uint32 defaultFreq = 7; // Hz
-  optional float defaultGain = 8;
-  optional float defaultQ = 9;
+  optional FilterType defaultType = 7;
+  optional uint32 defaultFreq = 8; // Hz
+  optional float defaultGain = 9;
+  optional float defaultQ = 10;
+  optional float defaultPeakQ = 11;
 }
 
 message Eq {
@@ -105,6 +107,9 @@ message Eq {
   optional float minQ = 12;
   optional float maxQ = 13;
   optional float stepQ = 14;
+  optional float minPeakQ = 15;
+  optional float maxPeakQ = 16;
+  optional float stepPeakQ = 17;
 }
 
 message NoiseGate {
@@ -536,6 +541,7 @@ message EqPointPatch {
   optional uint32 freq = 3; // Hz
   optional float gain = 4;
   optional float q = 5;
+  optional float peakQ = 6;
 }
 
 message EqPatch {

@@ -353,8 +353,8 @@ EQ 数据结构由设备 DB 中的 `Eq` 和 `EqPoint` 提供。
 交互规则：
 
 - 拖拽滤波器点修改频率和增益。
-- 滚轮或卡片输入修改 Q 值。
-- LowPass 与 HighPass 类型视为固定 Q 控件，Q 输入禁用。
+- 滚轮或卡片输入修改当前类型对应的 Q 值；Peak 使用 `peakQ`，其它类型使用共用 `q`。
+- LowPass 与 HighPass 类型视为固定 Q 控件，Q 输入禁用，但切换类型时仍读取共用 `q`。
 - 双击滤波器点恢复该点默认值。
 - Reset 按钮恢复当前面板全部 EQ 默认值。
 - Bypass 开关修改当前 EQ 的旁路状态。
@@ -471,7 +471,8 @@ DeviceConfig
 - `lowPassTypeList`：低通位置允许的滤波器类型。
 - `minFreq/maxFreq/stepFreq`：频率范围。
 - `minGain/maxGain/stepGain`：增益范围。
-- `minQ/maxQ/stepQ`：Q 值范围。
+- `minQ/maxQ/stepQ`：非 Peak 类型共用 Q 值范围。
+- `minPeakQ/maxPeakQ/stepPeakQ`：Peak 类型 Q 值范围。
 
 `EqPoint` 包含：
 
@@ -479,8 +480,9 @@ DeviceConfig
 - `type`：滤波器类型。
 - `freq`：频率，单位 Hz。
 - `gain`：增益。
-- `q`：Q 值。
-- `defaultType/defaultFreq/defaultGain/defaultQ`：恢复默认值时使用。
+- `q`：非 Peak 类型共用 Q 值。
+- `peakQ`：Peak 类型专用 Q 值。
+- `defaultType/defaultFreq/defaultGain/defaultQ/defaultPeakQ`：恢复默认值时使用。
 
 ### 4.5 Patch 请求模型
 

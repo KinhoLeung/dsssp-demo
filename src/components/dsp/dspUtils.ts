@@ -29,8 +29,13 @@ export type PanelDef = {
   getEq: (db: webhmi.IDeviceConfig | null) => webhmi.IEq | null
 }
 
+export type EqGraphFilter = GraphFilter & {
+  commonQ: number
+  peakQ: number
+}
+
 export type PanelState = {
-  filters: GraphFilter[]
+  filters: EqGraphFilter[]
   pointIndexByUiIndex: number[]
   allowedTypesByUiIndex: Array<FilterType[] | null>
 }
@@ -90,6 +95,7 @@ export const FBX_OPTIONS: SelectOption[] = [
 ]
 
 export const nearlyEqual = (a: number, b: number, eps = 1e-6) => Math.abs(a - b) <= eps
+export const isPeakFilterType = (type: string | null | undefined) => type === 'PEAK'
 export const isFixedQFilterType = (type: string | null | undefined) =>
   typeof type === 'string' && (type.includes('HIGHPASS') || type.includes('LOWPASS'))
 
@@ -107,6 +113,8 @@ export const panelStateEqual = (a: PanelState, b: PanelState) => {
     if (!nearlyEqual(fa.freq, fb.freq)) return false
     if (!nearlyEqual(fa.gain, fb.gain)) return false
     if (!nearlyEqual(fa.q, fb.q)) return false
+    if (!nearlyEqual(fa.commonQ, fb.commonQ)) return false
+    if (!nearlyEqual(fa.peakQ, fb.peakQ)) return false
   }
 
   if (a.allowedTypesByUiIndex.length !== b.allowedTypesByUiIndex.length) return false
@@ -176,7 +184,7 @@ export function buildPanelStateFromEq(eq: webhmi.IEq | null): PanelState {
   const points = eq?.point ?? []
   const sorted = [...points].sort((a, b) => (Number(a.index ?? 0) || 0) - (Number(b.index ?? 0) || 0))
 
-  const filters: GraphFilter[] = []
+  const filters: EqGraphFilter[] = []
   const pointIndexByUiIndex: number[] = []
   const allowedTypesByUiIndex: Array<FilterType[] | null> = []
 
@@ -205,11 +213,15 @@ export function buildPanelStateFromEq(eq: webhmi.IEq | null): PanelState {
     pointIndexByUiIndex.push(pointIndex)
 
     const graphType = graphTypeByUiIndex[uiIndex] ?? mapFilterTypeToGraphType(p.type)
+    const commonQ = typeof p.q === 'number' ? p.q : 0.7
+    const peakQ = typeof p.peakQ === 'number' ? p.peakQ : 1
     filters.push({
       type: graphType,
       freq: typeof p.freq === 'number' ? p.freq : 1000,
       gain: typeof p.gain === 'number' ? p.gain : 0,
-      q: typeof p.q === 'number' ? p.q : 0.7,
+      q: isPeakFilterType(graphType) ? peakQ : commonQ,
+      commonQ,
+      peakQ,
     })
 
     let allowed: FilterType[] | null = null

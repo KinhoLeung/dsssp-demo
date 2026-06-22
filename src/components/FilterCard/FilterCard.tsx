@@ -13,7 +13,7 @@ import tailwindColors from 'tailwindcss/colors'
 import filterColors from '../../configs/colors'
 import type { EqRangeConfig } from '../../configs/parameterRanges'
 import scale from '../../configs/scale'
-import { isFixedQFilterType } from '../dsp/dspUtils'
+import { isFixedQFilterType, isPeakFilterType } from '../dsp/dspUtils'
 
 import { FilterInput, FilterSelect, SliderInput } from '.'
 import { getStepPrecision } from './numberUtils'
@@ -43,12 +43,14 @@ const FilterCard = ({
   const fallbackEqRange = {
     freq: { min: scale.minFreq, max: scale.maxFreq, step: 1 },
     gain: { min: scale.minGain, max: scale.maxGain, step: Math.pow(10, -(scale.gainPrecision ?? 1)) },
-    q: { min: scale.minQ, max: scale.maxQ, step: Math.pow(10, -(scale.qPrecision ?? 1)) }
+    q: { min: scale.minQ, max: scale.maxQ, step: Math.pow(10, -(scale.qPrecision ?? 1)) },
+    peakQ: { min: scale.minQ, max: scale.maxQ, step: Math.pow(10, -(scale.qPrecision ?? 1)) }
   }
   const resolvedEqRange = eqRange ?? fallbackEqRange
   const resolvedFreqPrecision = getStepPrecision(resolvedEqRange.freq.step, 0)
   const resolvedGainPrecision = getStepPrecision(resolvedEqRange.gain.step, scale.gainPrecision ?? 1)
-  const resolvedQPrecision = getStepPrecision(resolvedEqRange.q.step, scale.qPrecision ?? 1)
+  const qRange = isPeakFilterType(filter.type) ? resolvedEqRange.peakQ : resolvedEqRange.q
+  const resolvedQPrecision = getStepPrecision(qRange.step, scale.qPrecision ?? 1)
   const [noiseDataUrl, setNoiseDataUrl] = useState<string>('')
   // eslint-disable-next-line no-param-reassign
   if (disabled) filter = { type: 'BYPASS', freq: 0, gain: 0, q: 1 }
@@ -119,9 +121,9 @@ const FilterCard = ({
 
         <SliderInput
           log
-          max={resolvedEqRange.q.max}
-          min={resolvedEqRange.q.min}
-          step={resolvedEqRange.q.step}
+          max={qRange.max}
+          min={qRange.min}
+          step={qRange.step}
           precision={resolvedQPrecision}
           className="flex-1"
           label="Q"

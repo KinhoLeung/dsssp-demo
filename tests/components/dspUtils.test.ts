@@ -24,9 +24,9 @@ test('filter type mapping round trips supported graph types', () => {
 test('buildPanelStateFromEq sorts points and assigns allowed filter types by slot', () => {
   const state = buildPanelStateFromEq({
     point: [
-      { index: 2, type: 3 as any, freq: 20000, gain: 0, q: 0.7 },
-      { index: 0, type: 4 as any, freq: 20, gain: 0, q: 0.7 },
-      { index: 1, type: 0 as any, freq: 1000, gain: 1, q: 1 },
+      { index: 2, type: 3 as any, freq: 20000, gain: 0, q: 0.7, peakQ: 1.5 },
+      { index: 0, type: 4 as any, freq: 20, gain: 0, q: 0.8, peakQ: 1.6 },
+      { index: 1, type: 0 as any, freq: 1000, gain: 1, q: 0.9, peakQ: 2.1 },
     ],
     highPassTypeList: [4 as any],
     typeList: [0 as any, 1 as any, 2 as any],
@@ -38,4 +38,12 @@ test('buildPanelStateFromEq sorts points and assigns allowed filter types by slo
   assert.deepEqual(state.allowedTypesByUiIndex[0], ['HIGHPASS2'])
   assert.deepEqual(state.allowedTypesByUiIndex[1], ['PEAK', 'LOWSHELF2', 'HIGHSHELF2'])
   assert.deepEqual(state.allowedTypesByUiIndex[2], ['LOWPASS2'])
+  assert.deepEqual(
+    state.filters.map((filter) => filter.q),
+    [0.8, 2.1, 0.7],
+  )
+  assert.deepEqual(
+    state.filters.map((filter) => [filter.commonQ, filter.peakQ]),
+    [[0.8, 1.6], [0.9, 2.1], [0.7, 1.5]],
+  )
 })

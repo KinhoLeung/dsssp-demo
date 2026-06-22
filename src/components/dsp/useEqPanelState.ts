@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   buildPanelStateFromEq,
   isFixedQFilterType,
+  isPeakFilterType,
   mapGraphTypeToFilterType,
   nearlyEqual,
   panelStateEqual,
@@ -109,7 +110,26 @@ export function useEqPanelState(options: {
   const deferredDraftKeysRef = useRef<Set<string>>(new Set())
 
   const graphFilterEqual = (a: any, b: any) =>
-    a.type === b.type && nearlyEqual(a.freq, b.freq) && nearlyEqual(a.gain, b.gain) && nearlyEqual(a.q, b.q)
+    a.type === b.type &&
+    nearlyEqual(a.freq, b.freq) &&
+    nearlyEqual(a.gain, b.gain) &&
+    nearlyEqual(a.q, b.q) &&
+    nearlyEqual(a.commonQ, b.commonQ) &&
+    nearlyEqual(a.peakQ, b.peakQ)
+
+  const getStoredCommonQ = (filter: any) =>
+    typeof filter?.commonQ === 'number'
+      ? filter.commonQ
+      : !isPeakFilterType(filter?.type) && typeof filter?.q === 'number'
+        ? filter.q
+        : 0.7
+
+  const getStoredPeakQ = (filter: any) =>
+    typeof filter?.peakQ === 'number'
+      ? filter.peakQ
+      : isPeakFilterType(filter?.type) && typeof filter?.q === 'number'
+        ? filter.q
+        : 1
 
   const applyUiPatches = useCallback((patchesByKey: Map<PanelKey, Map<number, Partial<any>>>) => {
     if (patchesByKey.size === 0) return
@@ -172,9 +192,24 @@ export function useEqPanelState(options: {
       const { index: uiIndex, ended, ...filterEventFilter } = filterEvent
       const isLiveDrag = ended !== true
       const existingFilter = stateForPanel.filters[uiIndex]
-      const filter = isFixedQFilterType(filterEventFilter.type) && existingFilter
-        ? { ...filterEventFilter, q: existingFilter.q }
-        : filterEventFilter
+      const typeChanged = existingFilter?.type !== filterEventFilter.type
+      let commonQ = typeof filterEventFilter.commonQ === 'number' ? filterEventFilter.commonQ : getStoredCommonQ(existingFilter)
+      let peakQ = typeof filterEventFilter.peakQ === 'number' ? filterEventFilter.peakQ : getStoredPeakQ(existingFilter)
+
+      if (!typeChanged && typeof filterEventFilter.q === 'number') {
+        if (isPeakFilterType(filterEventFilter.type)) {
+          peakQ = filterEventFilter.q
+        } else if (!isFixedQFilterType(filterEventFilter.type)) {
+          commonQ = filterEventFilter.q
+        }
+      }
+
+      const filter = {
+        ...filterEventFilter,
+        commonQ,
+        peakQ,
+        q: isPeakFilterType(filterEventFilter.type) ? peakQ : commonQ,
+      }
 
       if (isLiveDrag) {
         setActiveIndex(uiIndex)
@@ -237,18 +272,23 @@ export function useEqPanelState(options: {
         const currentEq = def.getEq(sourceDb)
         if (currentEq?.point) {
           const cp = currentEq.point.find((point) => point && point.index === deviceIndex)
-          if (cp && cp.type === filterType && nearlyEqual(cp.freq ?? 0, freq) && nearlyEqual(cp.gain ?? 0, gain) && nearlyEqual(cp.q ?? 0, q)) {
+          const currentQ = isPeakFilterType(filter.type) ? cp?.peakQ : cp?.q
+          if (cp && cp.type === filterType && nearlyEqual(cp.freq ?? 0, freq) && nearlyEqual(cp.gain ?? 0, gain) && nearlyEqual(currentQ ?? 0, q)) {
             return
           }
         }
       }
 
-      const pointPatch = {
+      const pointPatch: webhmi.IEqPointPatch = {
         index: deviceIndex,
         type: filterType,
         freq,
         gain,
-        q,
+      }
+      if (isPeakFilterType(filter.type)) {
+        pointPatch.peakQ = q
+      } else {
+        pointPatch.q = q
       }
       const sceneMode = isOutputPanelKey(key) ? getSceneModeFromConfig(dbRef.current) : undefined
       const queueOptions = isLiveDrag ? { syncDraft: false } : undefined

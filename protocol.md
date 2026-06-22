@@ -121,24 +121,24 @@ v1 约定的 ext TLV 类型：
 | 值 | 名称 | 说明 |
 | --- | --- | --- |
 | `0x0000` | `OK` | 成功。 |
-| `0x0001` | `UNKNOWN_MSG` | 未知 msg_id。 |
-| `0x0002` | `BAD_PAYLOAD` | payload 解码失败或格式错误。 |
-| `0x0003` | `INVALID_FIELD` | 字段组合非法或缺少必要字段。 |
-| `0x0004` | `VALUE_OUT_OF_RANGE` | 参数超出设备允许范围。 |
-| `0x0005` | `BUSY` | 设备忙，稍后重试。 |
-| `0x0006` | `NOT_AUTHORIZED` | 未鉴权或权限不足。 |
-| `0x0007` | `UNSUPPORTED` | 当前设备或固件不支持。 |
-| `0x0008` | `APPLY_FAILED` | 参数应用失败。 |
-| `0x0009` | `MODE_LOCKED` | 当前模式锁定，不能修改。 |
-| `0x000a` | `VERSION_MISMATCH` | 版本不匹配。 |
-| `0x00ff` | `INTERNAL_ERROR` | 设备内部错误。 |
+| `0x0001` | `FAILED` | 操作失败。 |
+| `0x0002` | `INVALID_PARAMETER` | 参数无效或缺少必要参数。 |
+| `0x0003` | `OUT_OF_RANGE` | 参数超出设备允许范围。 |
+| `0x0004` | `BUSY` | 设备忙，稍后重试。 |
+| `0x0005` | `PERMISSION_DENIED` | 当前无权限执行该操作。 |
+| `0x0006` | `NOT_SUPPORTED` | 当前设备、固件或配置不支持该功能。 |
+| `0x0007` | `UNAVAILABLE_IN_CURRENT_STATE` | 当前状态或模式下不可执行该操作。 |
+| `0x0008` | `VERSION_NOT_SUPPORTED` | 软件或固件版本不兼容。 |
+| `0x00ff` | `DEVICE_ERROR` | 设备异常。 |
+
+`result` 是面向客户和业务流程的执行结果，不用于暴露协议解析、通信实现或上位机内部细节。未知 `msg_id`、payload 解码失败、字段组合错误等底层原因应由上位机或设备日志记录；客户界面应根据上述状态码映射为统一、友好的错误提示。
 
 响应帧规则：
 
 * 上位机请求帧设置 `RESPONSE=1` 时，必须携带 `req_id`，不携带 `result`。
 * 设备普通响应帧设置 `RESPONSE=1` 且 `EVENT=0`，必须携带同一个 `req_id` 和 `result`。
 * `result=OK` 时，payload 按对应 response protobuf 或原始响应格式解码；没有业务返回值时 payload 长度为 0。
-* `result!=OK` 时，payload 长度应为 0，上位机根据 `result` 映射错误。
+* `result!=OK` 时，payload 长度应为 0，上位机根据 `result` 映射客户可见错误；底层诊断信息仅记录到日志或调试通道。
 
 payload（len bytes）
 
@@ -414,21 +414,25 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                         "freq": 20,
                         "gain": 0.0,
                         "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "HighPass",
                         "defaultFreq": 20,
                         "defaultGain": 0.0,
-                        "defaultQ": 0.7
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     },
                     {
                         "index": 1,
                         "type": "Peak",
                         "freq": 666,
                         "gain": 6.0,
-                        "q": 1.0,
+                        "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "Peak",
                         "defaultFreq": 666,
                         "defaultGain": 6.0,
-                        "defaultQ": 1.0
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     },
                     {
                         "index": 2,
@@ -436,10 +440,12 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                         "freq": 20000,
                         "gain": 0.0,
                         "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "LowPass",
                         "defaultFreq": 20000,
                         "defaultGain": 0.0,
-                        "defaultQ": 0.7
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     }
                 ],
                 "bypass": false,
@@ -461,8 +467,11 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "maxGain": 12.0,
                 "stepGain": 0.1,
                 "minQ": 0.1,
-                "maxQ": 25.0,
-                "stepQ": 0.1
+                "maxQ": 2.0,
+                "stepQ": 0.1,
+                "minPeakQ": 0.1,
+                "maxPeakQ": 25.0,
+                "stepPeakQ": 0.1
             },
             "inputGain": 0,
             "btGain": 0,
@@ -534,21 +543,25 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                             "freq": 20,
                             "gain": 0.0,
                             "q": 0.7,
+                            "peakQ": 1.0,
                             "defaultType": "HighPass",
                             "defaultFreq": 20,
                             "defaultGain": 0.0,
-                            "defaultQ": 0.7
+                            "defaultQ": 0.7,
+                            "defaultPeakQ": 1.0
                         },
                         {
                             "index": 1,
                             "type": "Peak",
                             "freq": 666,
                             "gain": 6.0,
-                            "q": 1.0,
+                            "q": 0.7,
+                            "peakQ": 1.0,
                             "defaultType": "Peak",
                             "defaultFreq": 666,
                             "defaultGain": 6.0,
-                            "defaultQ": 1.0
+                            "defaultQ": 0.7,
+                            "defaultPeakQ": 1.0
                         },
                         {
                             "index": 2,
@@ -556,10 +569,12 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                             "freq": 20000,
                             "gain": 0.0,
                             "q": 0.7,
+                            "peakQ": 1.0,
                             "defaultType": "LowPass",
                             "defaultFreq": 20000,
                             "defaultGain": 0.0,
-                            "defaultQ": 0.7
+                            "defaultQ": 0.7,
+                            "defaultPeakQ": 1.0
                         }
                     ],
                     "bypass": false,
@@ -581,8 +596,11 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                     "maxGain": 12.0,
                     "stepGain": 0.1,
                     "minQ": 0.1,
-                    "maxQ": 25.0,
-                    "stepQ": 0.1
+                    "maxQ": 2.0,
+                    "stepQ": 0.1,
+                    "minPeakQ": 0.1,
+                    "maxPeakQ": 25.0,
+                    "stepPeakQ": 0.1
                 }
             },
             "micBEq": {
@@ -594,21 +612,25 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                             "freq": 20,
                             "gain": 0.0,
                             "q": 0.7,
+                            "peakQ": 1.0,
                             "defaultType": "HighPass",
                             "defaultFreq": 20,
                             "defaultGain": 0.0,
-                            "defaultQ": 0.7
+                            "defaultQ": 0.7,
+                            "defaultPeakQ": 1.0
                         },
                         {
                             "index": 1,
                             "type": "Peak",
                             "freq": 666,
                             "gain": 6.0,
-                            "q": 1.0,
+                            "q": 0.7,
+                            "peakQ": 1.0,
                             "defaultType": "Peak",
                             "defaultFreq": 666,
                             "defaultGain": 6.0,
-                            "defaultQ": 1.0
+                            "defaultQ": 0.7,
+                            "defaultPeakQ": 1.0
                         },
                         {
                             "index": 2,
@@ -616,10 +638,12 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                             "freq": 20000,
                             "gain": 0.0,
                             "q": 0.7,
+                            "peakQ": 1.0,
                             "defaultType": "LowPass",
                             "defaultFreq": 20000,
                             "defaultGain": 0.0,
-                            "defaultQ": 0.7
+                            "defaultQ": 0.7,
+                            "defaultPeakQ": 1.0
                         }
                     ],
                     "bypass": false,
@@ -641,8 +665,11 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                     "maxGain": 12.0,
                     "stepGain": 0.1,
                     "minQ": 0.1,
-                    "maxQ": 25.0,
-                    "stepQ": 0.1
+                    "maxQ": 2.0,
+                    "stepQ": 0.1,
+                    "minPeakQ": 0.1,
+                    "maxPeakQ": 25.0,
+                    "stepPeakQ": 0.1
                 }
             },
             "micEqJointDebugging": false,
@@ -727,21 +754,25 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                         "freq": 20,
                         "gain": 0.0,
                         "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "HighPass",
                         "defaultFreq": 20,
                         "defaultGain": 0.0,
-                        "defaultQ": 0.7
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     },
                     {
                         "index": 1,
                         "type": "Peak",
                         "freq": 666,
                         "gain": 6.0,
-                        "q": 1.0,
+                        "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "Peak",
                         "defaultFreq": 666,
                         "defaultGain": 6.0,
-                        "defaultQ": 1.0
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     },
                     {
                         "index": 2,
@@ -749,10 +780,12 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                         "freq": 20000,
                         "gain": 0.0,
                         "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "LowPass",
                         "defaultFreq": 20000,
                         "defaultGain": 0.0,
-                        "defaultQ": 0.7
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     }
                 ],
                 "bypass": false,
@@ -774,8 +807,11 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "maxGain": 12.0,
                 "stepGain": 0.1,
                 "minQ": 0.1,
-                "maxQ": 25.0,
-                "stepQ": 0.1
+                "maxQ": 2.0,
+                "stepQ": 0.1,
+                "minPeakQ": 0.1,
+                "maxPeakQ": 25.0,
+                "stepPeakQ": 0.1
             },
             "reverbLevel": 100,
             "micDirectLevel": 100,
@@ -805,21 +841,25 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                         "freq": 20,
                         "gain": 0.0,
                         "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "HighPass",
                         "defaultFreq": 20,
                         "defaultGain": 0.0,
-                        "defaultQ": 0.7
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     },
                     {
                         "index": 1,
                         "type": "Peak",
                         "freq": 666,
                         "gain": 6.0,
-                        "q": 1.0,
+                        "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "Peak",
                         "defaultFreq": 666,
                         "defaultGain": 6.0,
-                        "defaultQ": 1.0
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     },
                     {
                         "index": 2,
@@ -827,10 +867,12 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                         "freq": 20000,
                         "gain": 0.0,
                         "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "LowPass",
                         "defaultFreq": 20000,
                         "defaultGain": 0.0,
-                        "defaultQ": 0.7
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     }
                 ],
                 "bypass": false,
@@ -852,8 +894,11 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "maxGain": 12.0,
                 "stepGain": 0.1,
                 "minQ": 0.1,
-                "maxQ": 25.0,
-                "stepQ": 0.1
+                "maxQ": 2.0,
+                "stepQ": 0.1,
+                "minPeakQ": 0.1,
+                "maxPeakQ": 25.0,
+                "stepPeakQ": 0.1
             },
             "echoLevel": 100,
             "micDirectLevel": 100,
@@ -895,21 +940,25 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                         "freq": 20,
                         "gain": 0.0,
                         "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "HighPass",
                         "defaultFreq": 20,
                         "defaultGain": 0.0,
-                        "defaultQ": 0.7
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     },
                     {
                         "index": 1,
                         "type": "Peak",
                         "freq": 666,
                         "gain": 6.0,
-                        "q": 1.0,
+                        "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "Peak",
                         "defaultFreq": 666,
                         "defaultGain": 6.0,
-                        "defaultQ": 1.0
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     },
                     {
                         "index": 2,
@@ -917,10 +966,12 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                         "freq": 20000,
                         "gain": 0.0,
                         "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "LowPass",
                         "defaultFreq": 20000,
                         "defaultGain": 0.0,
-                        "defaultQ": 0.7
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     }
                 ],
                 "bypass": false,
@@ -942,8 +993,11 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "maxGain": 12.0,
                 "stepGain": 0.1,
                 "minQ": 0.1,
-                "maxQ": 25.0,
-                "stepQ": 0.1
+                "maxQ": 2.0,
+                "stepQ": 0.1,
+                "minPeakQ": 0.1,
+                "maxPeakQ": 25.0,
+                "stepPeakQ": 0.1
             },
             "output": {
                 "leftChannelVolume": 0.0,
@@ -1018,21 +1072,25 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                         "freq": 20,
                         "gain": 0.0,
                         "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "HighPass",
                         "defaultFreq": 20,
                         "defaultGain": 0.0,
-                        "defaultQ": 0.7
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     },
                     {
                         "index": 1,
                         "type": "Peak",
                         "freq": 666,
                         "gain": 6.0,
-                        "q": 1.0,
+                        "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "Peak",
                         "defaultFreq": 666,
                         "defaultGain": 6.0,
-                        "defaultQ": 1.0
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     },
                     {
                         "index": 2,
@@ -1040,10 +1098,12 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                         "freq": 20000,
                         "gain": 0.0,
                         "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "LowPass",
                         "defaultFreq": 20000,
                         "defaultGain": 0.0,
-                        "defaultQ": 0.7
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     }
                 ],
                 "bypass": false,
@@ -1065,8 +1125,11 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "maxGain": 12.0,
                 "stepGain": 0.1,
                 "minQ": 0.1,
-                "maxQ": 25.0,
-                "stepQ": 0.1
+                "maxQ": 2.0,
+                "stepQ": 0.1,
+                "minPeakQ": 0.1,
+                "maxPeakQ": 25.0,
+                "stepPeakQ": 0.1
             },
             "output": {
                 "volume": 0.0,
@@ -1131,21 +1194,25 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                         "freq": 20,
                         "gain": 0.0,
                         "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "HighPass",
                         "defaultFreq": 20,
                         "defaultGain": 0.0,
-                        "defaultQ": 0.7
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     },
                     {
                         "index": 1,
                         "type": "Peak",
                         "freq": 666,
                         "gain": 6.0,
-                        "q": 1.0,
+                        "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "Peak",
                         "defaultFreq": 666,
                         "defaultGain": 6.0,
-                        "defaultQ": 1.0
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     },
                     {
                         "index": 2,
@@ -1153,10 +1220,12 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                         "freq": 20000,
                         "gain": 0.0,
                         "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "LowPass",
                         "defaultFreq": 20000,
                         "defaultGain": 0.0,
-                        "defaultQ": 0.7
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     }
                 ],
                 "bypass": false,
@@ -1178,8 +1247,11 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "maxGain": 12.0,
                 "stepGain": 0.1,
                 "minQ": 0.1,
-                "maxQ": 25.0,
-                "stepQ": 0.1
+                "maxQ": 2.0,
+                "stepQ": 0.1,
+                "minPeakQ": 0.1,
+                "maxPeakQ": 25.0,
+                "stepPeakQ": 0.1
             },
             "output": {
                 "volume": 0.0,
@@ -1244,21 +1316,25 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                         "freq": 20,
                         "gain": 0.0,
                         "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "HighPass",
                         "defaultFreq": 20,
                         "defaultGain": 0.0,
-                        "defaultQ": 0.7
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     },
                     {
                         "index": 1,
                         "type": "Peak",
                         "freq": 666,
                         "gain": 6.0,
-                        "q": 1.0,
+                        "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "Peak",
                         "defaultFreq": 666,
                         "defaultGain": 6.0,
-                        "defaultQ": 1.0
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     },
                     {
                         "index": 2,
@@ -1266,10 +1342,12 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                         "freq": 20000,
                         "gain": 0.0,
                         "q": 0.7,
+                        "peakQ": 1.0,
                         "defaultType": "LowPass",
                         "defaultFreq": 20000,
                         "defaultGain": 0.0,
-                        "defaultQ": 0.7
+                        "defaultQ": 0.7,
+                        "defaultPeakQ": 1.0
                     }
                 ],
                 "bypass": false,
@@ -1291,8 +1369,11 @@ payload 使用 protobuf 编码，对应 `webhmi.GetDbRequest`（定义见 `webhm
                 "maxGain": 12.0,
                 "stepGain": 0.1,
                 "minQ": 0.1,
-                "maxQ": 25.0,
-                "stepQ": 0.1
+                "maxQ": 2.0,
+                "stepQ": 0.1,
+                "minPeakQ": 0.1,
+                "maxPeakQ": 25.0,
+                "stepPeakQ": 0.1
             },
             "output": {
                 "leftChannelVolume": 0.0,
