@@ -71,7 +71,7 @@
     "@tabler/icons-react": "^3.36.1",
     "@tailwindcss/typography": "^0.5.19",
     "class-variance-authority": "^0.7.1",
-    "dsssp": "git+https://github.com/KinhoLeung/dsssp.git#631e8c7d28b9138dfac8a383d2d9ff9ec1a2c950",
+    "dsssp": "git+https://github.com/KinhoLeung/dsssp.git#5728860d067318759a293b48ddf16a50f0d057f4",
     "i18next": "^25.8.0",
     "i18next-browser-languagedetector": "^8.2.0",
     "lightswind": "^3.1.20",
