@@ -41,6 +41,26 @@
     },
     "connectionError": {
       "title": "连接错误"
+    },
+    "deviceCommandFailed": {
+      "title": "设备执行失败"
+    }
+  },
+
+  "deviceErrors": {
+    "result": {
+      "unknown_msg": "设备不认识该命令。",
+      "bad_payload": "设备无法解析这次请求。",
+      "invalid_field": "请求字段组合无效。",
+      "value_out_of_range": "参数超出设备允许范围。",
+      "busy": "设备忙，请稍后重试。",
+      "not_authorized": "设备未授权，请重新连接。",
+      "unsupported": "当前设备或固件不支持该操作。",
+      "apply_failed": "设备应用参数失败。",
+      "mode_locked": "当前模式已锁定，不能修改。",
+      "version_mismatch": "设备版本不匹配。",
+      "internal_error": "设备内部错误。",
+      "unknown": "设备返回错误：{{result}}。"
     }
   },
   "docs": {

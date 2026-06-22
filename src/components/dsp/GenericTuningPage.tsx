@@ -33,6 +33,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { buildParameterRanges, clampToRange, withRangeBounds } from '@/configs/parameterRanges'
 import { webhmi } from '@/device/proto/generated/webhmi'
+import { formatDeviceErrorMessage } from '@/device/utils/errorMessages'
+import { toast } from '@/hooks/use-toast'
 import { useTuningState } from '@/hooks/useTuningState'
 
 // Shared DSP UI components
@@ -84,6 +86,16 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
       void disconnect()
     }
   }, [disconnect])
+
+  const lastToastErrorRef = useRef('')
+  useEffect(() => {
+    if (isDemoMode || !state.error || state.error === lastToastErrorRef.current) return
+    lastToastErrorRef.current = state.error
+    toast.destructive({
+      title: t('toast.deviceCommandFailed.title'),
+      description: formatDeviceErrorMessage(state.error, t),
+    })
+  }, [isDemoMode, state.error, t])
 
   const panels: PanelDef[] = useMemo(
     () => [

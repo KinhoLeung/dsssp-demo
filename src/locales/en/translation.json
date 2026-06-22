@@ -41,6 +41,26 @@
     },
     "connectionError": {
       "title": "Connection Error"
+    },
+    "deviceCommandFailed": {
+      "title": "Device Command Failed"
+    }
+  },
+
+  "deviceErrors": {
+    "result": {
+      "unknown_msg": "The device does not recognize this command.",
+      "bad_payload": "The device could not parse this request.",
+      "invalid_field": "The request contains an invalid field combination.",
+      "value_out_of_range": "A parameter is outside the device's allowed range.",
+      "busy": "The device is busy. Please try again shortly.",
+      "not_authorized": "The device is not authorized. Please reconnect.",
+      "unsupported": "This operation is not supported by the current device or firmware.",
+      "apply_failed": "The device failed to apply the parameter.",
+      "mode_locked": "The current mode is locked and cannot be changed.",
+      "version_mismatch": "The device version does not match.",
+      "internal_error": "The device reported an internal error.",
+      "unknown": "The device returned an error: {{result}}."
     }
   },
   "docs": {

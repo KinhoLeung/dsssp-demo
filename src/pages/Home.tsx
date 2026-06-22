@@ -14,6 +14,7 @@ import {
 } from '@/configs/deviceProfiles'
 import { setSelectedBleDevice, setSelectedHidDevice } from '@/device/selectedDevices'
 import { useDeviceSessionContext } from '@/device/session/deviceSessionContext'
+import { formatDeviceErrorMessage } from '@/device/utils/errorMessages'
 import { toast } from '@/hooks/use-toast'
 
 function Home() {
@@ -50,7 +51,7 @@ function Home() {
         } else {
           toast.destructive({
             title: t('toast.connectionFailed.title'),
-            description: state.error || state.authError || t('toast.connectionFailed.usb')
+            description: formatDeviceErrorMessage(state.error || state.authError, t) || t('toast.connectionFailed.usb')
           })
         }
       } catch (e) {
@@ -88,7 +89,7 @@ function Home() {
         } else {
           toast.destructive({
             title: t('toast.connectionFailed.title'),
-            description: state.error || state.authError || t('toast.connectionFailed.ble')
+            description: formatDeviceErrorMessage(state.error || state.authError, t) || t('toast.connectionFailed.ble')
           })
         }
       } catch (e) {
