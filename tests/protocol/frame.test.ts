@@ -17,6 +17,7 @@ test('encodeFrame/decodeFrame round trips payload and extensions', () => {
     flags: FLAG_RESPONSE | FLAG_ENCRYPTED,
     reqId: 0x33,
     ivSync: 0x80000005,
+    result: 0,
     payload,
   })
 
@@ -27,6 +28,7 @@ test('encodeFrame/decodeFrame round trips payload and extensions', () => {
   assert.equal(frame.flags, FLAG_RESPONSE | FLAG_ENCRYPTED)
   assert.equal(frame.reqId, 0x33)
   assert.equal(frame.ivSync, 0x80000005)
+  assert.equal(frame.result, 0)
   assert.deepEqual([...frame.payload], [...payload])
 })
 

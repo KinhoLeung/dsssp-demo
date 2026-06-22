@@ -50,6 +50,7 @@ test('RpcSession matches responses by request id', async () => {
     msgId: 0x1234,
     flags: FLAG_RESPONSE,
     reqId: requestFrame.reqId,
+    result: 0,
     payload: new Uint8Array([9]),
   }))
 
@@ -57,6 +58,39 @@ test('RpcSession matches responses by request id', async () => {
   assert.deepEqual([...response.payload], [9])
 
   await session.stop()
+})
+
+test('RpcSession rejects response frames with missing or non-OK result', async () => {
+  const missingResultTransport = createMockTransport()
+  const missingResultSession = new RpcSession(missingResultTransport)
+  await missingResultSession.start()
+
+  const missingResultPending = missingResultSession.request(0x1235, new Uint8Array(), { timeoutMs: 100 })
+  const missingResultRequest = decodeFrame(missingResultTransport.writes[0])
+  missingResultTransport.emitBytes(encodeFrame({
+    msgId: 0x1235,
+    flags: FLAG_RESPONSE,
+    reqId: missingResultRequest.reqId,
+  }))
+
+  await assert.rejects(missingResultPending, /response missing result/)
+  await missingResultSession.stop()
+
+  const failedResultTransport = createMockTransport()
+  const failedResultSession = new RpcSession(failedResultTransport)
+  await failedResultSession.start()
+
+  const failedResultPending = failedResultSession.request(0x1236, new Uint8Array(), { timeoutMs: 100 })
+  const failedResultRequest = decodeFrame(failedResultTransport.writes[0])
+  failedResultTransport.emitBytes(encodeFrame({
+    msgId: 0x1236,
+    flags: FLAG_RESPONSE,
+    reqId: failedResultRequest.reqId,
+    result: 0x0004,
+  }))
+
+  await assert.rejects(failedResultPending, /VALUE_OUT_OF_RANGE/)
+  await failedResultSession.stop()
 })
 
 test('RpcSession dispatches event frames', async () => {
@@ -119,6 +153,7 @@ test('RpcSession encrypts requests and drops replayed encrypted events', async (
     flags: FLAG_RESPONSE | FLAG_ENCRYPTED,
     reqId: requestFrame.reqId,
     ivSync: 0x80000000,
+    result: 0,
     payload: encryptedResponse,
   }))
 

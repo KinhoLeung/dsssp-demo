@@ -93,7 +93,7 @@ len（2 bytes）
 ext（N bytes）
 
 * 长度：`hdr_len - 7`
-* v1：可选；不使用 ext 时长度为 0；携带 `req_id` 时 ext 长度为 4（hdr_len=11）
+* v1：不使用 ext 时长度为 0；携带 `req_id` 时 ext 长度为 4（hdr_len=11）；设备响应帧必须携带 `req_id` 和 `result`
 * 用途（未来扩展）：
 * 当 flags 开了某些能力（FRAG/ENCRYPTED/COMPRESSED），需要附带参数时可放在 ext
 
@@ -114,6 +114,31 @@ v1 约定的 ext TLV 类型：
 
 * `0x80`：`req_id`，`L=2`，`V=u16 little-endian`。用于并发请求与响应匹配；请求与其响应必须携带相同 `req_id`
 * `0x81`：`iv_sync`，`L=4`，`V=u32 little-endian`。**当 ENCRYPTED=1 时必须存在**。携带本次加密使用的帧计数器（Frame Counter, 32-bit）。
+* `0x82`：`result`，`L=2`，`V=u16 little-endian`。设备响应帧（设备→上位机，`RESPONSE=1`，`EVENT=0`）必须存在，表示命令执行结果。
+
+`result` 状态码：
+
+| 值 | 名称 | 说明 |
+| --- | --- | --- |
+| `0x0000` | `OK` | 成功。 |
+| `0x0001` | `UNKNOWN_MSG` | 未知 msg_id。 |
+| `0x0002` | `BAD_PAYLOAD` | payload 解码失败或格式错误。 |
+| `0x0003` | `INVALID_FIELD` | 字段组合非法或缺少必要字段。 |
+| `0x0004` | `VALUE_OUT_OF_RANGE` | 参数超出设备允许范围。 |
+| `0x0005` | `BUSY` | 设备忙，稍后重试。 |
+| `0x0006` | `NOT_AUTHORIZED` | 未鉴权或权限不足。 |
+| `0x0007` | `UNSUPPORTED` | 当前设备或固件不支持。 |
+| `0x0008` | `APPLY_FAILED` | 参数应用失败。 |
+| `0x0009` | `MODE_LOCKED` | 当前模式锁定，不能修改。 |
+| `0x000a` | `VERSION_MISMATCH` | 版本不匹配。 |
+| `0x00ff` | `INTERNAL_ERROR` | 设备内部错误。 |
+
+响应帧规则：
+
+* 上位机请求帧设置 `RESPONSE=1` 时，必须携带 `req_id`，不携带 `result`。
+* 设备普通响应帧设置 `RESPONSE=1` 且 `EVENT=0`，必须携带同一个 `req_id` 和 `result`。
+* `result=OK` 时，payload 按对应 response protobuf 或原始响应格式解码；没有业务返回值时 payload 长度为 0。
+* `result!=OK` 时，payload 长度应为 0，上位机根据 `result` 映射错误。
 
 payload（len bytes）
 
@@ -1349,13 +1374,23 @@ payload：protobuf `webhmi.SetEqRequest`
 
 ### 6.4 设置系统参数（SetSystem）0x0003
 
-#### 6.4.1 SetSystemRequest（上位机→设备，msg_id=SetSystem 0x0003，RESPONSE=1）
+#### 6.4.1 SetSystemRequest（上位机→设备，msg_id=SetSystem 0x0003，RESPONSE=0/1）
 
 payload：protobuf `webhmi.SetSystemRequest`
+
+仅当请求 patch 包含以下字段之一时，上位机设置 `RESPONSE=1`，设备必须返回 `SetSystemResponse`：
+
+* `bleName`
+* `panelLock`
+* `modeList`
+* `controlMode`
+* `sceneMode`
+
+其他 `SetSystemRequest` 字段默认 `RESPONSE=0`，用于高频或普通参数更新。当前模式切换使用 `SetSystemRequest.currentModeIndex`，不再定义独立切换模式消息。
 
 #### 6.4.2 SetSystemResponse（设备→上位机，msg_id=SetSystem 0x0003，RESPONSE=1）
 
-payload：protobuf `webhmi.SetSystemRequest`
+payload：空或 protobuf `webhmi.SetSystemRequest`；执行结果以 ext `result` 为准。
 
 #### 6.4.3 SetSystemReport（设备→上位机，msg_id=SetSystem 0x0003，RESPONSE=0，EVENT=1）
 
@@ -1443,12 +1478,16 @@ payload：protobuf `webhmi.SetSurroundRequest`
 
 ### 6.13 保存模式（SaveMode）0x000c
 
-#### 6.13.1 SaveModeRequest（上位机→设备，msg_id=SaveMode 0x000c，RESPONSE=0）
+#### 6.13.1 SaveModeRequest（上位机→设备，msg_id=SaveMode 0x000c，RESPONSE=1）
 
 payload：protobuf `webhmi.SaveModeRequest`
 
+设备响应 payload 为空，执行结果以 ext `result` 为准。
+
 ### 6.14 重置EQ参数（ResetEq）0x000d
 
-#### 6.14.1 ResetEqRequest（上位机→设备，msg_id=ResetEq 0x000d，RESPONSE=0）
+#### 6.14.1 ResetEqRequest（上位机→设备，msg_id=ResetEq 0x000d，RESPONSE=1）
 
 payload：protobuf `webhmi.ResetEqRequest`
+
+设备响应 payload 为空，执行结果以 ext `result` 为准。

@@ -7,12 +7,37 @@ export const FLAG_RESPONSE = 1 << 0
 export const FLAG_EVENT = 1 << 1
 export const FLAG_ENCRYPTED = 1 << 2
 
+export const FRAME_RESULT_OK = 0x0000
+
+export const FrameResult = {
+  OK: 0x0000,
+  UNKNOWN_MSG: 0x0001,
+  BAD_PAYLOAD: 0x0002,
+  INVALID_FIELD: 0x0003,
+  VALUE_OUT_OF_RANGE: 0x0004,
+  BUSY: 0x0005,
+  NOT_AUTHORIZED: 0x0006,
+  UNSUPPORTED: 0x0007,
+  APPLY_FAILED: 0x0008,
+  MODE_LOCKED: 0x0009,
+  VERSION_MISMATCH: 0x000a,
+  INTERNAL_ERROR: 0x00ff,
+} as const
+
+export const frameResultName = (result: number) => {
+  for (const [name, value] of Object.entries(FrameResult)) {
+    if (value === result) return name
+  }
+  return `UNKNOWN_RESULT_0x${result.toString(16).padStart(4, '0')}`
+}
+
 export type DecodedFrame = {
   ver: number
   msgId: number
   flags: number
   reqId?: number
   ivSync?: number
+  result?: number
   payload: Uint8Array
   raw: Uint8Array
 }
@@ -22,6 +47,7 @@ export type EncodeFrameParams = {
   flags: number
   reqId?: number
   ivSync?: number
+  result?: number
   payload?: Uint8Array
   ver?: number
 }
@@ -52,7 +78,16 @@ const encodeIvSyncExt = (ivSync: number) => {
   return ext
 }
 
-const parseReqIdFromExt = (ext: Uint8Array): number | undefined => {
+const encodeResultExt = (result: number) => {
+  const ext = new Uint8Array(4)
+  ext[0] = 0x82
+  ext[1] = 0x02
+  ext[2] = result & 0xff
+  ext[3] = (result >>> 8) & 0xff
+  return ext
+}
+
+const parseU16Ext = (ext: Uint8Array, type: number): number | undefined => {
   let offset = 0
   while (offset + 2 <= ext.length) {
     const t = ext[offset]
@@ -60,13 +95,17 @@ const parseReqIdFromExt = (ext: Uint8Array): number | undefined => {
     offset += 2
     if (offset + l > ext.length) return undefined
 
-    if (t === 0x80 && l === 2) {
+    if (t === type && l === 2) {
       return ext[offset] | (ext[offset + 1] << 8)
     }
     offset += l
   }
   return undefined
 }
+
+const parseReqIdFromExt = (ext: Uint8Array): number | undefined => parseU16Ext(ext, 0x80)
+
+const parseResultFromExt = (ext: Uint8Array): number | undefined => parseU16Ext(ext, 0x82)
 
 const parseIvSyncFromExt = (ext: Uint8Array): number | undefined => {
   let offset = 0
@@ -90,8 +129,9 @@ export const encodeFrame = (params: EncodeFrameParams): Uint8Array => {
   const payload = params.payload ?? new Uint8Array()
   const extReqId = typeof params.reqId === 'number' ? encodeReqIdExt(params.reqId) : new Uint8Array()
   const extIvSync = typeof params.ivSync === 'number' ? encodeIvSyncExt(params.ivSync) : new Uint8Array()
+  const extResult = typeof params.result === 'number' ? encodeResultExt(params.result) : new Uint8Array()
 
-  const extLen = extReqId.length + extIvSync.length
+  const extLen = extReqId.length + extIvSync.length + extResult.length
   const hdrLen = 7 + extLen
 
   const totalLen = 2 + hdrLen + payload.length + 2
@@ -109,6 +149,7 @@ export const encodeFrame = (params: EncodeFrameParams): Uint8Array => {
   // Append Extensions
   out.set(extReqId, 9)
   out.set(extIvSync, 9 + extReqId.length)
+  out.set(extResult, 9 + extReqId.length + extIvSync.length)
 
   out.set(payload, 9 + extLen)
 
@@ -143,8 +184,8 @@ export const decodeFrame = (raw: Uint8Array): DecodedFrame => {
   const ext = raw.subarray(9, 9 + extLen)
   const reqId = parseReqIdFromExt(ext)
   const ivSync = parseIvSyncFromExt(ext)
+  const result = parseResultFromExt(ext)
   const payload = raw.subarray(9 + extLen, 9 + extLen + payloadLen)
 
-  return { ver, msgId, flags, reqId, ivSync, payload, raw }
+  return { ver, msgId, flags, reqId, ivSync, result, payload, raw }
 }
-

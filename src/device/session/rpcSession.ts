@@ -1,4 +1,12 @@
-import { encodeFrame, FLAG_EVENT, FLAG_RESPONSE, FLAG_ENCRYPTED, type DecodedFrame } from '../protocol/frame'
+import {
+  encodeFrame,
+  FLAG_EVENT,
+  FLAG_RESPONSE,
+  FLAG_ENCRYPTED,
+  FRAME_RESULT_OK,
+  frameResultName,
+  type DecodedFrame,
+} from '../protocol/frame'
 import { FrameStreamDecoder } from '../protocol/streamDecoder'
 import type { Transport } from '../transport'
 
@@ -10,6 +18,17 @@ type InFlight = {
   resolve: (frame: DecodedFrame) => void
   reject: (error: Error) => void
   timeoutId: number
+}
+
+export class RpcCommandError extends Error {
+  constructor(
+    readonly msgId: number,
+    readonly reqId: number,
+    readonly result: number,
+  ) {
+    super(`Command failed (msg_id=0x${msgId.toString(16)}, req_id=${reqId}, result=${frameResultName(result)})`)
+    this.name = 'RpcCommandError'
+  }
 }
 
 export class RpcSession {
@@ -219,7 +238,7 @@ export class RpcSession {
       }
     }
 
-    console.debug(`[RpcSession] RX msgId=0x${frame.msgId.toString(16)} flags=${frame.flags} reqId=${frame.reqId} len=${frame.payload.length}`)
+    console.debug(`[RpcSession] RX msgId=0x${frame.msgId.toString(16)} flags=${frame.flags} reqId=${frame.reqId} result=${frame.result} len=${frame.payload.length}`)
 
     if (frame.flags & FLAG_EVENT) {
       for (const handler of this.eventHandlers) handler(frame)
@@ -232,6 +251,14 @@ export class RpcSession {
       if (!entry) return
       this.inFlight.delete(frame.reqId)
       clearTimeout(entry.timeoutId)
+      if (typeof frame.result !== 'number') {
+        entry.reject(new Error(`Protocol error: response missing result (msg_id=0x${frame.msgId.toString(16)}, req_id=${frame.reqId})`))
+        return
+      }
+      if (frame.result !== FRAME_RESULT_OK) {
+        entry.reject(new RpcCommandError(frame.msgId, frame.reqId, frame.result))
+        return
+      }
       entry.resolve(frame)
     }
   }

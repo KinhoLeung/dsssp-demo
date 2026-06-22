@@ -72,6 +72,20 @@ export function useDeviceSession(
       const pb = getWebhmiNamespace()
 
       const unsub = nextClient.onEvent(({ msgId, payload }) => {
+        if (msgId === MsgId.SetSystem) {
+          try {
+            const msg = pb.SetSystemRequest.decode(payload)
+            const patch = pb.SetSystemRequest.toObject(msg, { defaults: false })
+            if (patch.currentModeIndex !== undefined) {
+              void queue.refreshDb(nextClient)
+              return
+            }
+          } catch (e) {
+            console.error(`[web:rx] failed to decode EVENT msgId=0x${msgId.toString(16)}:`, e)
+            return
+          }
+        }
+
         queue.updateDbDraft((db) => {
           if (!db.db) return db
           try {

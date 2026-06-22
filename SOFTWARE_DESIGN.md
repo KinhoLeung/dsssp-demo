@@ -235,7 +235,7 @@ System 面板负责全局设备参数和配置管理。
 - 音量和默认音量会根据设备提供的最大值动态收紧范围。
 - 最大音量会根据默认音量动态收紧最小值，避免默认值高于最大值。
 - `modeList` 由设备 DB 提供，页面不固定模式数量。
-- `switchCurrentMode` 执行后会刷新数据库，保证页面显示的是切换后的真实参数。
+- 当前模式切换通过 `SetSystem.currentModeIndex` 执行，发送成功后会刷新数据库，保证页面显示的是切换后的真实参数。
 
 ### 3.4 Music 功能
 
@@ -526,9 +526,8 @@ DeviceConfig
 | `0x0009` | `SetSubOutput` | 设置超低音输出参数。 |
 | `0x000a` | `SetCenter` | 设置中置输出参数。 |
 | `0x000b` | `SetSurround` | 设置环绕输出参数。 |
-| `0x000c` | `SwitchCurrentMode` | 切换当前模式。 |
-| `0x000d` | `SaveMode` | 保存当前参数到指定模式。 |
-| `0x000e` | `ResetEq` | 重置 EQ。 |
+| `0x000c` | `SaveMode` | 保存当前参数到指定模式。 |
+| `0x000d` | `ResetEq` | 重置 EQ。 |
 
 ### 5.2 数据帧格式
 
@@ -549,7 +548,7 @@ payload_len(2 LE) | ext(N) | payload(M) | crc16(2 LE)
 | `msg_id` | 业务消息 ID，小端。 |
 | `flags` | 响应、事件、加密等标志位。 |
 | `payload_len` | payload 长度，小端。 |
-| `ext` | 扩展区，当前支持 `req_id` 和 `ivSync`。 |
+| `ext` | 扩展区，当前支持 `req_id`、`ivSync` 和 `result`。 |
 | `payload` | 业务数据，Auth 除外均为 protobuf。 |
 | `crc16` | 对 `ver` 到 payload 末尾做 CRC16-CCITT-FALSE。 |
 
@@ -569,6 +568,9 @@ payload_len(2 LE) | ext(N) | payload(M) | crc16(2 LE)
 | --- | --- | --- |
 | `0x80` | `0x02` | `req_id`，用于请求响应匹配。 |
 | `0x81` | `0x04` | `ivSync`，用于 AES-CTR counter 同步。 |
+| `0x82` | `0x02` | `result`，设备响应帧的命令执行结果。 |
+
+设备普通响应帧（设备到上位机，`FLAG_RESPONSE=1` 且 `FLAG_EVENT=0`）必须包含 `req_id` 和 `result`。`result=0x0000` 表示成功；非 0 表示设备拒绝或执行失败，`RpcSession` 会 reject 对应请求。
 
 ### 5.5 流式解码
 
@@ -596,8 +598,10 @@ payload_len(2 LE) | ext(N) | payload(M) | crc16(2 LE)
 
 无响应请求：
 
-- SetEq、SetMusic、SetMic、SetReverb、SetEcho、SetMainOutput、SetSubOutput、SetCenter、SetSurround、SaveMode、ResetEq 默认 `expectResponse: false`。
-- SetSystem 和 SwitchCurrentMode 当前期望响应。
+- SetEq、SetMusic、SetMic、SetReverb、SetEcho、SetMainOutput、SetSubOutput、SetCenter、SetSurround 默认 `expectResponse: false`。
+- SetSystem 仅在 patch 包含 `bleName`、`panelLock`、`modeList`、`controlMode`、`sceneMode` 时期望响应；其他 System 字段默认无响应。
+- SaveMode、ResetEq 作为关键命令期望响应。
+- 当前模式切换通过 `SetSystem.currentModeIndex` 完成，不再使用独立切换模式消息。
 
 ### 5.7 GetDb 分段读取
 
@@ -784,9 +788,8 @@ PendingPatches
 - `SetCenter`
 - `SetSurround`
 - `SaveMode`
-- `SwitchCurrentMode`
 
-Set 类事件会解码 request payload 并 patch 本地 DB。`SwitchCurrentMode` 事件触发 `refreshDb`，保证模式切换后所有参数重新对齐设备真实状态。
+Set 类事件会解码 request payload 并 patch 本地 DB。`SetSystem.currentModeIndex` 代表当前模式切换，收到后触发 `refreshDb`，保证模式切换后所有参数重新对齐设备真实状态。
 
 ## 8. 连接与断连设计
 
@@ -1188,7 +1191,7 @@ BLE：
 - 失败后 500ms 起指数退避，最大 10s。
 - 发送中继续修改参数时，发送完成后继续 flush。
 - 设备主动事件能 patch 本地 DB。
-- SwitchCurrentMode 事件能触发整库刷新。
+- SetSystem.currentModeIndex 事件能触发整库刷新。
 
 ## 16. 已知边界与注意事项
 

@@ -283,7 +283,21 @@ export class WebhmiClient {
   async setSystem(request: webhmi.ISetSystemRequest) {
     this.logRequest('SetSystemRequest', request, this.pb.SetSystemRequest)
     const payload = this.pb.SetSystemRequest.encode(request).finish()
-    await this.session.request(MsgId.SetSystem, payload)
+    const expectResponse = this.shouldExpectSetSystemResponse(request)
+    const frame = await this.session.request(MsgId.SetSystem, payload, { expectResponse })
+    if (!expectResponse) return
+    if (!frame) throw new Error('SetSystem failed: no response')
+    if (frame.payload.length > 0) this.logResponse('SetSystemResponse', frame.payload, this.pb.SetSystemRequest)
+  }
+
+  private shouldExpectSetSystemResponse(request: webhmi.ISetSystemRequest) {
+    return (
+      request.bleName !== undefined ||
+      request.panelLock !== undefined ||
+      Object.prototype.hasOwnProperty.call(request, 'modeList') ||
+      request.controlMode !== undefined ||
+      request.sceneMode !== undefined
+    )
   }
 
   async setMusic(request: webhmi.ISetMusicRequest) {
@@ -337,13 +351,13 @@ export class WebhmiClient {
   async saveMode(request: webhmi.ISaveModeRequest) {
     this.logRequest('SaveModeRequest', request, this.pb.SaveModeRequest)
     const payload = this.pb.SaveModeRequest.encode(request).finish()
-    await this.session.request(MsgId.SaveMode, payload, { expectResponse: false })
+    await this.session.request(MsgId.SaveMode, payload)
   }
 
   async resetEq(request: webhmi.IResetEqRequest) {
     this.logRequest('ResetEqRequest', request, this.pb.ResetEqRequest)
     const payload = this.pb.ResetEqRequest.encode(request).finish()
-    await this.session.request(MsgId.ResetEq, payload, { expectResponse: false })
+    await this.session.request(MsgId.ResetEq, payload)
   }
 
 }
