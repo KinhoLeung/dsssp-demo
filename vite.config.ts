@@ -65,6 +65,7 @@ const getBase = (mode: string) => {
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
+  const dropConsole = process.env.VITE_DROP_CONSOLE === 'true'
   return {
     plugins: [
       svgr(),
@@ -100,6 +101,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        '@protobufjs/inquire': path.resolve(__dirname, './src/shims/protobufjs-inquire-browser.cjs'),
       },
     },
     server: {
@@ -113,7 +115,7 @@ export default defineConfig(({ mode }) => {
       minify: 'terser', // 指定使用 terser
       terserOptions: {
         compress: {
-          drop_console: true, // 生产环境移除 console
+          drop_console: dropConsole, // 生产环境移除 console
           // 需要保留 src/utils/security.ts 的反调试 debugger；不要全局移除
           drop_debugger: false,
         },
@@ -169,3 +171,4 @@ export default defineConfig(({ mode }) => {
     }
   }
 })
+
