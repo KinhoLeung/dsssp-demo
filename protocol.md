@@ -118,18 +118,18 @@ v1 约定的 ext TLV 类型：
 
 `result` 状态码：
 
-| 值 | 名称 | 说明 |
-| --- | --- | --- |
-| `0x0000` | `OK` | 成功。 |
-| `0x0001` | `FAILED` | 操作失败。 |
-| `0x0002` | `INVALID_PARAMETER` | 参数无效或缺少必要参数。 |
-| `0x0003` | `OUT_OF_RANGE` | 参数超出设备允许范围。 |
-| `0x0004` | `BUSY` | 设备忙，稍后重试。 |
-| `0x0005` | `PERMISSION_DENIED` | 当前无权限执行该操作。 |
-| `0x0006` | `NOT_SUPPORTED` | 当前设备、固件或配置不支持该功能。 |
-| `0x0007` | `UNAVAILABLE_IN_CURRENT_STATE` | 当前状态或模式下不可执行该操作。 |
-| `0x0008` | `VERSION_NOT_SUPPORTED` | 软件或固件版本不兼容。 |
-| `0x00ff` | `DEVICE_ERROR` | 设备异常。 |
+| 值         | 名称                             | 说明                               |
+| ---------- | -------------------------------- | ---------------------------------- |
+| `0x0000` | `OK`                           | 成功。                             |
+| `0x0001` | `FAILED`                       | 操作失败。                         |
+| `0x0002` | `INVALID_PARAMETER`            | 参数无效或缺少必要参数。           |
+| `0x0003` | `OUT_OF_RANGE`                 | 参数超出设备允许范围。             |
+| `0x0004` | `BUSY`                         | 设备忙，稍后重试。                 |
+| `0x0005` | `PERMISSION_DENIED`            | 当前无权限执行该操作。             |
+| `0x0006` | `NOT_SUPPORTED`                | 当前设备、固件或配置不支持该功能。 |
+| `0x0007` | `UNAVAILABLE_IN_CURRENT_STATE` | 当前状态或模式下不可执行该操作。   |
+| `0x0008` | `VERSION_NOT_SUPPORTED`        | 软件或固件版本不兼容。             |
+| `0x00ff` | `DEVICE_ERROR`                 | 设备异常。                         |
 
 `result` 是面向客户和业务流程的执行结果，不用于暴露协议解析、通信实现或上位机内部细节。未知 `msg_id`、payload 解码失败、字段组合错误等底层原因应由上位机或设备日志记录；客户界面应根据上述状态码映射为统一、友好的错误提示。
 
@@ -161,22 +161,22 @@ crc16（2 bytes）
 
 控制字可供使用的有65,536个（0x0000—0xFFFF），可根据实际应用需求进行扩充，具体定义见下表：
 
-| msg_id | 含义              | 说明                          |
-| ------ | ----------------- | ----------------------------- |
-| 0x0000 | Auth              | 认证设备 + 密钥协商 (ECDH)    |
-| 0x0001 | GetDb             | 获取设备可配置数据数据库      |
-| 0x0002 | SetEq             | 设置 EQ 参数（patch）         |
-| 0x0003 | SetSystem         | 设置系统参数（patch）         |
-| 0x0004 | SetMusic          | 设置 Music 参数（patch）      |
-| 0x0005 | SetMic            | 设置 Mic 参数（patch）        |
-| 0x0006 | SetReverb         | 设置 Reverb 参数（patch）     |
-| 0x0007 | SetEcho           | 设置 Echo 参数（patch）       |
-| 0x0008 | SetMainOutput     | 设置 MainOutput 参数（patch） |
-| 0x0009 | SetSubOutput      | 设置 SubOutput 参数（patch）  |
-| 0x000a | SetCenter         | 设置 Center 参数（patch）     |
-| 0x000b | SetSurround       | 设置 Surround 参数（patch）  |
-| 0x000c | SaveMode          | 保存当前模式参数              |
-| 0x000d | ResetEq           | 重置EQ参数                    |
+| msg_id | 含义          | 说明                          |
+| ------ | ------------- | ----------------------------- |
+| 0x0000 | Auth          | 认证设备 + 密钥协商 (ECDH)    |
+| 0x0001 | GetDb         | 获取设备可配置数据数据库      |
+| 0x0002 | SetEq         | 设置 EQ 参数（patch）         |
+| 0x0003 | SetSystem     | 设置系统参数（patch）         |
+| 0x0004 | SetMusic      | 设置 Music 参数（patch）      |
+| 0x0005 | SetMic        | 设置 Mic 参数（patch）        |
+| 0x0006 | SetReverb     | 设置 Reverb 参数（patch）     |
+| 0x0007 | SetEcho       | 设置 Echo 参数（patch）       |
+| 0x0008 | SetMainOutput | 设置 MainOutput 参数（patch） |
+| 0x0009 | SetSubOutput  | 设置 SubOutput 参数（patch）  |
+| 0x000a | SetCenter     | 设置 Center 参数（patch）     |
+| 0x000b | SetSurround   | 设置 Surround 参数（patch）  |
+| 0x000c | SaveMode      | 保存当前模式参数              |
+| 0x000d | ResetEq       | 重置EQ参数                    |
 
 ## 5 安全机制与交互流程
 
