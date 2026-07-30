@@ -26,7 +26,7 @@ function App() {
   ]
 
   return (
-    <div className="min-h-screen" onContextMenuCapture={(e) => e.preventDefault()}>
+    <div className="min-h-screen">
       <Navbar>
         <NavBody>
           <NavbarLogo />

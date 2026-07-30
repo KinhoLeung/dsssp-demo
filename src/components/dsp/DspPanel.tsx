@@ -169,6 +169,7 @@ export function DspPanel({
         <div
           ref={graphContainerRef}
           className={`shadow-sm shadow-black relative w-full ${disabled ? 'pointer-events-none' : ''}`}
+          onContextMenu={(event) => event.preventDefault()}
         >
           {graphWidth > 0 && (
             <FrequencyResponseGraph
