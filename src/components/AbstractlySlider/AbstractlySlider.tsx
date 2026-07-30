@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { AbstractlySliderHandleBg } from './AbstractlySliderHandleBg'
+import { AbstractlySliderHorizontalHandleBg } from './AbstractlySliderHorizontalHandleBg'
 import './AbstractlySlider.css'
 
 function clamp(value: number, min: number, max: number) {
@@ -94,6 +95,7 @@ export type AbstractlySliderProps = {
   max?: number
   step?: number
   onChange?: (nextValue: number) => void
+  orientation?: 'vertical' | 'horizontal'
   ledOpacity?: number
   showLed?: boolean
   ledColor?: string
@@ -111,6 +113,7 @@ export function AbstractlySlider({
   max = 100,
   step = 1,
   onChange,
+  orientation = 'vertical',
   ledOpacity,
   showLed = true,
   ledColor,
@@ -142,6 +145,7 @@ export function AbstractlySlider({
 
   const fraction = max === min ? 0 : (currentValue - min) / (max - min)
   const computedLedOpacity = clamp(ledOpacity != null ? ledOpacity : fraction, 0, 1)
+  const isHorizontal = orientation === 'horizontal'
 
   const commitValue = React.useCallback(
     (nextValue: number) => {
@@ -153,24 +157,36 @@ export function AbstractlySlider({
     [isControlled, min, max, step, onChange]
   )
 
-  const updateFromClientY = React.useCallback(
-    (clientY: number, element: HTMLDivElement, pointerOffset = 0) => {
+  const updateFromClientPosition = React.useCallback(
+    (
+      clientX: number,
+      clientY: number,
+      element: HTMLDivElement,
+      pointerOffset = 0
+    ) => {
       const rect = element.getBoundingClientRect()
       const handle = element.querySelector<HTMLElement>('.rangeslider__handle')
-      const handleHeight = handle?.getBoundingClientRect().height ?? 0
-      const halfHandle = handleHeight / 2
-      const minY = rect.top + halfHandle
-      const maxY = rect.bottom - halfHandle
-      const safeMinY = Math.min(minY, maxY)
-      const safeMaxY = Math.max(minY, maxY)
-      const adjustedY = clientY - pointerOffset
-      const y = clamp(adjustedY, safeMinY, safeMaxY)
-      const usableHeight = safeMaxY - safeMinY
-      const normalized = usableHeight === 0 ? 0 : 1 - (y - safeMinY) / usableHeight
+      const handleRect = handle?.getBoundingClientRect()
+      const handleSize = isHorizontal ? (handleRect?.width ?? 0) : (handleRect?.height ?? 0)
+      const halfHandle = handleSize / 2
+      const minPosition = (isHorizontal ? rect.left : rect.top) + halfHandle
+      const maxPosition = (isHorizontal ? rect.right : rect.bottom) - halfHandle
+      const safeMinPosition = Math.min(minPosition, maxPosition)
+      const safeMaxPosition = Math.max(minPosition, maxPosition)
+      const clientPosition = isHorizontal ? clientX : clientY
+      const adjustedPosition = clientPosition - pointerOffset
+      const position = clamp(adjustedPosition, safeMinPosition, safeMaxPosition)
+      const usableLength = safeMaxPosition - safeMinPosition
+      const normalized =
+        usableLength === 0
+          ? 0
+          : isHorizontal
+            ? (position - safeMinPosition) / usableLength
+            : 1 - (position - safeMinPosition) / usableLength
       const next = min + normalized * (max - min)
       commitValue(next)
     },
-    [min, max, commitValue]
+    [isHorizontal, min, max, commitValue]
   )
 
   const trackRef = React.useRef<HTMLDivElement | null>(null)
@@ -223,14 +239,15 @@ export function AbstractlySlider({
       const targetNode = event.target instanceof Node ? event.target : null
       if (handle && targetNode && handle.contains(targetNode)) {
         const handleRect = handle.getBoundingClientRect()
-        pointerOffsetRef.current =
-          event.clientY - (handleRect.top + handleRect.height / 2)
+        pointerOffsetRef.current = isHorizontal
+          ? event.clientX - (handleRect.left + handleRect.width / 2)
+          : event.clientY - (handleRect.top + handleRect.height / 2)
         return
       }
 
-      updateFromClientY(event.clientY, element)
+      updateFromClientPosition(event.clientX, event.clientY, element)
     },
-    [disabled, updateFromClientY]
+    [disabled, isHorizontal, updateFromClientPosition]
   )
 
   const onFocus = React.useCallback(() => {
@@ -250,9 +267,14 @@ export function AbstractlySlider({
       if (activePointerIdRef.current == null) return
       if (event.pointerId !== activePointerIdRef.current) return
       event.preventDefault()
-      updateFromClientY(event.clientY, event.currentTarget, pointerOffsetRef.current)
+      updateFromClientPosition(
+        event.clientX,
+        event.clientY,
+        event.currentTarget,
+        pointerOffsetRef.current
+      )
     },
-    [disabled, updateFromClientY]
+    [disabled, updateFromClientPosition]
   )
 
   const onPointerUpOrCancel = React.useCallback(
@@ -324,7 +346,7 @@ export function AbstractlySlider({
     return { ...(style ?? {}), ...ledVars } as React.CSSProperties
   }, [ledVars, style])
 
-  const rootClassName = ['ab-slider', themeClass, className]
+  const rootClassName = ['ab-slider', `ab-slider--${orientation}`, themeClass, className]
     .filter((item): item is string => Boolean(item))
     .join(' ')
 
@@ -344,14 +366,14 @@ export function AbstractlySlider({
         <div
           className={[
             'rangeslider',
-            'rangeslider-vertical',
+            isHorizontal ? 'rangeslider-horizontal' : 'rangeslider-vertical',
             showFocusRing ? 'ab-slider-focus-ring' : null,
           ]
             .filter(Boolean)
             .join(' ')}
           ref={trackRef}
           role="slider"
-          aria-orientation="vertical"
+          aria-orientation={orientation}
           aria-label={ariaLabel}
           aria-valuemin={min}
           aria-valuemax={max}
@@ -373,7 +395,11 @@ export function AbstractlySlider({
         >
           <div className="rangeslider__fill" />
           <div className="rangeslider__handle" aria-hidden="true">
-            <AbstractlySliderHandleBg />
+            {isHorizontal ? (
+              <AbstractlySliderHorizontalHandleBg />
+            ) : (
+              <AbstractlySliderHandleBg />
+            )}
           </div>
         </div>
       </div>

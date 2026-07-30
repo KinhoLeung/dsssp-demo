@@ -14,11 +14,18 @@ export function Example() {
 }
 ```
 
+横向使用：
+
+```jsx
+<AbstractlySlider orientation="horizontal" value={value} onChange={setValue} />
+```
+
 ## Props
 
 - `value` / `defaultValue`: 当前值（0~100，默认 0）
 - `onChange(nextValue)`
 - `min` / `max` / `step`
+- `orientation`：`"vertical" | "horizontal"`（默认 `"vertical"`）
 - `ledOpacity`：LED 亮度（0~1）。不传时会用 `(value - min) / (max - min)` 自动计算
 - `showLed`：是否显示顶部 LED（默认 `true`）
 - `ledColor`：LED 亮灯颜色（支持 `#RGB/#RRGGBB`；其它 CSS 颜色会降级为纯色）
