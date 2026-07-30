@@ -232,6 +232,13 @@ export function DspPanel({
           )}
 
           <div className="absolute top-0 left-0 w-full h-full pointer-events-none bg-transparent mix-blend-overlay"></div>
+          {bypass && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="select-none text-4xl font-bold tracking-[0.18em] text-zinc-500 sm:text-7xl sm:tracking-[0.25em]">
+                BYPASS
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Desktop View: All filter cards in a row */}
