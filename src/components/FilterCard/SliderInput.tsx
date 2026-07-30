@@ -95,6 +95,9 @@ const SliderInput = ({
     const handleWheel = (event: WheelEvent) => {
       const latest = latestRef.current
       if (latest.disabled) return
+      const target = event.target instanceof Element ? event.target : null
+      if (!target?.closest('.rangeslider')) return
+
       event.preventDefault()
       const direction = event.deltaY < 0 ? 1 : -1
       const resolvedLatestStep = normalizeStep(latest.step)
