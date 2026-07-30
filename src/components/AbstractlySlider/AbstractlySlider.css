@@ -74,17 +74,11 @@
   --ab-slider-handle-width: 53px;
   --ab-slider-handle-height: 22px;
   --ab-slider-handle-offset-y: -9px;
-  --ab-slider-tickmarks-url: url("./ab-slider-tickmarks-horizontal-light.svg");
 
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-}
-
-.ab-slider.ab-slider--horizontal.ab-slider--dark,
-.dark .ab-slider.ab-slider--horizontal.ab-slider--auto {
-  --ab-slider-tickmarks-url: url("./ab-slider-tickmarks-horizontal.svg");
 }
 
 .ab-slider .ab-slider-innerplate {
@@ -111,6 +105,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background-image: none;
 }
 
 .ab-slider .ab-slider-led-wrapper {
