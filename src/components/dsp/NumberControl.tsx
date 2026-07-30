@@ -1,16 +1,11 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { uiTextKey } from './dspUtils'
+import { clampNumber, PreciseValueButton } from './PreciseValueButton'
 
-import {
-  NumberField,
-  NumberFieldDecrementTrigger,
-  NumberFieldGroup,
-  NumberFieldIncrementTrigger,
-  NumberFieldInput,
-  NumberFieldLabel,
-} from '@/components/ui/number-field'
+import { AbstractlySlider } from '@/components/AbstractlySlider'
+import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 
 export type NumberControlProps = {
@@ -38,29 +33,55 @@ export function NumberControl({
 }: NumberControlProps) {
   const { t } = useTranslation()
   const translatedLabel = t(`uiText.${uiTextKey(label)}`, { defaultValue: label })
+  const sliderMin = min ?? 0
+  const sliderMax = max ?? 100
+  const hasValue = typeof value === 'number' && Number.isFinite(value)
+  const currentValue = hasValue ? clampNumber(value, sliderMin, sliderMax) : sliderMin
 
   return (
-    <div className={cn('flex items-end gap-1', className)}>
-      <NumberField
-        value={value ?? undefined}
-        onValueChange={(next) => {
-          if (typeof next !== 'number' || Number.isNaN(next)) return
-          onChange(next)
-        }}
-        step={step}
-        min={min}
-        max={max}
-        disabled={disabled}
-        className="flex-1 gap-1"
-      >
-        <NumberFieldLabel className="text-xs text-muted-foreground">{translatedLabel}</NumberFieldLabel>
-        <NumberFieldGroup>
-          <NumberFieldDecrementTrigger />
-          <NumberFieldInput className="text-sm tabular-nums" />
-          <NumberFieldIncrementTrigger />
-        </NumberFieldGroup>
-      </NumberField>
-      {extra && <div className="mb-[1px]">{extra}</div>}
+    <div className={cn('flex items-end gap-2', className)}>
+      <div className="min-w-0 flex-1 flex flex-col gap-1">
+        <div className="flex items-center justify-between gap-3">
+          <Label className="text-xs text-muted-foreground font-medium">{translatedLabel}</Label>
+          <PreciseValueButton
+            label={translatedLabel}
+            value={currentValue}
+            hasValue={hasValue}
+            min={sliderMin}
+            max={sliderMax}
+            step={step}
+            disabled={disabled}
+            onCommit={onChange}
+          />
+        </div>
+        <AbstractlySlider
+          orientation="horizontal"
+          value={currentValue}
+          min={sliderMin}
+          max={sliderMax}
+          step={step}
+          disabled={disabled}
+          showLed={false}
+          className="ab-slider--no-shell ab-slider--dark"
+          aria-label={translatedLabel}
+          onChange={onChange}
+          style={
+            {
+              '--ab-slider-width': '100%',
+              '--ab-slider-min-height': '34px',
+              '--ab-slider-innerplate-width': '100%',
+              '--ab-slider-innerplate-min-height': '32px',
+              '--ab-slider-innerplate-padding-y': '10px',
+              '--ab-slider-track-width': '100%',
+              '--ab-slider-track-height': '6px',
+              '--ab-slider-handle-width': '54px',
+              '--ab-slider-handle-height': '25px',
+              '--ab-slider-handle-offset-y': '-10px',
+            } as CSSProperties
+          }
+        />
+      </div>
+      {extra && <div className="pb-[5px]">{extra}</div>}
     </div>
   )
 }

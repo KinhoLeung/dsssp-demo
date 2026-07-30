@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -9,13 +9,11 @@ import {
   type SelectOption,
 } from './dspUtils'
 import { EffectPanel } from './EffectPanel'
-import {
-  NumberControl,
-  ToggleControl,
-} from './index'
+import { ToggleControl } from './index'
 import { MicPanel, type MicPanelKey } from './MicPanel'
 import { MusicPanel } from './MusicPanel'
 import { OutputPanel } from './OutputPanel'
+import { PreciseValueButton } from './PreciseValueButton'
 import { SystemPanel } from './SystemPanel'
 import { useConfigImportExport } from './useConfigImportExport'
 import { useEqPanelState } from './useEqPanelState'
@@ -26,12 +24,13 @@ import {
 } from './useOutputScene'
 import { buildTuningVisibility, getInitialTuningTab } from './visibilityRules'
 
+import { AbstractlySlider } from '@/components/AbstractlySlider'
 import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { buildParameterRanges, clampToRange, withRangeBounds } from '@/configs/parameterRanges'
+import { buildParameterRanges, clampToRange, type RangeConfig, withRangeBounds } from '@/configs/parameterRanges'
 import { webhmi } from '@/device/proto/generated/webhmi'
 import { formatDeviceErrorMessage } from '@/device/utils/errorMessages'
 import { toast } from '@/hooks/use-toast'
@@ -41,6 +40,74 @@ import { useTuningState } from '@/hooks/useTuningState'
 
 export type GenericTuningPageProps = {
   isDemoMode: boolean
+}
+
+type SystemVolumeSliderProps = {
+  label: string
+  value?: number | null
+  range: RangeConfig
+  disabled?: boolean
+  uiText: (text: string) => string
+  onChange: (value: number) => void
+}
+
+function SystemVolumeSlider({
+  label,
+  value,
+  range,
+  disabled,
+  uiText,
+  onChange,
+}: SystemVolumeSliderProps) {
+  const hasValue = typeof value === 'number' && Number.isFinite(value)
+  const currentValue = hasValue
+    ? clampToRange(value, range)
+    : range.min
+  const translatedLabel = uiText(label)
+
+  return (
+    <div className="w-36 flex flex-col gap-1">
+      <div className="flex items-center justify-between gap-3">
+        <Label className="text-xs text-muted-foreground font-medium">{translatedLabel}</Label>
+        <PreciseValueButton
+          label={translatedLabel}
+          value={currentValue}
+          hasValue={hasValue}
+          min={range.min}
+          max={range.max}
+          step={range.step}
+          disabled={disabled}
+          onCommit={onChange}
+        />
+      </div>
+      <AbstractlySlider
+        orientation="horizontal"
+        value={currentValue}
+        min={range.min}
+        max={range.max}
+        step={range.step}
+        disabled={disabled}
+        showLed={false}
+        className="ab-slider--no-shell ab-slider--dark"
+        aria-label={translatedLabel}
+        onChange={onChange}
+        style={
+          {
+            '--ab-slider-width': '144px',
+            '--ab-slider-min-height': '34px',
+            '--ab-slider-innerplate-width': '144px',
+            '--ab-slider-innerplate-min-height': '32px',
+            '--ab-slider-innerplate-padding-y': '10px',
+            '--ab-slider-track-width': '124px',
+            '--ab-slider-track-height': '6px',
+            '--ab-slider-handle-width': '54px',
+            '--ab-slider-handle-height': '25px',
+            '--ab-slider-handle-offset-y': '-10px',
+          } as CSSProperties
+        }
+      />
+    </div>
+  )
 }
 
 export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
@@ -332,32 +399,32 @@ export function GenericTuningPage({ isDemoMode }: GenericTuningPageProps) {
               <Separator orientation="horizontal" className="sm:hidden w-full bg-zinc-800 my-2" />
 
               <div className="flex flex-wrap items-end gap-6 justify-center">
-                <NumberControl
+                <SystemVolumeSlider
                   label="Music Volume"
                   value={systemDb.musicVolume ?? undefined}
-                  {...systemMusicVolumeRange}
+                  range={systemMusicVolumeRange}
                   disabled={systemDisabled}
-                  className="w-32"
+                  uiText={uiText}
                   onChange={(value) => {
                     actions.queueSystem({ musicVolume: clampToRange(Math.round(value), systemMusicVolumeRange) })
                   }}
                 />
-                <NumberControl
+                <SystemVolumeSlider
                   label="Mic Volume"
                   value={systemDb.micVolume ?? undefined}
-                  {...systemMicVolumeRange}
+                  range={systemMicVolumeRange}
                   disabled={systemDisabled}
-                  className="w-32"
+                  uiText={uiText}
                   onChange={(value) => {
                     actions.queueSystem({ micVolume: clampToRange(Math.round(value), systemMicVolumeRange) })
                   }}
                 />
-                <NumberControl
+                <SystemVolumeSlider
                   label="Effect Volume"
                   value={systemDb.effectVolume ?? undefined}
-                  {...systemEffectVolumeRange}
+                  range={systemEffectVolumeRange}
                   disabled={systemDisabled}
-                  className="w-32"
+                  uiText={uiText}
                   onChange={(value) => {
                     actions.queueSystem({ effectVolume: clampToRange(Math.round(value), systemEffectVolumeRange) })
                   }}
