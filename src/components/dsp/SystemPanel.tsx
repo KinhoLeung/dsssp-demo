@@ -126,6 +126,10 @@ export function SystemPanel({
 }: SystemPanelProps) {
   const { t } = useTranslation()
 
+  const applyModeSelection = (value: string) => {
+    actions.queueSystem({ currentModeIndex: Number(value) })
+    void actions.flushNow()
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -251,10 +255,7 @@ export function SystemPanel({
                 </Label>
                   <Select
                     value={systemModeValue}
-                    onValueChange={(value) => {
-                      actions.queueSystem({ currentModeIndex: Number(value) })
-                      void actions.flushNow()
-                    }}
+                    onValueChange={applyModeSelection}
                     disabled={disabled}
                   >
                   <SelectTrigger className="w-full">
@@ -262,7 +263,19 @@ export function SystemPanel({
                   </SelectTrigger>
                   <SelectContent>
                     {systemModeOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
+                      <SelectItem
+                        key={option.value}
+                        value={option.value}
+                        onPointerUp={(event) => {
+                          if (disabled || option.value !== systemModeValue || event.button !== 0) return
+                          applyModeSelection(option.value)
+                        }}
+                        onKeyDown={(event) => {
+                          if (disabled || option.value !== systemModeValue) return
+                          if (event.key !== 'Enter' && event.key !== ' ') return
+                          applyModeSelection(option.value)
+                        }}
+                      >
                         {option.label}
                       </SelectItem>
                     ))}
