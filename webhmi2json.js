@@ -3,6 +3,18 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+/*
+ * Usage:
+ *   node webhmi2json.js <input_file.webhmi>
+ *
+ * Example:
+ *   node webhmi2json.js mode1.webhmi
+ *
+ * The script decodes the exported .webhmi protobuf file with webhmi.proto and
+ * writes a pretty-printed JSON file next to it. For example, mode1.webhmi will
+ * be converted to mode1.json.
+ */
+
 // Handling __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
