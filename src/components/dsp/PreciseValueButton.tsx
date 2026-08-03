@@ -22,12 +22,20 @@ import {
 export const clampNumber = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value))
 
+const MAX_STEP_DECIMALS = 6
+
 export const getStepDecimals = (step: number) => {
   if (!Number.isFinite(step) || step <= 0) return 0
-  const stepString = String(step)
-  if (!stepString.includes('.')) return 0
-  const [, decimals] = stepString.split('.')
-  return decimals.length
+
+  const absStep = Math.abs(step)
+  const tolerance = Math.max(Number.EPSILON * 100, absStep * 1e-6)
+
+  for (let decimals = 0; decimals <= MAX_STEP_DECIMALS; decimals += 1) {
+    const rounded = Number(absStep.toFixed(decimals))
+    if (Math.abs(rounded - absStep) <= tolerance) return decimals
+  }
+
+  return MAX_STEP_DECIMALS
 }
 
 export const snapToStep = (value: number, min: number, max: number, step: number) => {
